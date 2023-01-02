@@ -1,3 +1,0 @@
-## RCompendium Credentials ----
-options(given = "Ulysse", family = "Flandrin", email = "ulysse.flandrin@gmail.com", orcid = "")
-options(usethis.protocol = "ssh")
