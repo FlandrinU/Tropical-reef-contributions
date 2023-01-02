@@ -1,0 +1,80 @@
+################################################################################
+##
+## Gather all NCPs in one dataframe, at the survey scale
+##
+## merge_NCP_surveys.R
+##
+## 21/10/2022
+##
+## Ulysse Flandrin
+##
+################################################################################
+#----------------- cleaning memory -----------------
+rm(list=ls())
+
+#-----------------Loading packages-------------------
+pkgs <- c("here", "tidyverse","dplyr")
+nip <- pkgs[!(pkgs %in% installed.packages())]
+nip <- lapply(nip, install.packages, dependencies = TRUE)
+ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+
+##-------------loading data-------------
+load(here::here("data","metadata_surveys.Rdata"))
+load(here::here("recycling", "outputs","flux_final_data_surveys.Rdata"))
+load(here::here("productivity", "outputs","RLS_prod_transect.Rdata"))
+load(here::here("nutrients", "outputs", "nutrient_concentration_surveys.Rdata"))
+load(here::here("biodiversity", "outputs", "surveys_biodiversity.Rdata"))
+load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
+load(here::here("biodiversity", "outputs", "surveys_iucn_and_chondrichtyans_scores.Rdata"))
+load(here::here("aesthetic", "outputs", "survey_aesth_without_outliers.Rdata"))
+load( here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata"))
+
+
+##-------------Filtering NCP-------------
+recycl <- dplyr::select(task3_data_surveys,
+                        SurveyID, Btot, recycling_N, recycling_P) #2399 surveys
+
+prod <- dplyr::select(RLS_prod_transect, SurveyID, Productivity) #3619 surveys
+
+nutrients <- RLS_nut_without_outliers[,-2] #3606 surveys
+
+biodiv <- dplyr::select(surveys_biodiversity_without_outliers, SurveyID,taxo_richness, taxo_entropy, funct_entropy)#3610 surveys
+
+phylo <- dplyr::select(phylo_indices_surveys, SurveyID, SES_PD_Mean, ED_Mean)#3613 surveys
+
+aesthetic <- dplyr::select(survey_aesth, SurveyID, aesthe_survey) #7005 surveys
+
+carbonates <- dplyr::select(caco3_per_day_without_outliers, SurveyID, carbonate_tot, low_mg_calcite, high_mg_calcite,
+                            aragonite, monohydrocalcite, amorphous_carbonate) #2156 surveys
+
+NCP <- metadata_surveys %>%
+  select(SurveyID, SiteCode, SiteCountry, SiteEcoregion, SiteLatitude, SiteLongitude, SurveyDepth, SiteMeanSST ) %>%
+  left_join(recycl) %>%
+  left_join(prod) %>%
+  left_join(biodiv) %>%
+  left_join(nutrients) %>%
+  left_join(phylo) %>%
+  left_join(aesthetic) %>%
+  left_join(iucn_and_elasmo_by_surveys)%>%
+  left_join(carbonates)
+
+NCP_surveys <- na.rm(NCP) #remains 1813 surveys
+save(NCP_surveys, file = here::here("outputs", "all_NCP_surveys.Rdata"))
+
+
+#Mean per site
+NCP_site <- NCP_surveys %>%
+  group_by( SiteCode, SiteCountry, SiteEcoregion) %>%
+  summarise(across(.cols = c("SurveyDepth","SiteMeanSST","SiteLatitude", "SiteLongitude",
+                       "Btot","recycling_N","recycling_P","Productivity","taxo_richness", "taxo_entropy",
+                       "funct_entropy","Selenium_C","Zinc_C","Omega_3_C","Calcium_C","Iron_C","Vitamin_A_C",
+                       "SES_PD_Mean","ED_Mean","aesthe_survey", "iucn_species", "elasmobranch_diversity",
+                       "carbonate_tot", "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
+                       "amorphous_carbonate"),
+                   .fns = mean, .names = "{.col}"))
+
+summary(NCP_site) # 1223 sites
+
+NCP_site <- NCP_site[,!colnames(NCP_site) %in% c("ED_Mean", "taxo_entropy", "carbonate_tot")]
+
+save(NCP_site, file = here::here("outputs", "all_NCP_site.Rdata"))

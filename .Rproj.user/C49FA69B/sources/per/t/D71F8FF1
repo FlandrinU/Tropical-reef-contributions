@@ -1,0 +1,24 @@
+{
+    "id": "D71F8FF1",
+    "path": "~/Scolarité/ENS/M2 bioscience/Stage M2/Data stage/Metaweb/Script_trophic_web/Script_plot_trophic_ind.R",
+    "project_path": null,
+    "type": "r_source",
+    "hash": "3288312961",
+    "contents": "",
+    "dirty": false,
+    "created": 1667213501965.0,
+    "source_on_save": false,
+    "relative_order": 8,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "23|58|64|0|\n",
+    "lastKnownWriteTime": 1654102158,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1667213516079,
+    "read_only": false,
+    "read_only_alternatives": []
+}

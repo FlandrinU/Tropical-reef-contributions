@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1668702589921.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "ED5D825A",
+    "lastKnownWriteTime" : 1668702216,
+    "last_content_update" : 1668702589921,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "id" : "c6b69594c40340d989f995fd9d2bf09e",
+        "name" : "coord",
+        "title" : "coord"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 15,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "object_explorer"
+}

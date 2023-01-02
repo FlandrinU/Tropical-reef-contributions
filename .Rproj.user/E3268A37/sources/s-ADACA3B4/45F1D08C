@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1668702374127.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "45F1D08C",
+    "lastKnownWriteTime" : 2314885530818453536,
+    "last_content_update" : 1668702374127,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "id" : "e8e59ef6a94742aebf635dbb8e01b651",
+        "name" : "pca",
+        "title" : "pca"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 14,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "object_explorer"
+}

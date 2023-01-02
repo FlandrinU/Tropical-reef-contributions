@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1668440998633.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1345639366",
+    "id" : "6B4E2EB5",
+    "lastKnownWriteTime" : 1668692230,
+    "last_content_update" : 1668692230416,
+    "path" : "~/Bureau/Chap_1_NCPs/R_NCPs/R/merge_NCP_surveys.R",
+    "project_path" : "R/merge_NCP_surveys.R",
+    "properties" : {
+        "cursorPosition" : "80,0",
+        "scrollLine" : "50"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

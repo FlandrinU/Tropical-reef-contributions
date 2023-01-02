@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1668681125534.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "4454E56",
+    "lastKnownWriteTime" : 1666698588,
+    "last_content_update" : 1666698588,
+    "path" : "~/Bureau/Chap_1_NCPs/R_NCPs/aesthetic/analyses/aesthetic_analyses.R",
+    "project_path" : "aesthetic/analyses/aesthetic_analyses.R",
+    "properties" : {
+        "cursorPosition" : "27,0",
+        "scrollLine" : "4",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

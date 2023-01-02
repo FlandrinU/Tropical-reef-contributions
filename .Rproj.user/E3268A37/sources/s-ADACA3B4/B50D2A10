@@ -1,0 +1,33 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1668679127916.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "B50D2A10",
+    "lastKnownWriteTime" : 1668679035,
+    "last_content_update" : 1668679127916,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "F41D5962",
+        "caption" : "caco3_per_day",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=caco3_per_day&cache_key=F41D5962",
+        "displayedObservations" : 2169,
+        "environment" : "",
+        "expression" : "caco3_per_day",
+        "object" : "caco3_per_day",
+        "preview" : 0,
+        "totalObservations" : 2169,
+        "variables" : 9
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 10,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

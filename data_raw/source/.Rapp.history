@@ -1,0 +1,5 @@
+load("/Volumes/Travail/__googledrive_um/REEF FUTURES Drive/2. Services/2. Nutrient cycling/Analyzes/RF_nutcycl/data_raw/source/RLS_env_spatio_temporal.rds")
+load("/Volumes/Travail/__googledrive_um/REEF FUTURES Drive/2. Services/2. Nutrient cycling/Analyzes/RF_nutcycl/data_raw/source/RLS_fish.rds")
+load("/Volumes/Travail/__googledrive_um/REEF FUTURES Drive/2. Services/2. Nutrient cycling/Analyzes/RF_nutcycl/data_raw/source/RLS_sites.rds")
+load("/Volumes/Travail/__googledrive_um/REEF FUTURES Drive/2. Services/2. Nutrient cycling/Analyzes/RF_nutcycl/data_raw/source/RLS_traits.rds")
+load("/Volumes/Travail/__googledrive_um/REEF FUTURES Drive/2. Services/2. Nutrient cycling/Analyzes/RF_nutcycl/data_raw/source/RLS_traits.rds")

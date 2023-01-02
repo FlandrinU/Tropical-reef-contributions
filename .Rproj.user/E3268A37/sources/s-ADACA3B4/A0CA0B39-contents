@@ -1,0 +1,264 @@
+---
+title: "Covariations in Nature Based Contributions"
+author: "Ulysse Flandrin"
+date: "14/11/2022"
+output: html_document
+---
+***
+* **Questions:**
+  + Which trade offs have we got between NCPs?
+  + Are there specialized reefs in one or few kinds of NCPs?
+  + Are there reefs good or bad for alls NCP (brightspots/darkspots),
+  + ...?
+
+* **Hypothesis:**
+  + There are many trade offs between NCPs, i.e reefs can't be of great interest for all NCPS in the same time?
+
+*NB: We use to talk about "Nature Contributions to People", I think this is better than "ecosystem services", but Humans are still the center of the Nature contributions... Perhaps something like "Nature Based Contributions" could be more neutral? This would include Nature for Nature, Nature fos society and Nature for Culture services...? *
+
+***
+
+### Import data
+```{r, eval=TRUE, warning=FALSE, message=FALSE}
+#----------------- cleaning memory -----------------
+rm(list=ls())
+
+#-----------------Loading packages-------------------
+pkgs <- c("here", "tidyverse","FactoMineR", "tibble", "questionr", "corrplot",
+          "factoextra", "ggpubr", "scico", "RColorBrewer", "plotly")
+nip <- pkgs[!(pkgs %in% installed.packages())]
+nip <- lapply(nip, install.packages, dependencies = TRUE)
+ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+
+##-------------loading data-------------
+load(here::here("outputs","all_NCP_site.Rdata"))
+load(here::here("outputs","all_NCP_surveys.Rdata"))
+
+##-------------computing pca-------------
+rownames(NCP_site) <- NCP_site$SiteCode
+pca <- FactoMineR::PCA(NCP_site[,-c(1:7)], scale.unit = T, graph=F, ncp=10)
+```
+
+* **See data:**
+  + *Carbonates measures are lacking*
+  + *we should choose only one index between taxonomic richness and taxonomic entropy, and between SES.PD and Evolutionary Distinctivness*
+  + *Site properties and studied NCP:*
+```{r, echo=TRUE}
+names(NCP_site)
+```
+*  + *Structure of the data:*
+```{r, echo=FALSE}
+head(NCP_site)
+```
+
+***
+
+# PCA with all NCPs at the community scale
+## 1. Number of dimensions
+### Variances explained by the 10 first dimensions
+```{r, echo=FALSE}
+factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 30))
+```
+
+### Contribution of NCP in dimensions
+```{r, echo=FALSE, fig.height=8, fig.width=6}
+var <- get_pca_var(pca)
+corrplot(var$contrib, is.corr=FALSE)    
+```
+  *=> 8 dimensions needed to represent all variables ?*
+  
+## 2. Covariations
+### Corr-matrix for all NCPs
+```{r, echo=TRUE, fig.height=9, fig.width=9}
+M <- cor(NCP_site[,-c(1:7)])
+corrplot(M, order = 'hclust', hclust.method = 'ward.D2', addrect = 10)
+```
+
+### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
+```{r, echo=TRUE, fig.height=9, fig.width=9}
+fviz_pca_var(pca, col.var = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE 
+)
+```
+
+> **Display only well represented variables (cos2 > 0.4):**
+
+```{r, echo=FALSE, fig.height=7, fig.width=7}
+fviz_pca_var(pca, col.var = "cos2",
+             gradient.cols = c( "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(cos2 = 0.4)
+)
+```
+
+### PCA in dimensions 3 and 4 *(for variables with cos2 > 0.2)*
+
+```{r, echo=FALSE, fig.height=7, fig.width=7}
+fviz_pca_var(pca, col.var = "cos2",
+             axe=c(3,4),
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(cos2 = 0.2)
+)
+```
+
+
+### PCA in dimensions 5 and 6 *(for variables with cos2 > 0.2)*
+
+```{r, echo=FALSE, fig.height=5, fig.width=5}
+fviz_pca_var(pca, col.var = "cos2",
+             axe=c(5,6),
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(cos2 = 0.2)
+)
+```
+
+### PCA in dimensions 7 and 8 *(for variables with cos2 > 0.1)*
+
+```{r, echo=FALSE, fig.height=5, fig.width=5}
+fviz_pca_var(pca, col.var = "cos2",
+             axe=c(7,8),
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,
+             select.var = list(cos2 = 0.1)
+)
+```
+
+
+## 3. Sites distribution
+### By countries
+```{r, echo=FALSE, fig.width= 10, fig.height=7}
+ind.p <- fviz_pca_ind(pca, geom = "point",
+                      pointshape=21, 
+                      fill.ind = NCP_site$SiteCountry)
+ggpubr::ggpar(ind.p,
+              title = "Principal Component Analysis of NCPs",
+              subtitle = "RLS data set",
+              caption = "Source: factoextra",
+              xlab = "PC1", ylab = "PC2",
+              legend.title = "Country", legend.position = "top",
+              font.legend = c(8, "plain", "black"),
+              ggtheme = theme_gray(), palette = scico(38, palette = "roma")
+)
+
+```
+
+
+#### By countries, with $cos2 > 0.4$ variables:
+```{r, echo=FALSE, fig.width= 9, fig.height=5}
+fviz_pca_biplot (pca,
+                 select.var = list(cos2 = 0.4),
+                 geom="point", pointshape=21,
+                 col.ind = NCP_site$SiteCountry,
+                 fill.ind = NCP_site$SiteCountry,
+                 palette = scico(38, palette = "roma"),
+                 addEllipses = F, label = "var",
+                 col.var = "black", repel = TRUE,
+                 legend.title = "Country",
+                 font.legend = c(7, "plain", "black")
+)
+```
+
+#### clustering countries, with $cos2 > 0.4$ variables:
+```{r, echo=FALSE, fig.width= 9, fig.height=5, message= FALSE}
+fviz_pca_biplot (pca,
+                 select.var = list(cos2 = 0.4),
+                 geom="point", pointshape=21,
+                 col.ind = NCP_site$SiteCountry,
+                 fill.ind = NCP_site$SiteCountry,
+                 palette = rainbow(38),
+                 addEllipses = T, label = "var",
+                 col.var = "black", repel = TRUE,
+                 legend.title = "Country",
+                 font.legend = c(6, "plain", "black")
+                 )
+
+```
+
+### Temperature pattern
+```{r, echo=FALSE, fig.width= 8, fig.height=5, message= FALSE}
+fviz_pca_biplot(pca,
+                select.var = list(cos2 = 0.4),
+                geom="point", pointshape=21,
+                fill.ind = NCP_site$SiteMeanSST,
+                col.ind = NCP_site$SiteMeanSST,
+                gradient.cols = rev(brewer.pal(10,name="RdYlBu")),
+                col.var = "black", repel = TRUE,
+                legend.title = "Mean temperature")
+
+```
+
+    * => Strong temperature pattern, notably due to Spain with high phylogenetic diversity and omega 3 richness *
+
+### Depth pattern
+```{r, echo=FALSE, fig.width= 8, fig.height=5}
+fviz_pca_biplot(pca, 
+                geom="point", pointshape=21,
+                fill.ind = NCP_site$SurveyDepth,
+                col.ind = NCP_site$SurveyDepth,
+                gradient.cols = c("blue4", "yellow", "red"),
+                col.var = "black", repel = TRUE,
+                legend.title = "Mean depth")
+```
+
+
+
+
+
+
+```{r, echo= FALSE, eval= FALSE, warning=FALSE}
+ind.p <- fviz_pca_ind(pca, geom = "point",
+                      pointshape=21, 
+                      fill.ind = NCP_site$SiteEcoregion)
+ggpubr::ggpar(ind.p,
+              title = "Principal Component Analysis of NCPs",
+              subtitle = "RLS data set",
+              caption = "Source: factoextra",
+              xlab = "PC1", ylab = "PC2",
+              legend.title = "Ecoregion", legend.position = "top",
+              ggtheme = theme_gray(), palette = scico(58, palette = "roma")
+)
+
+```
+
+```{r, eval=FALSE, echo=FALSE}
+#"biplot sites_NCP with Elipse by ecoregion.png"
+fviz_pca_biplot (pca,
+                 geom="point", pointshape=21,
+                 col.ind = NCP_site$SiteEcoregion,
+                 fill.ind = NCP_site$SiteEcoregion,
+                 palette = scico(58, palette = "roma"),
+                 addEllipses = T, label = "var",
+                 col.var = "black", repel = TRUE,
+                 legend.title = "Ecoregion")
+```
+
+### Explore with plotly
+```{r, warning=FALSE}
+library(plotly)
+site_coord_in_pca <- as.data.frame(pca$ind$coord) %>%
+  cbind(NCP_site[,c("SiteCountry", "SiteMeanSST")])
+
+plot_ly(site_coord_in_pca, 
+        x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
+        size = 10
+        ) %>%
+  add_markers(color= ~SiteCountry)
+```
+
+```{r}
+plot_ly(site_coord_in_pca, 
+        x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
+        size = 10
+        ) %>%
+  add_markers(color= ~SiteMeanSST)
+```
+
+# Study NN, NC, and NS
+```{r}
+# voir http://fermin.perso.math.cnrs.fr/Files/ACP-AFM.html
+res.mfa = MFA(wine, group=c(2,5,3,10,9,2), type=c("n",rep("s",5)), ncp=5, name.group=c("origin","odor","visual","odor.after.shaking", "taste","overall"), num.group.sup=c(1,6))
+```
+

@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1666107726393.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "25053976",
+    "lastKnownWriteTime" : 1668440992,
+    "last_content_update" : 1668440992956,
+    "path" : "~/Bureau/Chap_1_NCPs/R_NCPs/biodiversity/analyses/biodiversity_analysis.R",
+    "project_path" : "biodiversity/analyses/biodiversity_analysis.R",
+    "properties" : {
+        "cursorPosition" : "28,71",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

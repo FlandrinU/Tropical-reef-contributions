@@ -1,0 +1,27 @@
+################################################################################
+##
+## clean carbonates outputs
+##
+## carbonates_analyses.R
+##
+## 31/10/2022
+##
+## Ulysse Flandrin
+##
+################################################################################
+#----------------- cleaning memory -----------------
+rm(list=ls())
+
+#-----------------Loading packages-------------------
+pkgs <- c("here")
+nip <- pkgs[!(pkgs %in% installed.packages())]
+nip <- lapply(nip, install.packages, dependencies = TRUE)
+ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+
+##-------------loading data-------------
+carbonates <- read.csv(file = here::here("carbonates", "outputs", "RLS_sites_with_carbonate_data.csv")) 
+
+carbonates$SurveyID <- as.character(carbonates$SurveyID)
+
+##-------------saving data-------------
+save(carbonates, file=  here::here("carbonates", "outputs", "carbonates_surveys.Rdata") )

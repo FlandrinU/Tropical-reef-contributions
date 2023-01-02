@@ -1,0 +1,197 @@
+## cleaning memory
+rm(list=ls())
+
+## preparing environment ######
+
+# loading data from RLS and from fishflux
+load(here::here( "data_raw", "source", "species_spec_code.Rdata"))
+load(here::here("data_raw","rls_trop_fish_sizeok_biomok.Rdata"))
+head(rls_trop_fish_sizeok_biomok)
+RLS_socio_data <- readRDS(here::here("data_raw", "source", "RLS_socio_withoutNA.rds"))
+
+# checking taxonomic resolution
+unique(rls_trop_fish_sizeok_biomok$taxo_level) # both species and genus
+rls_trop_fish_sizeok_biomok %>%
+  filter(taxo_level=="genus") %>%
+  distinct(taxa) %>%
+  nrow() # 81 genera
+
+## data about species for running fishflux ####
+
+# loading
+species_parameters<-read.csv(here::here("data_raw", "source", "species_parameters.csv") )
+head(species_parameters)
+nrow(species_parameters) # 1 110 species
+sort(unique(species_parameters$family)) # 25 families (parrotfishes within Labridae)
+
+# species names----
+fishflux_species <- data.frame(species=species_parameters$species, fishflux="yes")
+
+# merging fishflux status with data from RLS
+data_rls_fishflux<-rls_trop_fish_sizeok_biomok %>%
+  left_join( fishflux_species, by=c("taxa"="species")  ) %>%
+  mutate(fishflux=replace_na(fishflux, "no") )
+summary(data_rls_fishflux)
+
+
+## computing abundance, biomass metrics at survey level #####
+
+# computing total number of individuals per survey ----
+surveys_Ntot<-data_rls_fishflux %>%
+  group_by(SurveyID) %>%
+  select(SurveyID, number) %>%
+  summarize(Ntot=sum(number) )
+summary(surveys_Ntot$Ntot) # from 5 to 42 376 fish per survey
+
+
+# computing total biomass ----
+surveys_Btot<-data_rls_fishflux %>%
+  group_by(SurveyID) %>%
+  select(SurveyID, biomass) %>%
+  summarize(Btot=sum(biomass) )
+summary(surveys_Btot$Btot) # from 232 to 7 876 307g (7.8 tons) of fish
+
+
+# computing total biomass of species with fishflux estimates ----
+surveys_Btot_fishflux<-data_rls_fishflux %>%
+  group_by(SurveyID) %>%
+  filter(fishflux=="yes") %>%
+  select(SurveyID, biomass) %>%
+  summarize(Btot_fishflux=sum(biomass) )
+summary(surveys_Btot_fishflux$Btot_fishflux) # from 9 to 6 062 096g of fish
+
+
+# computing total abundance of species with fishflux estimates ----
+surveys_Ntot_fishflux<-data_rls_fishflux %>%
+  group_by(SurveyID) %>%
+  filter(fishflux=="yes") %>%
+  select(SurveyID, number) %>%
+  summarize(Ntot_fishflux=sum(number) )
+summary(surveys_Ntot_fishflux$Ntot_fishflux) # from  1 to 32 637 fish
+
+
+# merging these 2 metrics in a single table and adding 2 quality metrics ----
+# 'p_biom_nutflux' 'p_abund_nutflux' = ratio between total biomass or abundance  
+# of species with nutrient cycling estimates and total biomass or abundance surveyed
+
+surveys_quality <- surveys_Ntot %>%
+  left_join(surveys_Btot, by="SurveyID") %>%
+  left_join(surveys_Ntot_fishflux, by="SurveyID") %>%
+  left_join(surveys_Btot_fishflux, by="SurveyID") %>%
+  replace_na(list(Btot_fishflux = 0, Ntot_fishflux = 0) ) %>%
+  mutate (p_abund_nutflux = Ntot_fishflux / Ntot) %>%
+  mutate( p_biom_nutflux = Btot_fishflux / Btot )
+summary(surveys_quality)
+nrow(surveys_quality) # 3 631 surveys
+
+
+# summary of % of biomass or abudance belonging to taxa in fishflux
+summary(surveys_quality$p_biom_nutflux) # median = 0.930, Q3=0.98
+summary(surveys_quality$p_abund_nutflux) # median = 0.966, Q3=0.99
+
+
+# building 3 datasets: survey features, species info, fish obs ####
+names(data_rls_fishflux)
+
+# keeping only observation of species with bioenergetics models and actual abundance
+data_rls_fishflux <- data_rls_fishflux %>%
+  filter(number>0) %>%
+  filter(fishflux=="yes")
+
+
+# surveys metadata and quality metrics for nutrient recycling estimates ----
+  # gravity data
+  gravity <- RLS_socio_data %>%
+    select( SurveyID, gravtot2, HDI, MarineEcosystemDependency) %>%
+    mutate(SurveyID = as.character(SurveyID))
+
+
+metadata_surveys <- data_rls_fishflux %>%
+  select(SurveyID, SurveyDate, SurveyDepth, 
+         SiteCode, SiteLatitude, SiteLongitude, SiteCountry, SiteEcoregion,
+         SiteMeanSST, SiteMinSST) %>%
+  distinct(SurveyID, .keep_all = TRUE) %>%
+  left_join(surveys_quality, by="SurveyID") %>%
+  left_join( gravity)
+  
+
+# summary of sites surveyed
+summary(metadata_surveys)
+n_distinct(metadata_surveys$SurveyID) # 3 627 surveys
+n_distinct(metadata_surveys$SiteCode) # 2 011 sites
+n_distinct(metadata_surveys$SiteCountry) # 39 countries
+summary(metadata_surveys$SiteLatitude) # latitude from -32.4 to 29.5
+summary(metadata_surveys$SiteLongitude) # longitude from -179 to 170
+
+
+# taxonomy and traits of species ----
+data_species<-data_rls_fishflux %>%
+  select( species=taxa, family, 
+          Size=MaxLength, Position, Activity ) %>%
+  distinct(species,.keep_all = TRUE) %>%
+  mutate(species=as.character(species))   %>%
+  mutate(family=as_factor(family))
+
+summary(data_species)
+n_distinct(data_species$species) # 1 024 taxa
+unique(data_species$family) # from 26 families (25+Scaridae)
+
+# recoding Position as an ordinal trait after merging the 2 types of Pelagic
+# capital letter for all categories
+data_species$Position<-fct_recode(data_species$Position,
+                                  Benthic="benthic", 
+                                  Pelagic="pelagic site attached", Pelagic="pelagic non-site attached")
+data_species$Position<-factor(data_species$Position, 
+                              levels=c("Benthic", "Demersal", "Pelagic"), ordered = TRUE)
+
+
+# Diet categories from Parravicini et al (https://doi.org/10.1371/journal.pbio.3000702)
+diet_pbiol <- species_parameters %>%
+  select(species, diet_cat, a = lwa_m, b = lwb_m) %>%
+  mutate(Diet=factor(diet_cat) ) %>%
+  mutate(Diet= fct_recode(Diet,
+                          sessile_invertivores="1",
+                          herbivores_microvores_detritivores="2",
+                          corallivores="3",
+                          piscivores="4",
+                          microinvertivores="5",
+                          macroinvertivores="6",
+                          crustacivores="7",
+                          planktivores="8")
+  ) %>%
+  select(species, Diet, a, b)
+
+summary(diet_pbiol$Diet)
+
+# merging
+data_species <- data_species %>%
+  left_join(diet_pbiol)
+
+summary(data_species)
+
+ filter(data_species, is.na(Position))
+# => 2 NA for Naso_lopezi, replacing with value taken from FihsBase
+ data_species[which(data_species$species=="Naso_lopezi"),"Position"]<-fct_explicit_na("Pelagic")
+ data_species[which(data_species$species=="Naso_lopezi"),"Activity"]<-fct_explicit_na("Day")
+ 
+ 
+# fish number, size and biomass in surveys ----
+data_surveys<-data_rls_fishflux %>%
+  select(SurveyID, species=taxa, size_class, number, biomass )
+summary(data_surveys)
+
+
+
+#change sp name : Abudefduf_luridus should be Similiparma lurida et Rhinesomus_triqueter should be Lactophrys triqueter
+data_species <- data_species %>%
+   left_join(species_spec_code) %>%
+   select(species, species_corrected, spec_code, family, Size, a, b, Position, Activity, Diet)
+
+data_surveys <- data_surveys %>%
+  left_join(species_spec_code) %>%
+  select(SurveyID, species, spec_code, size_class, number, biomass) 
+
+## saving as Rdata ####
+save( metadata_surveys, file=here::here("data", "metadata_surveys.Rdata")  )
+save( data_species, file=here::here("data", "data_species.Rdata")  )
+save( data_surveys, file=here::here("data", "data_surveys.Rdata")  )
