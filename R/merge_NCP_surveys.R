@@ -151,4 +151,3 @@ NCP_site <- NCP_surveys %>%
 summary(NCP_site) # 1223 sites
 
 save(NCP_site, file = here::here("outputs", "all_NCP_site.Rdata"))
-

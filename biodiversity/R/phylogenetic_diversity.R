@@ -200,5 +200,6 @@ phylo_indices_surveys <- phylo_indices_surveys_all %>%
   #filter(PE_Mean < quantile(phylo_indices_surveys_all$PE_Mean,0.999)) %>%
   filter(phylo_entropy < quantile(phylo_indices_surveys_all$phylo_entropy, 0.999)) 
 
+
 save(phylo_indices_surveys_all, file = here::here("biodiversity", "outputs", "phylogenetic_indices_all_surveys.Rdata"))
 save(phylo_indices_surveys, file = here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
