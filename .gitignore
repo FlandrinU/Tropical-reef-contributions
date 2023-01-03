@@ -28,7 +28,6 @@ renv/
 _targets/
 
 # Outputs
-outputs/
 
 # large files
 data/ShapeFiles Coast/

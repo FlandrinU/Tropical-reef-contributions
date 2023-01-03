@@ -6,6 +6,10 @@ nip <- lapply(nip, install.packages, dependencies = TRUE)
 devtools::install_github("renatoamorais/rfishprod")
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
+#-----------------renv---------------------
+renv::install("r-lib/devtools") #to install packages from github
+renv::install() #install all packages noted in file DESCRIPTION
+renv::snapshot()
 #-----------------Loading all data---------------------
 
 path = (here::here("data"))

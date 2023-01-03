@@ -1,0 +1,39 @@
+Package: Tropical reefs services
+Type: Package
+Title: R_NCP
+Version: 1.0
+Authors@R: c(
+    person(given   = "Ulysse",
+           family  = "Flandrin",
+           role    = c("aut", "cre", "cph"),
+           email   = "ulysse.flandrin@gmail.com",
+           comment = c(ORCID = "")))
+Description: co-variation between Natrure Contributuions to People and 
+	to Nature in tropical reef
+URL: https://github.com/FlandrinU/Tropical-reefs-services
+BugReports: https://github.com/FlandrinUTropical-reefs-services/issues
+License: GPL (>= 2)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+Imports:
+    data.table,
+    dplyr,
+    entropart,
+	factoextra,
+	FactoMineR,
+    ggplot2,
+    ggpubr,
+    here,
+    mFD,
+    phyloregion,
+    quarto,
+    renv,
+    sf,
+    tarchetypes,
+    targets,
+    visNetwork
+Remotes:
+	nschiett/fishflux,
+    r-link/corrmorant,
+    renatoamorais/rfishprod
