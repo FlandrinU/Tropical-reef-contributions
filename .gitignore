@@ -27,12 +27,11 @@ renv/
 # _targets
 _targets/
 
-# Output
+# Outputs
 outputs/
-figures/
-data/
 
-# temporarly removed
-biodiversity/
-recycling/
+# large files
+data/ShapeFiles Coast/
+biodiversity/data/Code&Data_Siquiera2020/
+
 
