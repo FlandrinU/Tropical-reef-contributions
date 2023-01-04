@@ -7,9 +7,16 @@ devtools::install_github("renatoamorais/rfishprod")
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 #-----------------renv---------------------
+if (!("remotes" %in% utils::installed.packages())) 
+  install.packages("remotes")
 renv::install("r-lib/devtools") #to install packages from github
 renv::install() #install all packages noted in file DESCRIPTION
 renv::snapshot()
+
+## Load packages & functions + Setup project ----
+
+devtools::load_all(here::here())
+
 #-----------------Loading all data---------------------
 
 path = (here::here("data"))
