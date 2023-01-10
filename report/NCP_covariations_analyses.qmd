@@ -3,6 +3,8 @@ title: "NCP's covariations analyses"
 author: "Ulysse Flandrin"
 format: 
   html:
+    self-contained: true
+    code-fold: true
     theme: cosmo 
     toc: true
     number-sections: true

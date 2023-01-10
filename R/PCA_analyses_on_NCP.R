@@ -31,8 +31,8 @@ NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoreg
                              SiteMeanSST, SiteLatitude, SiteLongitude,
                              HDI, gravtot2, MarineEcosystemDependency,
                              coral_imputation))
+
 ##-------------Correlations between NCPs-------------
-  
 ## With Biomass
 plot_correlation <- function(x,y,i){  
   ggplot() +
@@ -47,28 +47,18 @@ plot_correlation <- function(x,y,i){
 
 x<- NCP_site$Btot
 x_title = "total Biomass"
-all_y <- colnames(NCP_site_clean)
-plots <- as.list(all_y)
-col <- fishualize::fish(n = 26, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+col <- fishualize::fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
 
-for(i in 1:length(plots)){
-  p <- plot_correlation(x,all_y[i],i)
-  plots[[i]] <- p
-}
+plots <- lapply( 1:ncol(NCP_site_clean), function(i){
+            plot_correlation(x,colnames(NCP_site_clean)[i],i)
+        })
 
-# layout <- "abcde
-#            fghij
-#            klmno
-#            pqrst
-#            uvwxy
-#            z1234"
 plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] + 
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] +
+  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
   
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-  # plot_layout(design = layout) + 
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
 
@@ -79,56 +69,53 @@ ggsave(filename = here("outputs", "figures","NCP_correlation_with_biomass.png"),
 ## With biodiversity
 x<- NCP_site$taxo_richness
 x_title = "taxonomic richness"
-all_y <- colnames(NCP_site_clean)
-plots <- as.list(all_y)
-col <- fish(n = 26, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+col <- fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
 
-for(i in 1:length(plots)){
-  p <- plot_correlation(x,all_y[i],i)
-  plots[[i]] <- p
-}
+plots <- lapply( 1:ncol(NCP_site_clean), function(i){
+            plot_correlation(x,colnames(NCP_site_clean)[i],i)
+})
 
 plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] + 
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]]+
+  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]]+ plots[[27]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
 
 ggsave(filename = here("outputs", "figures","NCP_correlation_with_biodiversity.png"), plot, width = 22, height =14 )
 
-#### Correlation between NCPs
-# all_y <- colnames(NCP_site_clean)
-# plots <- as.list(all_y)
-# col <- fishualize::fish(n = 27, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
-# 
-# for(i in all_y){
-#   p <- ggplot(NCP_site_clean) +
-#         aes(x = Btot) +
-#         geom_histogram(bins = 30L) +
-#         theme_minimal()
-#   plots[[i]] <- p
-#   }
-# 
-# plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
-#   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
-#   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-#   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] +
-#   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-#   plot_annotation(tag_levels = "a") &
-#   theme(plot.tag = element_text(face = 'bold'))
-# plot
-# ggsave(filename = here("outputs", "figures","NCP_correlation_with_biomass.png"), plot, width = 22, height =14 )
+#### NCPs distribution
+col <- fishualize::fish(n = 27, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+names(col) <- colnames(NCP_site_clean)
 
-ggplot(NCP_site_clean) +
-  aes(x = Btot) +
-  geom_histogram(bins = 30L, fill = "#112446") +
-  theme_minimal()
+plots <- lapply(colnames(NCP_site_clean),function(i){
+    p <- ggplot(NCP_site_clean) +
+          aes(x = NCP_site_clean[,i][[i]]) +
+          geom_histogram(bins = 40L,
+                         fill = col[i][[1]],
+                         col = "black") +
+          labs(title = i) +
+          xlab("") + ylab("") +
+          theme_minimal() +
+          theme( legend.position = "none")
+  
+   p
+})
 
-names <- c()
-cor <- c()
-p_val <- c()
+all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
+  plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
+  plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
+  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
+  theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
+  plot_annotation(tag_levels = "a") &
+  theme(plot.tag = element_text(face = 'bold'))
+
+ggsave(filename = here("outputs", "figures","NCP_distribution.png"), all_plot, width = 22, height =14 )
+
+
+### Correlation test
+names <- cor <- p_val <- c()
 for( i in colnames(NCP_site_clean)){
   for(j in colnames(NCP_site_clean)){
     correlation <- stats::cor.test(get("NCP_site_clean")[[i]], get("NCP_site_clean")[[j]] )
@@ -137,48 +124,47 @@ for( i in colnames(NCP_site_clean)){
   p_val <- c(p_val, correlation[["p.value"]])}
 }
 
-correlations <- data.frame(name=names, cor = cor, p_val=p_val)
+correlations_between_NCPs <- data.frame(name=names, cor = cor, p_val=p_val)
+signif_correlations__NCPs <- dplyr::filter(correlations_between_NCPs, abs(cor) > 0.5)
 
-signif_corr <- dplyr::filter(correlations, abs(cor) > 0.5)
 
 #### Corr-matrix for all NCPs
 M <- cor(NCP_site_clean)
 png(filename = here("outputs", "figures","corr_matrix.png"), 
     width= 40, height = 30, units = "cm", res = 1000)
-testRes <- cor.mtest(NCP_site_clean, conf.level = 0.95)
-# corrplot(M, p.mat = testRes$p, insig = 'p-value')
-# 
-# ## circle + colorful number
-# corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'd')
-# corrplot(M, add = TRUE, type = 'upper', p.mat = testRes$p, insig = 'p-value')
 # ## circle + black number
 corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
 corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
            diag = FALSE, tl.pos = 'n', cl.pos = 'n')
 
+# corrplot(M, p.mat = testRes$p, insig = 'p-value')
 # corrplot(M, order = 'hclust', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
 # corrplot(M, order = 'hclust', add= T, type= 'upper', p.mat = testRes$p, insig = 'p-value', 
 #          tl.pos= 'n', cl.pos = 'n')
-
-# corrplot::corrplot(M, order = 'hclust', hclust.method = 'ward.D2', addrect = 10,  tl.srt = 60)
 dev.off() 
 
 
 ##-------------computing pca-------------
-rownames(NCP_site) <- NCP_site$SiteCode
+rownames(NCP_site_clean) <- NCP_site$SiteCode
 
-NCP_site_for_pca <- subset(NCP_site_clean, 
-                           select = c(
-                             #independents NCP
-                             Productivity, funct_distinctiveness, Vitamin_A_C, ED_Mean, aragonite, monohydrocalcite,
-                             Btot, # correlated with biomass: Btot, recycling_N, recycling_P, amorphous_carbonate, low_mg_calcite, 
-                             # high_mg_calcite, biom_lowTL, biom_mediumTL, biom_highTL, fishery_biomass
-                             iucn_species, # iucn_species, elasmobranch_diversity
-                             taxo_richness, # taxo_richness, phylo_entropy, aesthe_survey
-                             funct_entropy,
-                             Omega_3_C, # Omega_3_C, Selenium_C
-                             Iron_C # Iron_C, Calcium_C, Zinc_C
-                           ))
+NCP_site_for_pca <- subset(NCP_site, select = 
+    c( Productivity, funct_distinctiveness, Vitamin_A_C, ED_Mean, aragonite, monohydrocalcite,
+    recycling_N, recycling_P, amorphous_carbonate, low_mg_calcite, high_mg_calcite,
+    biom_lowTL, biom_mediumTL, biom_highTL, fishery_biomass, iucn_species, 
+    elasmobranch_diversity, taxo_richness, phylo_entropy, aesthe_survey, funct_entropy,
+    Omega_3_C, Selenium_C, Iron_C, Calcium_C, Zinc_C))
+# non_correlated_NCP_site_for_pca <- subset(NCP_site_clean, 
+#                             select = c(
+#                              #independents NCP
+#                              Productivity, funct_distinctiveness, Vitamin_A_C, ED_Mean, aragonite, monohydrocalcite,
+#                              Btot, # correlated with biomass: Btot, recycling_N, recycling_P, amorphous_carbonate, low_mg_calcite, 
+#                              # high_mg_calcite, biom_lowTL, biom_mediumTL, biom_highTL, fishery_biomass
+#                              iucn_species, # iucn_species, elasmobranch_diversity
+#                              taxo_richness, # taxo_richness, phylo_entropy, aesthe_survey
+#                              funct_entropy,
+#                              Omega_3_C, # Omega_3_C, Selenium_C
+#                              Iron_C # Iron_C, Calcium_C, Zinc_C
+#                            ))
 
 pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = T, graph=F, ncp=10)
 
@@ -186,8 +172,8 @@ summary(NCP_site$SiteCountry)
 
 ####----------plot -------------
 
-## PCA with all NCPs at the community scale
-### Number of dimensions
+##---- PCA with all NCPs at the community scale ------
+### Number of dimension
 #### Variance explained by the 10 first dimensions
 png(filename = here("outputs", "figures","barplot_variance_explained_all_NCP.png"), 
     width= 15, height = 10, units = "cm", res = 1000)
@@ -224,20 +210,15 @@ dev.off()
 
 ## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
 var <- get_pca_var(pca)
-# grp <- c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",         
-#          funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
-#          Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
-#          elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN", 
-#          monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-#          biom_highTL="NN", fishery_biomass="NS") # /!\ the order matter
-grp <- c(Productivity="NS", funct_distinctiveness="NN", Vitamin_A_C="NS",
-         ED_Mean="NN", aragonite="NN", monohydrocalcite="NN", Btot="NS",
-         iucn_species="NN", taxo_richness="NN", funct_entropy="NN",         
-         Omega_3_C="NS", Iron_C="NS"
-        ) # /!\ the order matter
+grp <- c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
+         funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
+         Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
+         elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
+         monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
+         biom_highTL="NN", fishery_biomass="NS") # /!\ the order matter
+
 
 grp <- as.factor(grp)
-
 
 png(filename = here("outputs", "figures","PCA_NS_NN_axes1-2.png"), 
     width= 20, height = 17, units = "cm", res = 1000)
@@ -290,7 +271,7 @@ fviz_pca_var(pca, col.var = "cos2",
 
 
 
-# Categories as Diaz 2022
+#------Categories as Diaz 2022-------
 ### Dimensions 1 and 2
 var_3cat <- get_pca_var(pca)
 grp_3cat <- c(recycling_N="regulating", recycling_P="regulating",Productivity="material",
@@ -353,7 +334,6 @@ dev.off()
 
 
 #### Nature intrinsic value
-```{r, echo= FALSE, warning=FALSE, fig.width= 12, fig.height= 7}
 nature <- names(grp_3cat)[ grp_3cat == "nature" ]
 NCP_nature <- NCP_site[,nature]
 rownames(NCP_nature) <- rownames(NCP_site)
@@ -364,7 +344,7 @@ hist <- factoextra::fviz_eig(pca_nature, addlabels = TRUE, ylim = c(0, 35), barf
 pca_plot <- fviz_pca_var(pca_nature, col.var = "forestgreen",
                          repel = TRUE)
 
-png(filename = here("outputs", "figures","PCA_regulating_NCP.png"), 
+png(filename = here("outputs", "figures","PCA_nature_Diaz_NCP.png"), 
     width= 30, height = 17, units = "cm", res = 1000)
 gridExtra::grid.arrange(hist, pca_plot, nrow = 1, widths= c(1,2))
 dev.off()
@@ -382,7 +362,7 @@ dev.off()
 
 
 
-## Sites distribution
+##----- Sites distribution-----
 ### By countries
 ind.p <- fviz_pca_ind(pca, geom = "point",
                       pointshape=21,
@@ -588,58 +568,58 @@ fviz_pca_biplot (pca,
 
 
 ### Explore with plotly
-library(plotly)
 site_coord_in_pca <- as.data.frame(pca$ind$coord) %>%
   cbind(NCP_site[,c("SiteCountry", "SiteMeanSST", "gravtot2")])
 
-png(filename = here("outputs", "figures","PCA_plotly_country.png"), 
-    width= 30, height = 20, units = "cm", res = 1000)
-plot_ly(site_coord_in_pca,
+plotly::plot_ly(site_coord_in_pca,
         x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
         size = 10 ) %>%
   add_markers(color= ~SiteCountry)
-dev.off()
 
-plot_ly(site_coord_in_pca,
+plotly::plot_ly(site_coord_in_pca,
         x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
         size = 10
 ) %>%
   add_markers(color= ~SiteMeanSST)
 
-plot_ly(site_coord_in_pca,
+plotly::plot_ly(site_coord_in_pca,
         x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
         size = 10
 ) %>%
   add_markers(color= ~log(gravtot2))
 
 
-## Study NN and NS separately
+##------- Study NN and NS separately ------
 
 ### Nature contributions to Nature   
--> covariation between Nature for Nature NCPs only
-
-```{r, echo= FALSE, warning=FALSE}
 NN <- names(grp)[ grp=="NN" ]
 NCP_NN <- NCP_site[,NN]
 rownames(NCP_NN) <- rownames(NCP_site)
 
 pca <- FactoMineR::PCA(NCP_NN, scale.unit = T, graph=F, ncp=10)
 
+png(filename = here("outputs", "figures","barplot_variance_explained_by_NN.png"), 
+    width= 15, height = 10, units = "cm", res = 1000)
 factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 35), barfill = "forestgreen", barcolor = "forestgreen")
+dev.off()
 
 var <- get_pca_var(pca)
+png(filename = here("outputs", "figures","contribution_NN_in_dimensions.png"), 
+    width= 17, height = 15, units = "cm", res = 1000)
 corrplot(var$contrib, is.corr=FALSE)
-```
+dev.off()
 
-#### NN variations in the 2 first dimensions  
+#### NN variations in the 2 first dimensions
 
-```{r, echo=FALSE, fig.height=10, fig.width=10}
+png(filename = here("outputs", "figures","PCA_NN_only.png"), 
+    width= 15, height = 15, units = "cm", res = 1000)
 fviz_pca_var(pca, col.var = "forestgreen",
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE
-)
+             repel = TRUE)
+dev.off()
 
 
+png(filename = here("outputs", "figures","PCA_countries_NN_only.png"), 
+    width= 30, height = 20, units = "cm", res = 1000)
 fviz_pca_biplot (pca,
                  select.var = list(cos2 = 0.1),
                  geom="point", pointshape=21,
@@ -651,28 +631,22 @@ fviz_pca_biplot (pca,
                  legend.title = "Country",
                  font.legend = c(6, "plain", "black")
 )
-
-```
+dev.off()
 
 #### NN PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.1)*
 
-```{r, echo=FALSE, fig.height=7, fig.width=7}
 fviz_pca_var(pca, col.var = "cos2",
              axe=c(3,4),
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE,
              select.var = list(cos2 = 0.1)
 )
-```
 
 #### Surveys positions in PC1
 
-```{r}
 NN_PC1_surveys <- pca$ind$coord[,1]
 summary(NN_PC1_surveys)
-```
 
-```{r, echo=FALSE, warning=FALSE}
 NN_PC1_surveys <- data.frame(NN_PC1=NN_PC1_surveys)
 rownames(NN_PC1_surveys) <- rownames(NCP_site)
 
@@ -684,7 +658,6 @@ histo_NN <- ggplot(NN_PC1_surveys, aes(x = NN_PC1)) +
   geom_vline(xintercept = 0, linetype = 2, col= "black")+
   theme_minimal()
 histo_NN
-```
 
 ### Nature contributions to Society
 

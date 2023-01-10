@@ -34,6 +34,10 @@ load( here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata"
 load(here::here("data_raw", "source", "coral_reef_allen_habitat__data.RData"))
 benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_imputed.txt"), sep= " ")
 
+#world coast shapefile
+#coast_high_resolution <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
+coast <- sf::st_read(here::here("data", "coastline_shapefile", "ne_10m_coastline.shp"))
+
 ##-------------Filtering NCP-------------
 recycl <- dplyr::select(task3_data_surveys,
                         SurveyID, Btot, recycling_N, recycling_P) #2399 surveys
@@ -151,3 +155,44 @@ NCP_site <- NCP_surveys %>%
 summary(NCP_site) # 1223 sites
 
 save(NCP_site, file = here::here("outputs", "all_NCP_site.Rdata"))
+
+##-------------plot NCPs on map-------------
+#plot function
+plot_NCP_on_world_map <- function(NCP = "taxo_richness"){
+  map <- ggplot(NCP_site) +
+    geom_sf(data = coast, color = "grey30", fill = "lightgrey",
+            aes(size=0.1)) +
+    
+    geom_point(data=NCP_site,
+               size = 2, alpha = 0.7, shape = 20,
+               aes(x = SiteLongitude, y = SiteLatitude,
+                   colour= NCP_site[,NCP][[1]])) +
+    scale_colour_gradient(NCP,
+                          low = "dodgerblue", high="darkred",
+                          na.value=NA) +
+    
+    coord_sf(ylim = c(-36, 31), expand = FALSE) +
+    guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
+    scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
+    theme_minimal()+
+    labs(title = paste0(NCP, " geographic distribution"),
+         x="", y= "") +
+    theme(legend.position = "right",
+          plot.title = element_text(size=10, face="bold"),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
+    )
+    
+  ggsave( here::here("outputs", "figures", "NCP_on_world_map", paste("world map with ", NCP, ".jpg")), plot = map, width=15, height = 7 )
+  #map
+}
+
+# save maps
+NCP_list <- colnames(subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                                  SiteMeanSST, SiteLatitude, SiteLongitude,
+                                                  HDI, gravtot2, MarineEcosystemDependency,
+                                                  coral_imputation)))
+for( NCP in NCP_list){
+  plot_NCP_on_world_map(NCP)
+}

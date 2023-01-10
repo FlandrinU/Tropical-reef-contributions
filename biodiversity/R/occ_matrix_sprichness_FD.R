@@ -66,9 +66,23 @@ surveys_family_biom <- data_surveys_fam %>%
 
 dim(surveys_family_biom) # OK
 
+surveys_nb_sp_per_family <- data_surveys_fam %>% 
+  select(SurveyID, family, species) %>%
+  group_by(SurveyID, family) %>%
+  summarize( family_richness = length(unique(species)) ) %>%
+  pivot_wider(names_from = family, values_from = family_richness, values_fill = 0) %>%
+  column_to_rownames(var="SurveyID") %>%
+  as.matrix()
+
+# occurrence of families in surveys ----
+surveys_family_occ <- surveys_family_biom
+surveys_family_occ[surveys_family_occ!=0] <- 1
+
 #relative biomass of families in surveys
 surveys_family_pbiom<-surveys_family_biom/apply(surveys_family_biom,1,sum)
 
+save(surveys_family_occ, file=here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_01.Rdata"))
+save(surveys_nb_sp_per_family, file=here::here("biodiversity", "outputs", "occurrence_matrix_nb_sp_per_family_survey.Rdata"))
 save(surveys_family_pbiom, file=here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 
 

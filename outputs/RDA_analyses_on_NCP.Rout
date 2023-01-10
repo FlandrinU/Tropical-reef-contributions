@@ -1,0 +1,174 @@
+
+R version 3.6.0 (2019-04-26) -- "Planting of a Tree"
+Copyright (C) 2019 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> ##
+> ## Makes RDA analyses on all NCPs. /!\ the rda analysis with rdacca.hp function
+> ## requires a very large virtual memory and a long time to run.
+> ##
+> ## RDA_analyses_on_NCP.R
+> ##
+> ## 03/01/2023
+> ##
+> ## Ulysse Flandrin
+> ##
+> ################################################################################
+> 
+> #----------------- Loading packages -------------------
+> pkgs <- c("here", "tidyverse","FactoMineR", "tibble", "questionr", "corrplot",
++           "factoextra", "ggpubr", "scico", "RColorBrewer", "plotly", "fishualize", 
++           "ggplot2", "patchwork", "colormap", "grDevices", "ggnewscale", "sf",
++           "rdacca.hp", "dplyr")
+> # nip <- pkgs[!(pkgs %in% installed.packages())]
+> # nip <- lapply(nip, install.packages, dependencies = TRUE)
+> ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+here() starts at /home/calbouy/Ulysse/R_NCPs
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+✔ ggplot2 3.4.0      ✔ purrr   0.3.4 
+✔ tibble  3.1.8      ✔ dplyr   1.0.10
+✔ tidyr   1.1.4      ✔ stringr 1.4.0 
+✔ readr   2.1.3      ✔ forcats 0.5.1 
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+corrplot 0.90 loaded
+
+Attaching package: ‘plotly’
+
+The following object is masked from ‘package:ggplot2’:
+
+    last_plot
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+The following object is masked from ‘package:graphics’:
+
+    layout
+
+Linking to GEOS 3.7.1, GDAL 2.4.2, PROJ 5.2.0
+WARNING: different compile-time and runtime versions for GEOS found:
+Linked against: 3.7.1-CAPI-1.11.1 27a5e771 compiled against: 3.7.0-CAPI-1.11.0
+It is probably a good idea to reinstall sf, and maybe rgeos and rgdal too
+This is vegan 2.5-7
+Warning messages:
+1: In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called ‘FactoMineR’
+2: In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called ‘factoextra’
+> 
+> rm(list=ls())
+> 
+> ##------------- loading data -------------
+> load(here::here("outputs","all_NCP_site.Rdata"))
+> load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
+> load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_01.Rdata"))
+> load(here::here("biodiversity", "outputs", "occurrence_matrix_nb_sp_per_family_survey.Rdata"))
+> load(here::here("data","metadata_surveys.Rdata"))
+> 
+> ##------------- preping data -------------
+> rownames(NCP_site) <- NCP_site$SiteCode
+Warning message:
+Setting row names on a tibble is deprecated. 
+> NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
++                                                  SiteMeanSST, SiteLatitude, SiteLongitude, Btot,
++                                                  HDI, gravtot2, MarineEcosystemDependency,
++                                                  coral_imputation))
+> 
+> 
+> ##------------- studying family importance -------------
+> family_tot_presence <- colSums(surveys_family_occ)
+> family_tot_presence[order(family_tot_presence, decreasing = T)] 
+      Labridae  Pomacentridae Chaetodontidae       Scaridae     Serranidae 
+          3596           3476           2948           2849           2788 
+  Acanthuridae  Pomacanthidae     Lutjanidae       Mullidae Tetraodontidae 
+          2636           2357           1960           1761           1500 
+    Balistidae  Holocentridae    Cirrhitidae      Zanclidae     Haemulidae 
+          1472           1297           1234           1117           1033 
+     Siganidae    Lethrinidae  Monacanthidae     Kyphosidae    Ostraciidae 
+           997            876            733            651            371 
+   Pempheridae  Fistulariidae   Scorpaenidae     Sciaenidae      Mugilidae 
+           286            205            187             62             12 
+      Bothidae 
+             8 
+> # 7 rarest families: Ostraciidae > Pempheridae > Fistulariidae > Scorpaenidae > Sciaenidae > Mugilidae > Bothidae 
+> 
+> colSums(surveys_nb_sp_per_family)[order(colSums(surveys_nb_sp_per_family), decreasing = T)]
+      Labridae  Pomacentridae Chaetodontidae   Acanthuridae       Scaridae 
+         28098          24439          11896          10012           8385 
+    Serranidae  Pomacanthidae     Lutjanidae       Mullidae     Balistidae 
+          7156           4257           3566           2770           2522 
+ Holocentridae Tetraodontidae     Haemulidae    Cirrhitidae      Siganidae 
+          2323           1959           1739           1686           1409 
+     Zanclidae    Lethrinidae  Monacanthidae     Kyphosidae    Ostraciidae 
+          1117           1112            881            830            386 
+   Pempheridae  Fistulariidae   Scorpaenidae     Sciaenidae      Mugilidae 
+           300            205            203             67             12 
+      Bothidae 
+             8 
+> colSums(surveys_family_pbiom)[order(colSums(surveys_family_pbiom), decreasing = T)]
+ Pomacentridae   Acanthuridae       Labridae       Scaridae     Serranidae 
+  693.76836171   640.11573786   522.97258176   466.77600998   248.44771437 
+    Lutjanidae     Kyphosidae     Haemulidae Chaetodontidae     Balistidae 
+  190.75294051   160.13916848   129.47166648   110.88852675    88.03431810 
+ Pomacanthidae  Holocentridae       Mullidae    Lethrinidae      Siganidae 
+   80.74412197    55.46398698    52.41923203    44.72729523    44.35862113 
+     Zanclidae Tetraodontidae    Cirrhitidae   Scorpaenidae  Monacanthidae 
+   40.88274903    21.98846424     9.53312153     7.75654838     4.86890098 
+   Pempheridae     Sciaenidae      Mugilidae    Ostraciidae  Fistulariidae 
+    4.80279927     2.44027894     2.21920370     2.06650024     1.30237680 
+      Bothidae 
+    0.05877353 
+> 
+> 
+> ##------------- computing rda with family occurrence-------------
+> #Sum up relative biomass of each family at the site scale
+> surveys_family_occ <- as.data.frame(surveys_family_occ) %>%
++   tibble::rownames_to_column("SurveyID") %>%
++   dplyr::left_join(metadata_surveys[,c("SurveyID", "SiteCode")]) %>%
++   dplyr::select(- SurveyID) 
+Joining, by = "SurveyID"
+> 
+> site_family_occ <- surveys_family_occ %>%
++   group_by( SiteCode) %>%
++   summarise(across(.cols = everything(),
++                    .fns = max, 
++                    .names = "{.col}")) %>%
++   dplyr::filter(SiteCode %in% NCP_site$SiteCode) %>%
++   dplyr::select( - SiteCode)
+> 
+> #summary(site_family_occ)
+> 
+> 
+> #reduce data
+> NCP_site_for_rda <- scale(NCP_site_clean[,] )
+> site_family_occ <- subset(site_family_occ, 
++                           select = -c(Ostraciidae, Pempheridae, Fistulariidae,
++                                       Scorpaenidae, Sciaenidae, Mugilidae, 
++                                       Bothidae)) #without rare families
+> 
+> 
+> #compute RDA
+> cat("Computing RDA with family occurences...", "\n")
+Computing RDA with family occurences... 
+> rda_family_occ <- rdacca.hp::rdacca.hp(dv = NCP_site_for_rda, 
++                      iv = site_family_occ,
++                      method = "RDA", type = "adjR2",
++                      scale = F)
