@@ -164,7 +164,7 @@ corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig 
 dev.off() 
 
 
-##-------------computing pca-------------
+##------------- Computing pca-------------
 rownames(NCP_site) <- NCP_site$SiteCode
 
 NCP_site_for_pca <- subset(NCP_site_clean, 

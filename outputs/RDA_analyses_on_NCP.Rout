@@ -172,3 +172,39 @@ Computing RDA with family occurences...
 +                      iv = site_family_occ,
 +                      method = "RDA", type = "adjR2",
 +                      scale = F)
+> 
+> save(rda_family_occ, file = here::here("outputs", "RDA_NCP_explained_by_19_occ_family.Rdata") )
+> cat("End of computation for RDA with family occurences", "\n")
+End of computation for RDA with family occurences 
+> 
+> 
+> ##------------- computing rda with family richness-------------
+> #Sum up relative biomass of each family at the site scale
+> surveys_family_richness <- as.data.frame(surveys_nb_sp_per_family) %>%
++   tibble::rownames_to_column("SurveyID") %>%
++   dplyr::left_join(metadata_surveys[,c("SurveyID", "SiteCode")]) %>%
++   dplyr::select(- SurveyID) 
+Joining, by = "SurveyID"
+> 
+> site_family_richness <- surveys_family_richness %>%
++   group_by( SiteCode) %>%
++   summarise(across(.cols = everything(),
++                    .fns = max, 
++                    .names = "{.col}")) %>%
++   dplyr::filter(SiteCode %in% NCP_site$SiteCode) %>%
++   dplyr::select( - SiteCode)
+> 
+> #summary(site_family_richness)
+> 
+> 
+> # #reduce data
+> # NCP_site_for_rda <- scale(NCP_site_clean[,] )
+> # site_family_richness <- site_family_richness[,]
+> 
+> #compute RDA
+> cat("Computing RDA with family richness...", "\n")
+Computing RDA with family richness... 
+> rda_family_richness <- rdacca.hp::rdacca.hp(dv = NCP_site_for_rda, 
++                                        iv = site_family_richness,
++                                        method = "RDA", type = "adjR2",
++                                        scale = F)
