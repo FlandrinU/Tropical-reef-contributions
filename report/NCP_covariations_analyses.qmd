@@ -1,6 +1,7 @@
 ---
 title: "NCP's covariations analyses"
 author: "Ulysse Flandrin"
+date: "`r Sys.Date()`"
 format: 
   html:
     self-contained: true
@@ -91,14 +92,21 @@ summary(NCP_site$SiteCountry)
 ![Correlation between NCP and Biodiversity](`r here::here("outputs", "figures", "NCP_correlation_with_biodiversity.png") `){width=100%}  
 
 ## NCPs distributions  
-![](`r here::here("outputs", "figures", "NCP_distribution.png") `){width=100%}  
+### Original data  
+![](`r here::here("outputs", "figures", "NCP_distribution.png") `){width=100%}
 
-#### Corr-matrix for all NCPs  
+### Corr-matrix for all NCPs  
 ![Correlation between NCPs](`r here::here("outputs", "figures", "corr_matrix.png") `){width=100%}  
+
+### log transformed data  
+![](`r here::here("outputs", "figures", "NCP_log_transformed_distribution.png") `){width=100%} 
+
+### Corr-matrix for log transformed NCPs  
+![Correlation between NCPs](`r here::here("outputs", "figures", "corr_matrix_log_transformed_NCP.png") `){width=100%}  
 
 ------------------------------------------------------------------------
 
-# PCA
+# PCA with log transformed data
 
 
 ## PCA with all NCPs at the community scale
@@ -227,497 +235,81 @@ Temperature pattern in PCA
 
 ### Imputed coral cover
 
-```{r, echo=FALSE, fig.width= 8, fig.height=5, message= FALSE}
-fviz_pca_biplot(pca,
-                axes= c(1,2),
-                select.var = list(cos2 = 0.4),
-                geom="point", pointshape=21,
-                fill.ind = NCP_site$coral_imputation,
-                col.ind = NCP_site$coral_imputation,
-                gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
-                col.var = "black", repel = TRUE,
-                invisible= "var",
-                legend.title = "Imputed coral cover")
-```
+![coral cover pattern in PCA](`r here::here("outputs", "figures", "PCA_coral_cover_pattern.png") `)
 
 ### Depth pattern
 
-```{r, echo=FALSE, fig.width= 8, fig.height=5}
-fviz_pca_biplot(pca,
-                geom="point", pointshape=21,
-                fill.ind = NCP_site$SurveyDepth,
-                col.ind = NCP_site$SurveyDepth,
-                gradient.cols = brewer.pal(10,name="RdYlBu"),
-                col.var = "black", repel = TRUE,
-                legend.title = "Mean depth")
-```
+![depth pattern in PCA](`r here::here("outputs", "figures", "PCA_depth_pattern.png") `)
 
 ### Lattitude pattern
 
-```{r, echo=FALSE, fig.width= 8, fig.height=5}
-fviz_pca_biplot(pca,
-                geom="point", pointshape=21,
-                fill.ind = abs(NCP_site$SiteLatitude),
-                col.ind = abs(NCP_site$SiteLatitude),
-                gradient.cols = brewer.pal(10,name="RdYlBu"),
-                col.var = "black", repel = TRUE,
-                legend.title = "abs(latitude)")
-```
+![lattitude pattern in PCA](`r here::here("outputs", "figures", "PCA_lattitude_pattern.png") `)
 
-```{r, echo= FALSE, eval= FALSE, warning=FALSE}
-ind.p <- fviz_pca_ind(pca, geom = "point",
-                      pointshape=21,
-                      fill.ind = NCP_site$SiteEcoregion)
-ggpubr::ggpar(ind.p,
-              title = "Principal Component Analysis of NCPs",
-              subtitle = "RLS data set",
-              caption = "Source: factoextra",
-              xlab = "PC1", ylab = "PC2",
-              legend.title = "Ecoregion", legend.position = "top",
-              ggtheme = theme_gray(), palette = scico(58, palette = "roma")
-)
 
-```
 
-```{r, eval=FALSE, echo=FALSE}
-#"biplot sites_NCP with Elipse by ecoregion.png"
-fviz_pca_biplot (pca,
-                 geom="point", pointshape=21,
-                 col.ind = NCP_site$SiteEcoregion,
-                 fill.ind = NCP_site$SiteEcoregion,
-                 palette = scico(58, palette = "roma"),
-                 addEllipses = T, label = "var",
-                 col.var = "black", repel = TRUE,
-                 legend.title = "Ecoregion")
-```
-
-### Explore with plotly
-
-```{r, warning=FALSE, echo = FALSE}
-library(plotly)
-site_coord_in_pca <- as.data.frame(pca$ind$coord) %>%
-  cbind(NCP_site[,c("SiteCountry", "SiteMeanSST", "gravtot2")])
-
-plot_ly(site_coord_in_pca,
-        x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
-        size = 10
-        ) %>%
-  add_markers(color= ~SiteCountry)
-```
-
-```{r, echo= FALSE}
-plot_ly(site_coord_in_pca,
-        x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
-        size = 10
-        ) %>%
-  add_markers(color= ~SiteMeanSST)
-
-plot_ly(site_coord_in_pca,
-        x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
-        size = 10
-        ) %>%
-  add_markers(color= ~log(gravtot2))
-```
 
 ## Study NN and NS separately
 
 ### Nature contributions to Nature   
     -> covariation between Nature for Nature NCPs only
 
-```{r, echo= FALSE, warning=FALSE}
-NN <- names(grp)[ grp=="NN" ]
-NCP_NN <- NCP_site[,NN]
-rownames(NCP_NN) <- rownames(NCP_site)
+![](`r here::here("outputs", "figures", "barplot_variance_explained_by_NN.png") `)
 
-pca <- FactoMineR::PCA(NCP_NN, scale.unit = T, graph=F, ncp=10)
+![](`r here::here("outputs", "figures", "contribution_NN_in_dimensions.png") `)
 
-factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 35), barfill = "forestgreen", barcolor = "forestgreen")
-
-var <- get_pca_var(pca)
-corrplot(var$contrib, is.corr=FALSE)
-```
 
 #### NN variations in the 2 first dimensions  
 
-```{r, echo=FALSE, fig.height=10, fig.width=10}
-fviz_pca_var(pca, col.var = "forestgreen",
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE
-)
+![](`r here::here("outputs", "figures", "PCA_NN_only.png") `)
 
-
-fviz_pca_biplot (pca,
-                 select.var = list(cos2 = 0.1),
-                 geom="point", pointshape=21,
-                 col.ind = "black",
-                 fill.ind = NCP_site$SiteCountry,
-                 palette = scico(38, palette = "roma"),
-                 addEllipses = F, label = "var",
-                 col.var = "black", repel = TRUE,
-                 legend.title = "Country",
-                 font.legend = c(6, "plain", "black")
-                 )
-
-```
+![](`r here::here("outputs", "figures", "PCA_countries_NN_only.png") `)
 
 #### NN PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.1)*
 
-```{r, echo=FALSE, fig.height=7, fig.width=7}
-fviz_pca_var(pca, col.var = "cos2",
-             axe=c(3,4),
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE,
-             select.var = list(cos2 = 0.1)
-)
-```
+      -> to do: save this plot
 
 #### Surveys positions in PC1
 
-```{r}
-NN_PC1_surveys <- pca$ind$coord[,1]
-summary(NN_PC1_surveys)
-```
-
-```{r, echo=FALSE, warning=FALSE}
-NN_PC1_surveys <- data.frame(NN_PC1=NN_PC1_surveys)
-rownames(NN_PC1_surveys) <- rownames(NCP_site)
-
-## NN
-histo_NN <- ggplot(NN_PC1_surveys, aes(x = NN_PC1)) +
-  geom_histogram( bins = 60, aes(fill=..x..), color="grey50", size=0.3)+
-  scale_fill_gradient2(low = "black", mid = "white", high = "forestgreen", guide = "colourbar")+
-  labs(x = "Nature for nature PC1 site's evaluation")+
-  geom_vline(xintercept = 0, linetype = 2, col= "black")+
-  theme_minimal()
-histo_NN
-```
+![](`r here::here("outputs", "figures", "hist_NN_in_PC1.png") `)
 
 ### Nature contributions to Society
 
-```{r, echo=FALSE, warning=FALSE}
-NS <- names(grp)[ grp=="NS" ]
-#NS <- NS[1:8] # enlever fishery biomass ################################
-NCP_NS <- NCP_site[,NS]
-rownames(NCP_NS) <- rownames(NCP_site)
+![](`r here::here("outputs", "figures", "barplot_variance_explained_by_NS.png") `)
 
-pca <- FactoMineR::PCA(NCP_NS, scale.unit = T, graph=F, ncp=10)
+![](`r here::here("outputs", "figures", "contribution_NS_in_dimensions.png") `)
 
-factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 35), barfill = "dodgerblue3", barcolor = "dodgerblue3")
-
-var <- get_pca_var(pca)
-corrplot(var$contrib, is.corr=FALSE)
-```
 
 #### Nature for Society variations in the 2 first dimensions 
 
-```{r, echo=TRUE, fig.height=9, fig.width=9}
-fviz_pca_var(pca, col.var = "dodgerblue3",
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE
-)
-```
+![](`r here::here("outputs", "figures", "PCA_NS_only.png") `)
 
 #### NS PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.1)*
 
-```{r, echo=FALSE, fig.height=7, fig.width=7}
-fviz_pca_var(pca, col.var = "cos2",
-             axe=c(3,4),
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE,
-             select.var = list(cos2 = 0.1)
-)
-```
+![](`r here::here("outputs", "figures", "PCA_NS_only_dim3&4.png") `)
 
 #### Surveys positions in PC1
 
-```{r}
-NS_PC1_surveys <- pca$ind$coord[,1]
-summary(NS_PC1_surveys)
-```
-
-```{r, echo=FALSE}
-NN_NS_PC1_surveys <- data.frame(SiteCode = NCP_site$SiteCode ,
-                                NN_PC1=NN_PC1_surveys,
-                                NS_PC1=NS_PC1_surveys)
-rownames(NN_NS_PC1_surveys) <- rownames(NCP_site)
-
-##NS
-histo_NS <- ggplot(NN_NS_PC1_surveys, aes(x = NS_PC1)) +
-  geom_histogram( bins = 60, aes(fill=..x..), color="grey30", size=0.3)+
-  scale_fill_gradient2(low = "black", mid = "white", high = "dodgerblue3", guide = "colourbar")+
-  labs(x = "Nature to People PC1 site's evaluation")+
-  geom_vline(xintercept = 0, linetype = 2, col= "black")+
-  theme_minimal()
-histo_NS
-
-```
+![](`r here::here("outputs", "figures", "hist_NS_in_PC1.png") `)
 
 ## NN against NS
 
-```{r, warning=FALSE, message=FALSE}
-##NS~NN
-#Define colors by quarter
-
-#up right
-quarter_up_right <- NN_NS_PC1_surveys |>
-  filter(NN_PC1 > 0 & NS_PC1 > 0) |>
-  mutate(product_u_r =  pnorm(NN_PC1 * NS_PC1) )
-
-pal <- grDevices::colorRampPalette(c("white", "darkred")) (nrow(quarter_up_right))
-
-quarter_up_right <- quarter_up_right |>
-  dplyr::arrange(product_u_r) |>
-  dplyr::mutate( cols = pal)
-
-#up left
-quarter_up_left <- NN_NS_PC1_surveys |>
-  filter(NN_PC1 < 0 & NS_PC1 > 0) |>
-  mutate(product_u_l =  pnorm(-NN_PC1 * NS_PC1) )
-
-pal <- grDevices::colorRampPalette(c("white", "dodgerblue3")) (nrow(quarter_up_left))
-
-quarter_up_left <- quarter_up_left |>
-  dplyr::arrange(product_u_l) |>
-  dplyr::mutate( cols = pal)
-
-#down right
-quarter_down_right <- NN_NS_PC1_surveys |>
-  filter(NN_PC1 > 0 & NS_PC1 < 0) |>
-  mutate(product_d_r =  pnorm(NN_PC1 * -NS_PC1))
-
-pal <- grDevices::colorRampPalette(c("white", "forestgreen")) (nrow(quarter_down_right))
-
-quarter_down_right <- quarter_down_right |>
-  dplyr::arrange(product_d_r) |>
-  dplyr::mutate( cols = pal)
-
-#down left
-quarter_down_left <- NN_NS_PC1_surveys |>
-  filter(NN_PC1 < 0 & NS_PC1 < 0) |>
-  mutate(product_d_l =  pnorm(NN_PC1 * NS_PC1))
-
-pal <- grDevices::colorRampPalette(c("white", "grey20")) (nrow(quarter_down_left))
-
-quarter_down_left <- quarter_down_left |>
-  dplyr::arrange(product_d_l) |>
-  dplyr::mutate( cols = pal)
-
-
-#Merge the 4 quarters
-NN_NS_with_col <- quarter_down_left |>
-  full_join(quarter_down_right) |>
-  full_join(quarter_up_left) |>
-  full_join(quarter_up_right)
-
-
-
-library(ggplot2)
-NN_NS_plot <- ggplot(NN_NS_with_col, aes( y= NS_PC1, x = NN_PC1) ) +
-  #up right quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_u_r)==F),
-             size = 2,
-             aes(colour= product_u_r, alpha = product_u_r)) +
-  scale_colour_gradient("product_u_r",
-                        low = "white", high="darkred",
-                        na.value=NA) +
-
-  ggnewscale::new_scale("colour") +
-
-  #up left quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_u_l)==F),
-             size = 2,
-             aes(colour=product_u_l, alpha = product_u_l)) +
-  scale_colour_gradient("product_u_l",
-                        low = "white", high="dodgerblue3",
-                        na.value=NA) +
-  geom_point(aes( y= NS_PC1, x = NN_PC1),
-            shape = 1, size = 2, stroke = 1,
-            color= "black",
-            data = filter(NN_NS_with_col ,
-                             product_u_l > quantile(NN_NS_with_col$product_u_l, 0.97, na.rm = TRUE))) +
-
-
-  ggnewscale::new_scale("colour") +
-
-  #down right quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_d_r)==F),
-             size = 2,
-             aes(colour=product_d_r, alpha = product_d_r)) +
-  scale_colour_gradient("product_d_r",
-                        low = "white", high="forestgreen",
-                        na.value=NA) +
-  geom_point(aes( y= NS_PC1, x = NN_PC1),
-            shape = 1, size = 2, stroke = 1,
-            color= "black",
-            data = head(NN_NS_with_col[order(NN_NS_with_col$product_d_r, decreasing = T),], 15)) +
-
-  ggnewscale::new_scale("colour") +
-
-  #down left quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_d_l)==F),
-             size = 2,
-             aes(colour= product_d_l, alpha = product_d_l)) +
-  scale_colour_gradient("product_d_l",
-                        low = "white", high="grey20",
-                        na.value=NA) +
-
-  scale_alpha_continuous(range = c(0, 0.8)) +
-
-
-  #add lines
-  geom_vline(xintercept = 0, linetype = 2, col = "black")+
-  geom_hline(yintercept = 0, linetype = 2, col = "black")+
-  labs( x=  "Nature to Nature", y = "Nature to People")+
-  theme_minimal()+
-  theme(legend.position = "none")
-
-NN_NS_plot
-#ggsave( here::here("outputs", "figures", "Sites in NN and NS PC1.jpg"), plot = NN_NS_plot, width=20, height = 15 )
-
-#plot(NN_NS_with_col$NN_PC1, NN_NS_with_col$NS_PC1, col=NN_NS_with_col$cols, pch=19)
-
-```
+![](`r here::here("outputs", "figures", "Sites in NN and NS PC1.jpg") `)
 
 ## Plot on map
 
 ### NS according to NN
 
-```{r, eval=TRUE,echo=FALSE, warning=FALSE, message=FALSE, fig.height=7, fig.width=15}
-#world coast shapefile
-coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
-#data
-NN_NS_with_col <- NN_NS_with_col %>%  left_join(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude")])
-#plot
-map <- ggplot(NN_NS_with_col) +
-  geom_sf(data = coast, color = NA, fill = "lightgrey") +
-
-  #down left quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_d_l)==F),
-             size = 2, alpha = 0.5,
-             aes(x = SiteLongitude, y = SiteLatitude,
-                 colour= product_d_l, alpha = product_d_l)) +
-  scale_colour_gradient("product_d_l",
-                        low = "white", high="grey20",
-                        na.value=NA) +
-  ggnewscale::new_scale("colour") +
-
-  #up left quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_u_l)==F),
-             size = 2, alpha = 0.5,
-             aes(x = SiteLongitude, y = SiteLatitude,
-                 colour=product_u_l, alpha = product_u_l)) +
-  scale_colour_gradient("product_u_l",
-                        low = "white", high="dodgerblue3",
-                        na.value=NA) +
-  geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-            shape = 1, size = 2, stroke = 1,
-            color= "black",
-            data = head(NN_NS_with_col[order(NN_NS_with_col$product_d_r, decreasing = T),], 8)) +
-
-  ggnewscale::new_scale("colour") +
-
-  #down right quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_d_r)==F),
-             size = 2, alpha = 0.5,
-             aes(x = SiteLongitude, y = SiteLatitude,
-                 colour=product_d_r, alpha = product_d_r)) +
-  scale_colour_gradient("product_d_r",
-                        low = "white", high="forestgreen",
-                        na.value=NA) +
-  geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-            shape = 1, size = 2, stroke = 1,
-            color= "black",
-            data = filter(NN_NS_with_col ,
-                             product_d_r >= quantile(NN_NS_with_col$product_d_r, 0.95, na.rm = TRUE))) +
-
-  ggnewscale::new_scale("colour") +
-
-    #up right quarter
-  geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_u_r)==F),
-             size = 2,
-             aes(x = SiteLongitude, y = SiteLatitude,
-                 colour= product_u_r, alpha = product_u_r)) +
-  scale_colour_gradient("product_u_r",
-                        low = "white", high="darkred",
-                        na.value=NA) +
-  #add transparency
-  scale_alpha_continuous(range = c(0, 1)) +
-
-
-  coord_sf(ylim = c(-36, 31), expand = FALSE) +
-  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-  scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
-  theme_minimal()+
-  labs(title = "Trade-offs in Nature Based Contribution worldwide",
-       x="Longitude", y= "Latitude") +
-  theme(legend.position = "none",
-        plot.title = element_text(size=10, face="bold"),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
-        )
-#ggsave( here::here("outputs", "figures", "world map with NN and NS PC1.jpg"), plot = map, width=15, height = 7 )
-map
-```
+![](`r here::here("outputs", "figures", "world map with NN and NS PC1.jpg") `)
 
 ### NN worldwide
 
-```{r,echo=FALSE, warning=FALSE, message=FALSE,fig.height=7, fig.width=15}
-##NN
-map <- ggplot(NN_NS_with_col) +
-  geom_sf(data = coast, color = NA, fill = "lightgrey") +
-  geom_point(aes(x = SiteLongitude, y = SiteLatitude,
-                 color = NN_PC1, alpha= abs(NN_PC1),
-                 size = 2)) +
-    geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-            shape = 1, size = 2, stroke = 0.5,
-            color= "black",
-            data = head(NN_NS_with_col[order(NN_NS_with_col$product_d_r, decreasing = T),], 15)) +
-  
-  scale_colour_gradientn(colours = colorRampPalette(rev(c( "forestgreen","white", "grey30")))(1000)) +
-  scale_alpha_continuous(range = c(0, 1)) +
-
-  coord_sf(ylim = c(-36, 31), expand = FALSE) +
-  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-  scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
-  theme_minimal()+
-  labs(title = "Nature for Nature",
-       x="Longitude", y= "Latitude") +
-  theme(
-        plot.title = element_text(size=10, face="bold"),
-        )
-map
-```
+![](`r here::here("outputs", "figures", "world map with NN PC1.jpg") `)
 
 ### NS worldwide
 
-```{r,echo=FALSE, warning=FALSE,fig.height=7, fig.width=15}
-##NS
-map <- ggplot(NN_NS_with_col) +
-  geom_sf(data = coast, color = NA, fill = "lightgrey") +
-  geom_point(aes(x = SiteLongitude, y = SiteLatitude,
-                 color = NS_PC1, alpha= abs(NS_PC1),
-                 size = 2)) +
-  geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-            shape = 1, size = 2, stroke = 1,
-            color= "black",
-            data = filter(NN_NS_with_col ,
-                             NN_PC1 >= quantile(NN_PC1, 0.99, na.rm = TRUE))) +
+![](`r here::here("outputs", "figures", "world map with NS PC1.jpg") `)
 
-  scale_colour_gradientn(colours = colorRampPalette(rev(c( "dodgerblue3","white", "grey30")))(1000)) +
-  scale_alpha_continuous(range = c(0, 1)) +
 
-  coord_sf(ylim = c(-36, 31), expand = FALSE) +
-  scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
-  theme_minimal()+
-  labs(title = "Nature to People",
-       x="Longitude", y= "Latitude") +
-  theme(
-        plot.title = element_text(size=10, face="bold"),
-        )
-
-map
-```
 
 
 # RDA
@@ -725,4 +317,3 @@ map
 Hierarchical and Variation Partitioning for Canonical Analysis Without Limiting the Number of Predictors (Matrices) is a statistical technique used to identify the relative importance of a set of predictors (matrices) on a dependent variable. Hierarchical and Variation Partitioning for Canonical Analysis Without Limiting the Number of Predictors (Matrices) starts with a correlation matrix of all the predictors and the dependent variable. The correlation matrix is then partitioned into two parts. The first partition is a hierarchical structure and the second partition is a variation structure. The hierarchical partition is used to identify which predictors are more closely related to the dependent variable and the variation partition is used to identify which predictors have more variation among them. This technique can be used to identify and rank the relative importance of predictors without limiting the number of predictors.
 
 Permutation Test of Hierarchical Partitioning for Canonical Analysis is a statistical technique used to determine if the hierarchical partitioning of the correlation matrix of all the predictors and the dependent variable is statistically significant. The permutation test calculates the probability that the hierarchical partitioning of the correlation matrix is due to chance. If the probability is below a certain threshold, then the results of the hierarchical partitioning can be regarded as statistically significant. This technique is useful in determining which predictors are more closely related to the dependent variable and helps to identify and rank the relative importance of predictors without limiting the number of predictors.
-

@@ -66,7 +66,7 @@ plot_correlation_NCP <- function(NCP_site, NCP){
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
   
-  ggsave(filename = here("outputs", "figures","NCP_correlation_with_biomass.png"), plot, width = 22, height =14 )
+  ggsave(filename = here::here("outputs", "figures","NCP_correlation_with_biomass.png"), plot, width = 22, height =14 )
   
   
   
@@ -87,25 +87,25 @@ plot_correlation_NCP <- function(NCP_site, NCP){
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
   
-  ggsave(filename = here("outputs", "figures","NCP_correlation_with_biodiversity.png"), plot, width = 22, height =14 )
+  ggsave(filename = here::here("outputs", "figures","NCP_correlation_with_biodiversity.png"), plot, width = 22, height =14 )
   
   #### NCPs distribution
-  col <- fishualize::fish(n = 27, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
-  names(col) <- colnames(NCP_site_clean)
-  
-  plots <- lapply(colnames(NCP_site_clean),function(i){
-      p <- ggplot(NCP_site_clean) +
-            aes(x = NCP_site_clean[,i][[i]]) +
-            geom_histogram(bins = 40L,
-                           fill = col[i][[1]],
-                           col = "black") +
-            labs(title = i) +
-            xlab("") + ylab("") +
-            theme_minimal() +
-            theme( legend.position = "none")
+  plot_distribution <- function(ncp, data){
+    col <- fishualize::fish(n = 27, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+    names(col) <- colnames(data)
     
-     p
-  })
+    ggplot(data) +
+        aes(x = data[,ncp][[ncp]]) +
+        geom_histogram(bins = 40L,
+                       fill = col[ncp][[1]],
+                       col = "black") +
+        labs(title = ncp) +
+        xlab("") + ylab("") +
+        theme_minimal() +
+        theme( legend.position = "none")
+  }
+  
+  plots <- lapply(colnames(NCP_site_clean), FUN = plot_distribution, data = NCP_site_clean )
   
   all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
     plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
@@ -117,6 +117,33 @@ plot_correlation_NCP <- function(NCP_site, NCP){
   
   ggsave(filename = here("outputs", "figures","NCP_distribution.png"), all_plot, width = 22, height =14 )
   
+  #### NCPs distribution with log correction
+  NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
+                               "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
+                               "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
+                               "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
+                               "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
+                               "fishery_biomass")
+  
+  NCP_log_transformed <- NCP_site_clean |>
+    dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
+                     .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed
+    dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
+                         .fns = log10 , .names = "{.col}")) |>       # log(x+1) to avoid negative values
+    dplyr::rename_with(.cols = all_of(NCP_skewed_distribution),
+                       .fn = ~ paste0("log(", .x, ")"))
+  
+  plots <- lapply(colnames(NCP_log_transformed), FUN = plot_distribution, data = NCP_log_transformed )
+  
+  all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
+    plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
+    plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
+    plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
+    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
+    plot_annotation(tag_levels = "a") &
+    theme(plot.tag = element_text(face = 'bold'))
+  
+  ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.png"), all_plot, width = 22, height =14 )
   
   ### Correlation test
   names <- cor <- p_val <- c()
@@ -136,6 +163,7 @@ plot_correlation_NCP <- function(NCP_site, NCP){
   M <- cor(NCP_site_clean)
   png(filename = here("outputs", "figures","corr_matrix.png"), 
       width= 40, height = 30, units = "cm", res = 1000)
+  print({
   # ## circle + black number
   corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
   corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
@@ -145,8 +173,19 @@ plot_correlation_NCP <- function(NCP_site, NCP){
   # corrplot(M, order = 'hclust', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
   # corrplot(M, order = 'hclust', add= T, type= 'upper', p.mat = testRes$p, insig = 'p-value', 
   #          tl.pos= 'n', cl.pos = 'n')
+  })
   dev.off() 
   
+  #### Corr-matrix for log transformed NCPs
+  png(filename = here("outputs", "figures","corr_matrix_log_transformed_NCP.png"), 
+      width= 40, height = 30, units = "cm", res = 1000)
+  print({
+    M <- cor(NCP_log_transformed)
+    corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
+    corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
+             diag = FALSE, tl.pos = 'n', cl.pos = 'n')
+    })
+  dev.off() 
 
 } #end of function plot_correlation_NCP()
 
@@ -156,14 +195,29 @@ plot_correlation_NCP(NCP_site)
 
 
 ##-------------computing pca-------------
+NCP_to_transformed <- c("Btot","recycling_N","recycling_P","Productivity",
+                        "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
+                        "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
+                        "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
+                        "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
+                        "fishery_biomass")
+
+NCP_site <- NCP_site |>
+  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>     
+  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
+                       .fns = log10 , .names = "{.col}"))
+
+
 plot_PCA_NCP <- function(NCP_site){
-    
+  
   NCP_site_selected <- subset(NCP_site, select = 
-      c( Productivity, funct_distinctiveness, Vitamin_A_C, ED_Mean, aragonite, monohydrocalcite,
-      recycling_N, recycling_P, amorphous_carbonate, low_mg_calcite, high_mg_calcite,
-      biom_lowTL, biom_mediumTL, biom_highTL, fishery_biomass, iucn_species, 
-      elasmobranch_diversity, taxo_richness, phylo_entropy, aesthe_survey, funct_entropy,
-      Omega_3_C, Selenium_C, Iron_C, Calcium_C, Zinc_C))
+    c(recycling_N, recycling_P,Productivity,taxo_richness, funct_entropy,
+      funct_distinctiveness, Selenium_C, Zinc_C, Omega_3_C, Calcium_C,
+      Iron_C, Vitamin_A_C, phylo_entropy, ED_Mean, aesthe_survey, iucn_species,
+      elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
+      monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
+      biom_highTL, fishery_biomass))
   # non_correlated_NCP_site_for_pca <- subset(NCP_site_clean, 
   #                             select = c(
   #                              #independents NCP
@@ -189,9 +243,10 @@ plot_PCA_NCP <- function(NCP_site){
   #### Variance explained by the 15 first dimensions
   png(filename = here("outputs", "figures","barplot_variance_explained_all_NCP.png"), 
       width= 15, height = 10, units = "cm", res = 1000)
-  factoextra::fviz_eig(pca, choice = "variance",
-                       addlabels = TRUE, ylim = c(0, 30), barcolor = "darkred", 
-                       barfill = "darkred", ncp=15)
+  print(
+    factoextra::fviz_eig(pca, choice = "variance",
+                       addlabels = TRUE, ylim = c(0, 35), barcolor = "darkred", 
+                       barfill = "darkred", ncp=15) )
   dev.off()
   
   
@@ -199,45 +254,44 @@ plot_PCA_NCP <- function(NCP_site){
   variance_explained <- data.frame(
     Dimensions = c(1:nrow(eig)), 
     cumulative_variance_explained = eig[,3])
-  
-  png(filename = here("outputs", "figures","barplot_cumulative_variance_explained_all_NCP.png"), 
-      width= 15, height = 10, units = "cm", res = 1000)
-  ggplot(variance_explained) +
+
+  cumulative_variance <- ggplot(variance_explained) +
     aes(x = Dimensions, y = cumulative_variance_explained) +
     geom_step(colour = "darkred") +
     geom_hline(yintercept=70, linetype="dashed", color = "black")+
+    ylim(0,100) +
     labs(
       x = "Dimensions",
       y = "Variance explained",
       title = "Cumulative variance explained by dimensions (threshold at 70%)"
     ) +
     theme_minimal()
-  dev.off()
+  ggsave(filename = here("outputs", "figures","barplot_cumulative_variance_explained_all_NCP.png"), cumulative_variance, width = 15, height =10 )
   
   #### Contribution of NCP in dimensions
   var <- get_pca_var(pca)
   png(filename = here("outputs", "figures","contribution_NCP_in_dimensions.png"), 
       width= 12, height = 15, units = "cm", res = 1000)
-  corrplot(var$contrib, is.corr=FALSE)    
+  print( corrplot::corrplot(var$contrib, is.corr=FALSE) )
   dev.off()
   
   
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
   png(filename = here("outputs", "figures","PCA_all_NCP.png"), 
       width= 20, height = 17, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = "cos2",
+  print( factoextra::fviz_pca_var(pca, col.var = "cos2",
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
                repel = TRUE 
-  )
+  ))
   dev.off()
   
   png(filename = here("outputs", "figures","PCA_all_NCP_cos2_0.4.png"), 
       width= 20, height = 17, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = "cos2",
+  print(factoextra::fviz_pca_var(pca, col.var = "cos2",
                gradient.cols = c( "#E7B800", "#FC4E07"),
                repel = TRUE,
                select.var = list(cos2 = 0.4)
-  )
+  ))
   dev.off() 
   
   
@@ -255,10 +309,11 @@ plot_PCA_NCP <- function(NCP_site){
   grp <- as.factor(grp)
   
   png(filename = here("outputs", "figures","PCA_NS_NN_axes1-2.png"), 
-      width= 20, height = 17, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = grp, 
+      width= 35, height = 25, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca, col.var = grp, 
                palette = c("forestgreen", "dodgerblue3"),
-               legend.title = "Nature Based Contributions")
+               legend.title = "Nature Based Contributions",
+               repel = TRUE))
   dev.off()
   
   #### PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.2, and according the NCPs groups)*
@@ -271,23 +326,23 @@ plot_PCA_NCP <- function(NCP_site){
   # )
   
   png(filename = here("outputs", "figures","PCA_NS_NN_axes3-4.png"), 
-      width= 20, height = 17, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = grp, axe= c(3,4), repel = TRUE,
+      width= 30, height = 25, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca, col.var = grp, axe= c(3,4), repel = TRUE,
                palette = c("forestgreen", "dodgerblue3"),
                legend.title = "Nature Based Contributions",
-               select.var = list(cos2 = 0))
+               select.var = list(cos2 = 0)))
   dev.off() 
   
   
   #### PCA in dimensions 5 and 6 *(for variables with cos2 \> 0.2, and according the NCPs groups)*
   png(filename = here("outputs", "figures","PCA_cos2_0.2_axes5-6.png"), 
-      width= 20, height = 17, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = "cos2",
+      width= 30, height = 25, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca, col.var = "cos2",
                axe=c(5,6),
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
                repel = TRUE,
                select.var = list(cos2 = 0.2)
-  )
+  ))
   dev.off()
   
   fviz_pca_var(pca, col.var = grp, axe= c(5,6), repel = TRUE,
@@ -322,10 +377,11 @@ plot_PCA_NCP <- function(NCP_site){
   grp_3cat <- as.factor(grp_3cat)
   
   png(filename = here("outputs", "figures","PCA_Diaz_categories.png"), 
-      width= 23, height = 20, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = grp_3cat,
+      width= 35, height = 25, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca, col.var = grp_3cat,
                palette = c( "dodgerblue3","forestgreen", "darkred", "grey20"),
-               legend.title = "Nature Assets")
+               legend.title = "Nature Assets",
+               repel = TRUE))
   dev.off()
   
   
@@ -341,12 +397,12 @@ plot_PCA_NCP <- function(NCP_site){
   
   # var <- get_pca_var(pca_regulating)
   # corrplot(var$contrib, is.corr=FALSE)    
-  pca_plot <- fviz_pca_var(pca_regulating, col.var = "grey20",
+  pca_plot <- factoextra::fviz_pca_var(pca_regulating, col.var = "grey20",
                            repel = TRUE )
   
   png(filename = here("outputs", "figures","PCA_regulating_NCP.png"), 
       width= 30, height = 17, units = "cm", res = 1000)
-  gridExtra::grid.arrange(hist, pca_plot, nrow = 1, widths= c(1,2))
+  print( gridExtra::grid.arrange(hist, pca_plot, nrow = 1, widths= c(1,2)) )
   dev.off()
   
   
@@ -359,12 +415,12 @@ plot_PCA_NCP <- function(NCP_site){
   
   hist <- factoextra::fviz_eig(pca_material, addlabels = TRUE, ylim = c(0, 40), barfill = "dodgerblue3", barcolor = "dodgerblue3")
   
-  pca_plot <- fviz_pca_var(pca_material, col.var = "dodgerblue3",
+  pca_plot <- factoextra::fviz_pca_var(pca_material, col.var = "dodgerblue3",
                            repel = TRUE)
   
   png(filename = here("outputs", "figures","PCA_material_NCP.png"), 
       width= 30, height = 17, units = "cm", res = 1000)
-  gridExtra::grid.arrange(hist, pca_plot, nrow = 1, widths= c(1,2))
+  print( gridExtra::grid.arrange(hist, pca_plot, nrow = 1, widths= c(1,2)) )
   dev.off()
   
   
@@ -376,22 +432,22 @@ plot_PCA_NCP <- function(NCP_site){
   
   hist <- factoextra::fviz_eig(pca_nature, addlabels = TRUE, ylim = c(0, 35), barfill = "forestgreen", barcolor = "forestgreen")
   
-  pca_plot <- fviz_pca_var(pca_nature, col.var = "forestgreen",
+  pca_plot <- factoextra::fviz_pca_var(pca_nature, col.var = "forestgreen",
                            repel = TRUE)
   
   png(filename = here("outputs", "figures","PCA_nature_Diaz_NCP.png"), 
       width= 30, height = 17, units = "cm", res = 1000)
-  gridExtra::grid.arrange(hist, pca_plot, nrow = 1, widths= c(1,2))
+  print( gridExtra::grid.arrange(hist, pca_plot, nrow = 1, widths= c(1,2)) )
   dev.off()
   
   
   #### Dimensions 3 and 4
   png(filename = here("outputs", "figures","PCA_Diaz_categories_dim3-4.png"), 
       width= 23, height = 20, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = grp_3cat,
+  print( factoextra::fviz_pca_var(pca, col.var = grp_3cat,
                axes=c(3,4),
                palette = c( "dodgerblue3","forestgreen", "darkred", "grey20"),
-               legend.title = "Nature Based Contributions")
+               legend.title = "Nature Based Contributions"))
   dev.off()
   
   
@@ -399,27 +455,27 @@ plot_PCA_NCP <- function(NCP_site){
   
   ##----- Sites distribution-----
   ### By countries
-  ind.p <- fviz_pca_ind(pca, geom = "point",
+  ind.p <- factoextra::fviz_pca_ind(pca, geom = "point",
                         pointshape=21,
                         fill.ind = NCP_site$SiteCountry)
   
   png(filename = here("outputs", "figures","PCA_countries.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  ggpubr::ggpar(ind.p,
+  print( ggpubr::ggpar(ind.p,
                 title = "Principal Component Analysis of NCPs",
                 subtitle = "RLS data set",
                 caption = "Source: factoextra",
                 xlab = "PC1", ylab = "PC2",
                 legend.title = "Country", legend.position = "top",
                 font.legend = c(8, "plain", "black"),
-                ggtheme = theme_gray(), palette = scico(38, palette = "roma"))
+                ggtheme = theme_gray(), palette = scico(38, palette = "roma")))
   dev.off() 
   
   
   #### By countries, with $cos2 > 0.4$ variables:
   png(filename = here("outputs", "figures","PCA_countries_cos2_0.4.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot (pca,
+  print( factoextra::fviz_pca_biplot (pca,
                    select.var = list(cos2 = 0.4),
                    geom="point", pointshape=21,
                    col.ind = NCP_site$SiteCountry,
@@ -428,11 +484,11 @@ plot_PCA_NCP <- function(NCP_site){
                    addEllipses = F, label = "var",
                    col.var = "black", repel = TRUE,
                    legend.title = "Country",
-                   font.legend = c(7, "plain", "black"))
+                   font.legend = c(7, "plain", "black")))
   dev.off()
   
   #### clustering countries, with $cos2 > 0.4$ variables:
-  fviz_pca_biplot (pca,
+  factoextra::fviz_pca_biplot (pca,
                    select.var = list(cos2 = 0.4),
                    geom="point", pointshape=21,
                    col.ind = NCP_site$SiteCountry,
@@ -449,34 +505,30 @@ plot_PCA_NCP <- function(NCP_site){
   ### Temperature pattern
   png(filename = here("outputs", "figures","PCA_temperature_pattern.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot(pca,
+  print( factoextra::fviz_pca_biplot(pca,
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
                   fill.ind = NCP_site$SiteMeanSST,
                   col.ind = NCP_site$SiteMeanSST,
                   gradient.cols = rev(brewer.pal(10,name="RdYlBu")),
                   col.var = "black", repel = TRUE,
-                  legend.title = "Mean temperature")
+                  legend.title = "Mean temperature"))
   dev.off()
   
   df <- data.frame(x = NCP_site$SiteMeanSST, y = pca$ind$coord[,"Dim.2"])
-  
-  png(filename = here("outputs", "figures","PCA_temp_according_Dim2.png"), 
-      width= 15, height = 12, units = "cm", res = 1000)
-  ggplot(df, aes(x , y , alpha = 0.5)) +
+  temp <- ggplot(df, aes(x , y , alpha = 0.5)) +
     geom_point()+
     geom_smooth() +
     labs(x = "Mean SST", y = "Dimension  in global PCA", title = "Importance of SST in PCA's axe 2") +
     theme_minimal()+
     theme(legend.position = 'none')
-  dev.off()
-  
+  ggsave(filename = here::here("outputs", "figures", "PCA_temp_according_Dim2.png"), temp, width = 15, height = 12)
   
   
   ### Gravity pattern:  log10(gravtot2)
   png(filename = here("outputs", "figures","PCA_gravity_pattern.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot(pca,
+  print( factoextra::fviz_pca_biplot(pca,
                   axes=c(1,2),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
@@ -485,12 +537,12 @@ plot_PCA_NCP <- function(NCP_site){
                   gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
                   col.var = "black", repel = TRUE,
                   invisible= "var",
-                  legend.title = "gravity impact")
+                  legend.title = "gravity impact"))
   dev.off()
   
   plot(log(NCP_site$gravtot2) ~ pca$ind$coord[,"Dim.1"])
   
-  fviz_pca_biplot(pca,
+  factoextra::fviz_pca_biplot(pca,
                   axes=c(1,3),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
@@ -508,7 +560,7 @@ plot_PCA_NCP <- function(NCP_site){
   ### Country HDI
   png(filename = here("outputs", "figures","PCA_HDI_pattern.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot(pca,
+  print( factoextra::fviz_pca_biplot(pca,
                   axes= c(1,2),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
@@ -517,13 +569,13 @@ plot_PCA_NCP <- function(NCP_site){
                   gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
                   col.var = "black", repel = TRUE,
                   invisible= "var",
-                  legend.title = "Country HDI")
+                  legend.title = "Country HDI"))
   dev.off()
   
   ### Marine Ecosystem Dependency
   png(filename = here("outputs", "figures","PCA_MED_pattern.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot(pca,
+  print( factoextra::fviz_pca_biplot(pca,
                   axes= c(1,2),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
@@ -532,14 +584,14 @@ plot_PCA_NCP <- function(NCP_site){
                   gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
                   col.var = "black", repel = TRUE,
                   invisible= "var",
-                  legend.title = "MarineEcosystemDependency")
+                  legend.title = "MarineEcosystemDependency"))
   dev.off()
   
   
   ### Imputed coral cover
   png(filename = here("outputs", "figures","PCA_coral_cover_pattern.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot(pca,
+  print( factoextra::fviz_pca_biplot(pca,
                   axes= c(1,2),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
@@ -548,38 +600,38 @@ plot_PCA_NCP <- function(NCP_site){
                   gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
                   col.var = "black", repel = TRUE,
                   invisible= "var",
-                  legend.title = "Imputed coral cover")
+                  legend.title = "Imputed coral cover"))
   dev.off()
   
   
   ### Depth pattern
   png(filename = here("outputs", "figures","PCA_depth_pattern.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot(pca,
+  print( factoextra::fviz_pca_biplot(pca,
                   geom="point", pointshape=21,
                   fill.ind = NCP_site$SurveyDepth,
                   col.ind = NCP_site$SurveyDepth,
                   gradient.cols = brewer.pal(10,name="RdYlBu"),
                   col.var = "black", repel = TRUE,
-                  legend.title = "Mean depth")
+                  legend.title = "Mean depth"))
   dev.off()
   
   
   ### Lattitude pattern
   png(filename = here("outputs", "figures","PCA_lattitude_pattern.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot(pca,
+  print( factoextra::fviz_pca_biplot(pca,
                   geom="point", pointshape=21,
                   fill.ind = abs(NCP_site$SiteLatitude),
                   col.ind = abs(NCP_site$SiteLatitude),
                   gradient.cols = brewer.pal(10,name="RdYlBu"),
                   col.var = "black", repel = TRUE,
-                  legend.title = "abs(latitude)")
+                  legend.title = "abs(latitude)") )
   dev.off()
   
   
   ### Ecoregions
-  ind.p <- fviz_pca_ind(pca, geom = "point",
+  ind.p <- factoextra::fviz_pca_ind(pca, geom = "point",
                         pointshape=21,
                         fill.ind = NCP_site$SiteEcoregion)
   ggpubr::ggpar(ind.p,
@@ -592,7 +644,7 @@ plot_PCA_NCP <- function(NCP_site){
   )
   
   #####biplot sites_NCP with Elipse by ecoregion
-  fviz_pca_biplot (pca,
+  factoextra::fviz_pca_biplot (pca,
                    geom="point", pointshape=21,
                    col.ind = NCP_site$SiteEcoregion,
                    fill.ind = NCP_site$SiteEcoregion,
@@ -633,7 +685,7 @@ plot_PCA_NCP <- function(NCP_site){
            biom_highTL="NN", fishery_biomass="NS")) # /!\ the order matter
   
   
-  ### Nature contributions to Nature   
+  ###------- NN: Nature contributions to Nature -------   
   NN <- names(grp)[ grp=="NN" ]
   NCP_NN <- NCP_site[,NN]
   rownames(NCP_NN) <- rownames(NCP_site)
@@ -642,27 +694,28 @@ plot_PCA_NCP <- function(NCP_site){
   
   png(filename = here("outputs", "figures","barplot_variance_explained_by_NN.png"), 
       width= 15, height = 10, units = "cm", res = 1000)
-  factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 35), barfill = "forestgreen", barcolor = "forestgreen")
+  print( factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 40),
+                              barfill = "forestgreen", barcolor = "forestgreen") )
   dev.off()
   
   var <- get_pca_var(pca)
   png(filename = here("outputs", "figures","contribution_NN_in_dimensions.png"), 
       width= 17, height = 15, units = "cm", res = 1000)
-  corrplot(var$contrib, is.corr=FALSE)
+  print( corrplot::corrplot(var$contrib, is.corr=FALSE) )
   dev.off()
   
   #### NN variations in the 2 first dimensions
   
   png(filename = here("outputs", "figures","PCA_NN_only.png"), 
       width= 15, height = 15, units = "cm", res = 1000)
-  fviz_pca_var(pca, col.var = "forestgreen",
-               repel = TRUE)
+  print( factoextra::fviz_pca_var(pca, col.var = "forestgreen",
+               repel = TRUE))
   dev.off()
   
   
   png(filename = here("outputs", "figures","PCA_countries_NN_only.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
-  fviz_pca_biplot (pca,
+  print( factoextra::fviz_pca_biplot (pca,
                    select.var = list(cos2 = 0.1),
                    geom="point", pointshape=21,
                    col.ind = "black",
@@ -672,7 +725,7 @@ plot_PCA_NCP <- function(NCP_site){
                    col.var = "black", repel = TRUE,
                    legend.title = "Country",
                    font.legend = c(6, "plain", "black")
-  )
+  ))
   dev.off()
   
   #### NN PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.1)*
@@ -694,44 +747,54 @@ plot_PCA_NCP <- function(NCP_site){
   
   ## NN
   histo_NN <- ggplot(NN_PC1_surveys, aes(x = NN_PC1)) +
-    geom_histogram( bins = 60, aes(fill=..x..), color="grey50", size=0.3)+
+    geom_histogram( bins = 60, aes(fill=after_stat(x)), color="grey50", size=0.3)+
     scale_fill_gradient2(low = "black", mid = "white", high = "forestgreen", guide = "colourbar")+
     labs(x = "Nature for nature PC1 site's evaluation")+
     geom_vline(xintercept = 0, linetype = 2, col= "black")+
     theme_minimal()
   histo_NN
+  ggsave(filename = here("outputs", "figures","hist_NN_in_PC1.png"), histo_NN, width = 8, height =6 )
   
   
   
   
-  ### Nature contributions to Society
+  ###------- NS: Nature contributions to Society -------
   NS <- names(grp)[ grp=="NS" ]
-  #NS <- NS[1:8] # enlever fishery biomass ################################
   NCP_NS <- NCP_site[,NS]
   rownames(NCP_NS) <- rownames(NCP_site)
   
   pca <- FactoMineR::PCA(NCP_NS, scale.unit = T, graph=F, ncp=10)
   
-  factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 35), barfill = "dodgerblue3", barcolor = "dodgerblue3")
+  png(filename = here("outputs", "figures","barplot_variance_explained_by_NS.png"), 
+      width= 15, height = 10, units = "cm", res = 1000)
+  print( factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 35), 
+                       barfill = "dodgerblue3", barcolor = "dodgerblue3"))
+  dev.off()
   
+  
+  png(filename = here("outputs", "figures","contribution_NS_in_dimensions.png"), 
+      width= 17, height = 15, units = "cm", res = 1000)
   var <- get_pca_var(pca)
-  corrplot(var$contrib, is.corr=FALSE)
-
+  print( corrplot::corrplot(var$contrib, is.corr=FALSE) )
+  dev.off()
   
   #### Nature for Society variations in the 2 first dimensions 
-  fviz_pca_var(pca, col.var = "dodgerblue3",
+  png(filename = here("outputs", "figures","PCA_NS_only.png"), 
+      width= 15, height = 15, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca, col.var = "dodgerblue3",
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-               repel = TRUE
-  )
-
+               repel = TRUE))
+  dev.off()
   
   #### NS PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.1)*
-  fviz_pca_var(pca, col.var = "cos2",
+  png(filename = here("outputs", "figures","PCA_NS_only_dim3&4.png"), 
+      width= 15, height = 15, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca, col.var = "cos2",
                axe=c(3,4),
                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
                repel = TRUE,
-               select.var = list(cos2 = 0.1)
-  )
+               select.var = list(cos2 = 0.1)))
+  dev.off()
 
   
   #### Surveys positions in PC1
@@ -752,12 +815,11 @@ plot_PCA_NCP <- function(NCP_site){
     geom_vline(xintercept = 0, linetype = 2, col= "black")+
     theme_minimal()
   histo_NS
+  ggsave(filename = here("outputs", "figures","hist_NS_in_PC1.png"), histo_NS, width = 8, height =6 )
   
 
-  ## NN against NS
-
+  ## ------- NN against NS -------
     #Define colors by quarter
-
     #up right
   quarter_up_right <- NN_NS_PC1_surveys |>
     filter(NN_PC1 > 0 & NS_PC1 > 0) |>
@@ -833,8 +895,7 @@ plot_PCA_NCP <- function(NCP_site){
     geom_point(aes( y= NS_PC1, x = NN_PC1),
                shape = 1, size = 2, stroke = 1,
                color= "black",
-               data = filter(NN_NS_with_col ,
-                             product_u_l > quantile(NN_NS_with_col$product_u_l, 0.97, na.rm = TRUE))) +
+               data = head(NN_NS_with_col[order(NN_NS_with_col$product_u_l, decreasing = T),], 15)) +
     
     
     ggnewscale::new_scale("colour") +
@@ -872,12 +933,12 @@ plot_PCA_NCP <- function(NCP_site){
     theme(legend.position = "none")
   
   NN_NS_plot
-  #ggsave( here::here("outputs", "figures", "Sites in NN and NS PC1.jpg"), plot = NN_NS_plot, width=20, height = 15 )
+  ggsave( here::here("outputs", "figures", "Sites in NN and NS PC1.jpg"), plot = NN_NS_plot, width=10, height = 8 )
   
 
   
   
-  ## Plot on map
+  ##------- Plot on map -------
   ### NS according to NN
   
   #data
@@ -907,7 +968,7 @@ plot_PCA_NCP <- function(NCP_site){
     geom_point(aes(x = SiteLongitude, y = SiteLatitude),
                shape = 1, size = 2, stroke = 1,
                color= "black",
-               data = head(NN_NS_with_col[order(NN_NS_with_col$product_d_r, decreasing = T),], 8)) +
+               data = head(NN_NS_with_col[order(NN_NS_with_col$product_u_l, decreasing = T),], 15)) +
     
     ggnewscale::new_scale("colour") +
     
@@ -922,8 +983,7 @@ plot_PCA_NCP <- function(NCP_site){
     geom_point(aes(x = SiteLongitude, y = SiteLatitude),
                shape = 1, size = 2, stroke = 1,
                color= "black",
-               data = filter(NN_NS_with_col ,
-                             product_d_r >= quantile(NN_NS_with_col$product_d_r, 0.95, na.rm = TRUE))) +
+               data = head(NN_NS_with_col[order(NN_NS_with_col$product_d_r, decreasing = T),], 15)) +
     
     ggnewscale::new_scale("colour") +
     
@@ -951,16 +1011,11 @@ plot_PCA_NCP <- function(NCP_site){
           axis.ticks.x = element_blank(),
           plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
     )
-  #ggsave( here::here("outputs", "figures", "world map with NN and NS PC1.jpg"), plot = map, width=15, height = 7 )
-  map_NN_NS
-
-  
+  ggsave( here::here("outputs", "figures", "world map with NN and NS PC1.jpg"), plot = map_NN_NS, width=10, height = 6 )
   
   
     
   ### NN worldwide
-  
-  ##NN
   map_NN <- ggplot(NN_NS_with_col) +
     geom_sf(data = coast, color = NA, fill = "lightgrey") +
     geom_point(aes(x = SiteLongitude, y = SiteLatitude,
@@ -976,14 +1031,16 @@ plot_PCA_NCP <- function(NCP_site){
     
     coord_sf(ylim = c(-36, 31), expand = FALSE) +
     guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-    scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
+    scale_size_continuous(range = c(0.5, 4), guide = "none") +
     theme_minimal()+
     labs(title = "Nature for Nature",
          x="Longitude", y= "Latitude") +
     theme(
+      legend.position = "none",
       plot.title = element_text(size=10, face="bold"),
     )
-
+  ggsave( here::here("outputs", "figures", "world map with NN PC1.jpg"), plot = map_NN, width=10, height = 6 )
+  
   
   
   
@@ -996,25 +1053,25 @@ plot_PCA_NCP <- function(NCP_site){
     geom_point(aes(x = SiteLongitude, y = SiteLatitude),
                shape = 1, size = 2, stroke = 1,
                color= "black",
-               data = filter(NN_NS_with_col ,
-                             NN_PC1 >= quantile(NN_PC1, 0.99, na.rm = TRUE))) +
+               data = head(NN_NS_with_col[order(NN_NS_with_col$product_u_l, decreasing = T),], 15)) +
     
     scale_colour_gradientn(colours = colorRampPalette(rev(c( "dodgerblue3","white", "grey30")))(1000)) +
     scale_alpha_continuous(range = c(0, 1)) +
     
     coord_sf(ylim = c(-36, 31), expand = FALSE) +
-    scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
+    scale_size_continuous(range = c(0.5, 4), guide = "none") +
     theme_minimal()+
     labs(title = "Nature to People",
          x="Longitude", y= "Latitude") +
     theme(
+      legend.position = "none",
       plot.title = element_text(size=10, face="bold"),
     )
   
-  map_NS
+  ggsave( here::here("outputs", "figures", "world map with NS PC1.jpg"), plot = map_NS, width=10, height = 6 )
   
   
 } # End of function plot_ACP_NCP
 
-#run function
-plot_ACP_NCP(NCP_site)
+#run plot_ACP_NCP function
+plot_PCA_NCP(NCP_site)
