@@ -29,7 +29,7 @@ load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_rela
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 ##-------------Correlations between NCPs-------------
-plot_correlation_NCP <- function(NCP_site, NCP){
+plot_correlation_NCP <- function(NCP_site){
   
   ## Clean data
   NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
@@ -684,6 +684,7 @@ plot_PCA_NCP <- function(NCP_site){
            monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
            biom_highTL="NN", fishery_biomass="NS")) # /!\ the order matter
   
+  library(ggplot2)
   
   ###------- NN: Nature contributions to Nature -------   
   NN <- names(grp)[ grp=="NN" ]
@@ -873,7 +874,6 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   
-  library(ggplot2)
   NN_NS_plot <- ggplot(NN_NS_with_col, aes( y= NS_PC1, x = NN_PC1) ) +
     #up right quarter
     geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_u_r)==F),
@@ -944,11 +944,13 @@ plot_PCA_NCP <- function(NCP_site){
   #data
   NN_NS_with_col <- NN_NS_with_col %>%  left_join(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude")])
   #plot
-  map_NN_NS <- ggplot(NN_NS_with_col) +
+  function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_col, ylim = c(-36, 31),
+                                    xlim= c(-180,180)){
+    ggplot(coord_NN_NS) +
     geom_sf(data = coast, color = NA, fill = "lightgrey") +
     
     #down left quarter
-    geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_d_l)==F),
+    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_d_l)==F),
                size = 2, alpha = 0.5,
                aes(x = SiteLongitude, y = SiteLatitude,
                    colour= product_d_l, alpha = product_d_l)) +
@@ -958,7 +960,7 @@ plot_PCA_NCP <- function(NCP_site){
     ggnewscale::new_scale("colour") +
     
     #up left quarter
-    geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_u_l)==F),
+    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_u_l)==F),
                size = 2, alpha = 0.5,
                aes(x = SiteLongitude, y = SiteLatitude,
                    colour=product_u_l, alpha = product_u_l)) +
@@ -968,12 +970,12 @@ plot_PCA_NCP <- function(NCP_site){
     geom_point(aes(x = SiteLongitude, y = SiteLatitude),
                shape = 1, size = 2, stroke = 1,
                color= "black",
-               data = head(NN_NS_with_col[order(NN_NS_with_col$product_u_l, decreasing = T),], 15)) +
+               data = head(coord_NN_NS[order(coord_NN_NS$product_u_l, decreasing = T),], 15)) +
     
     ggnewscale::new_scale("colour") +
     
     #down right quarter
-    geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_d_r)==F),
+    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_d_r)==F),
                size = 2, alpha = 0.5,
                aes(x = SiteLongitude, y = SiteLatitude,
                    colour=product_d_r, alpha = product_d_r)) +
@@ -983,12 +985,12 @@ plot_PCA_NCP <- function(NCP_site){
     geom_point(aes(x = SiteLongitude, y = SiteLatitude),
                shape = 1, size = 2, stroke = 1,
                color= "black",
-               data = head(NN_NS_with_col[order(NN_NS_with_col$product_d_r, decreasing = T),], 15)) +
+               data = head(coord_NN_NS[order(coord_NN_NS$product_d_r, decreasing = T),], 15)) +
     
     ggnewscale::new_scale("colour") +
     
     #up right quarter
-    geom_point(data= dplyr::filter(NN_NS_with_col, is.na(product_u_r)==F),
+    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_u_r)==F),
                size = 2,
                aes(x = SiteLongitude, y = SiteLatitude,
                    colour= product_u_r, alpha = product_u_r)) +
@@ -999,22 +1001,37 @@ plot_PCA_NCP <- function(NCP_site){
     scale_alpha_continuous(range = c(0, 1)) +
     
     
-    coord_sf(ylim = c(-36, 31), expand = FALSE) +
+    coord_sf(xlim= xlim, ylim = ylim, expand = FALSE) +
     guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
     scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
     theme_minimal()+
-    labs(title = "Trade-offs in Nature Based Contribution worldwide",
+    labs(title = "Trade-offs in Nature Based Contribution",
          x="Longitude", y= "Latitude") +
     theme(legend.position = "none",
           plot.title = element_text(size=10, face="bold"),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
+          # axis.text.x = element_blank(),
+          # axis.ticks.x = element_blank(),
           plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
     )
-  ggsave( here::here("outputs", "figures", "world map with NN and NS PC1.jpg"), plot = map_NN_NS, width=10, height = 6 )
+  }
+  
+  world_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_col, 
+                                        ylim = c(-36, 31),
+                                        xlim= c(-180,180))
+  ggsave( here::here("outputs", "figures", "world map with NN and NS PC1.jpg"), plot = world_map_NN_NS, width=10, height = 6 )
   
   
-    
+  australia_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_col, 
+                                              ylim = c(-39, 0),
+                                              xlim= c(100,180))
+  ggsave( here::here("outputs", "figures", "australia map with NN and NS PC1.jpg"), plot = australia_map_NN_NS, width=10, height = 6 )
+  
+  
+  polynesia_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_col, 
+                                                ylim = c(-25, -10),
+                                                xlim= c(-180,-130))
+  ggsave( here::here("outputs", "figures", "polynesia map with NN and NS PC1.jpg"), plot = polynesia_map_NN_NS, width=10, height = 6 )
+  
   ### NN worldwide
   map_NN <- ggplot(NN_NS_with_col) +
     geom_sf(data = coast, color = NA, fill = "lightgrey") +

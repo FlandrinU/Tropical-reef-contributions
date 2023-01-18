@@ -28,6 +28,19 @@ load(here::here("data","metadata_surveys.Rdata"))
 
 ##------------- preping data -------------
 #NCP_site <- dplyr::filter(NCP_site, SiteCountry != "Australia")
+NCP_to_transformed <- c("Btot","recycling_N","recycling_P","Productivity",
+                        "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
+                        "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
+                        "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
+                        "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
+                        "fishery_biomass")
+
+NCP_site <- NCP_site |>
+  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>     
+  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
+                       .fns = log10 , .names = "{.col}"))
+
 NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                  SiteMeanSST, SiteLatitude, SiteLongitude, Btot,
                                                  HDI, gravtot2, MarineEcosystemDependency,
@@ -85,8 +98,18 @@ dimRed::AUC_lnK_R_NX(encoding)
 umap <- dimRed::embed( NCP_scaled,  "UMAP", ndim=3)
 plot(umap, type = "2vars")
 dimRed::AUC_lnK_R_NX(umap)
+umap_coordinates <- cbind( umap@data@data , 
+                           subset(NCP_site, select = c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                                       SiteMeanSST, SiteLatitude, SiteLongitude, Btot,
+                                                       HDI, gravtot2, MarineEcosystemDependency,
+                                                       coral_imputation)))
 
-
+cluster <- ggplot(umap_coordinates) +
+  aes(x = UMAP1, y = UMAP2, colour = SiteCountry) +
+  geom_point(shape = "circle", size = 1.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()
+ggsave(filename = here::here("outputs", "figures", "umap_countries_distribution.png"), width=17, height= 10)
 
 ##-------------focus on t-SNE ------------- 
 tsne <- dimRed::embed( NCP_scaled, "tSNE", ndim = 3)
@@ -106,7 +129,7 @@ tsne_coordinates <- cbind( tsne@data@data ,
 plotly::plot_ly(tsne_coordinates,
                 x= ~tSNE1, y= ~tSNE2, z= ~tSNE3,
                 size = 10 ) %>%
-  add_markers(color= ~SiteCountry)
+  plotly::add_markers(color= ~SiteCountry)
 
 
 #temperature pattern
