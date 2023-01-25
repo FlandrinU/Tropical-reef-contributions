@@ -47,7 +47,7 @@ colSums(surveys_family_pbiom)[order(colSums(surveys_family_pbiom), decreasing = 
 
 
 ##------------- computing rda with family occurrence-------------
-#Sum up relative biomass of each family at the site scale
+#Sum up occurrences of each family at the site scale
 surveys_family_occ <- as.data.frame(surveys_family_occ) %>%
   tibble::rownames_to_column("SurveyID") %>%
   dplyr::left_join(metadata_surveys[,c("SurveyID", "SiteCode")]) %>%
@@ -84,7 +84,7 @@ cat("End of computation for RDA with family occurences", "\n")
 
 
 ##------------- computing rda with family richness-------------
-#Sum up relative biomass of each family at the site scale
+#Sum up richness of each family at the site scale
 surveys_family_richness <- as.data.frame(surveys_nb_sp_per_family) %>%
   tibble::rownames_to_column("SurveyID") %>%
   dplyr::left_join(metadata_surveys[,c("SurveyID", "SiteCode")]) %>%

@@ -163,7 +163,7 @@ for( site in 1:nrow(NCP_NS)){
 
 NN_NS_scores <- cbind(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude")],
                       data.frame(NN_score = EDS_NN, NS_score = EDS_NS) )
-
+save(NN_NS_scores, file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
 
 ##-------------plot NN and NS scores-------------
 library(ggplot2)

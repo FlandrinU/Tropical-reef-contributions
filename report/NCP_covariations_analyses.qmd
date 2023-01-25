@@ -29,10 +29,10 @@ format:
     -   Are there reefs good or bad for alls NCP (brightspots/darkspots),
     -   ...?
 -   **Hypothesis:**
-    -   There are many trade offs between NCPs, i.e reefs can't be of great interest for all NCPS in the same time?
+    -   There are many trade offs between NCPs, i.e reefs can't be of great interest for all NCPS in the same time? and neither bad for all?
     -   reefs interesting for Nature are my not the same than those valuable for societies?
 
-*NB: We use to talk about "Nature Contributions to People", I think this is better than "ecosystem services", but Humans are still the center of the Nature contributions... Perhaps something like "Nature Based Contributions" could be more neutral? This would include Nature for Nature, Nature for society and Nature for Culture services...? The human well-being may be then a result of Nature to People services and a healthy Nature as our mind is influenced by the surrounding world *
+*NB: We use to talk about "Nature Contributions to People", it seems better than "ecosystem services", but Humans are still the center of the Nature contributions... Perhaps something like "Nature Based Contributions" could be more neutral? This would include Nature for Nature (NN), and Nature for Society  services (NS)...? The human well-being may be then a result of Nature to Society services and a healthy Nature as our mind is influenced by the surrounding world. In the IPBES classification, NS could be synonym of "Nature Contributions to People" and NN could reflect intrinsic value of Nature... *
 
 ------------------------------------------------------------------------
 
@@ -83,23 +83,33 @@ summary(NCP_site$SiteCountry)
 
 ------------------------------------------------------------------------
 
-# Correlations between NCPs
+# Vizualize services assessement  
+## Biomass on maps  
+::: {layout="[[1], [1], [1]]"}
+![](`r here::here("outputs", "figures", "NCP_on_world_map", "world_map_with_Btot.jpg") `)
 
-## With Biomass  
-![Correlation between NCP and Biomass](`r here::here("outputs", "figures", "NCP_correlation_with_biomass.png") `){width=100%}  
+![](`r here::here("outputs", "figures", "NCP_on_world_map", "Australian_map_with_Btot.jpg") `)
 
-## With biodiversity  
-![Correlation between NCP and Biodiversity](`r here::here("outputs", "figures", "NCP_correlation_with_biodiversity.png") `){width=100%}  
+![](`r here::here("outputs", "figures", "NCP_on_world_map", "Caraib_map_with_Btot.jpg") `)
+:::
 
 ## NCPs distributions  
 ### Original data  
 ![](`r here::here("outputs", "figures", "NCP_distribution.png") `){width=100%}
 
-### Corr-matrix for all NCPs  
-![Correlation between NCPs](`r here::here("outputs", "figures", "corr_matrix.png") `){width=100%}  
-
 ### log transformed data  
 ![](`r here::here("outputs", "figures", "NCP_log_transformed_distribution.png") `){width=100%} 
+
+
+## Correlations between NCPs  
+### With Biomass  
+![Correlation between NCP and Biomass](`r here::here("outputs", "figures", "NCP_correlation_with_biomass.png") `){width=100%}  
+
+### With biodiversity  
+![Correlation between NCP and Biodiversity](`r here::here("outputs", "figures", "NCP_correlation_with_biodiversity.png") `){width=100%}  
+
+### Corr-matrix for all NCPs  
+![Correlation between NCPs](`r here::here("outputs", "figures", "corr_matrix.png") `){width=100%}  
 
 ### Corr-matrix for log transformed NCPs  
 ![Correlation between NCPs](`r here::here("outputs", "figures", "corr_matrix_log_transformed_NCP.png") `){width=100%}  
@@ -108,9 +118,7 @@ summary(NCP_site$SiteCountry)
 
 # PCA with log transformed data
 
-
 ## PCA with all NCPs at the community scale
-
 
 ### Number of dimensions
 
@@ -291,29 +299,138 @@ Temperature pattern in PCA
 
 ![](`r here::here("outputs", "figures", "hist_NS_in_PC1.png") `)
 
-## NN against NS
+## NN and NS scores according to PC1 of both PCAs
 
 ![](`r here::here("outputs", "figures", "Sites in NN and NS PC1.jpg") `)
 
-## Plot on map
+### Plot on map
 
-### NS according to NN
+#### NS according to NN
 
 ![](`r here::here("outputs", "figures", "world map with NN and NS PC1.jpg") `)
 
-### NN worldwide
+#### NN worldwide
 
 ![](`r here::here("outputs", "figures", "world map with NN PC1.jpg") `)
 
-### NS worldwide
+#### NS worldwide
 
 ![](`r here::here("outputs", "figures", "world map with NS PC1.jpg") `)
 
 
+## Sum up about PCAs
+
+We struggle with dimension reduction in the PCA. It seems that NN and NS services are highly dimensional: around 5 or 6 dimensions are needed to consider all variations in NCPs.
+Separated studies of NN and NS help us to say that NN services are quite positively correlated, with notably a strong correlation with the total biomass in PC1 (but also totally separated axes like richness in iucn species). On the other hand, NS are less correlated, which means that trade offs in NS are inevitable...?
 
 
-# RDA
+# Estimating NN and NS scores with weighted means
 
-Hierarchical and Variation Partitioning for Canonical Analysis Without Limiting the Number of Predictors (Matrices) is a statistical technique used to identify the relative importance of a set of predictors (matrices) on a dependent variable. Hierarchical and Variation Partitioning for Canonical Analysis Without Limiting the Number of Predictors (Matrices) starts with a correlation matrix of all the predictors and the dependent variable. The correlation matrix is then partitioned into two parts. The first partition is a hierarchical structure and the second partition is a variation structure. The hierarchical partition is used to identify which predictors are more closely related to the dependent variable and the variation partition is used to identify which predictors have more variation among them. This technique can be used to identify and rank the relative importance of predictors without limiting the number of predictors.
+We used the Estimator in Dependant Sample method (Kark 2002), to make a weighted mean of NN and NS: 
 
-Permutation Test of Hierarchical Partitioning for Canonical Analysis is a statistical technique used to determine if the hierarchical partitioning of the correlation matrix of all the predictors and the dependent variable is statistically significant. The permutation test calculates the probability that the hierarchical partitioning of the correlation matrix is due to chance. If the probability is below a certain threshold, then the results of the hierarchical partitioning can be regarded as statistically significant. This technique is useful in determining which predictors are more closely related to the dependent variable and helps to identify and rank the relative importance of predictors without limiting the number of predictors.
+$$
+EDS_{abs} = \frac{\mathrm 1}{\mathrm S_{i=1}^N} . \mathrm S_{i=1}^N (\mathrm a_i . w_{i}^{abs})
+\\  
+\text{with: } \mathrm w_{i}^{abs} =  \frac{1}{2} + \mathrm S_{j=1}^N(1 -\frac{\mathrm |r_{ij}| }{2})
+\\
+$$
+
+$$
+\text{!! les valeurs de NCPs (} \ \mathrm a_i \ \text{) sont} \ log10() \ \text{(pour les distribution right skewed), et toutes centrées réduites}
+$$
+
+## NN and NS scores
+
+:::{#fig-temperature layout-ncol=2}
+![](`r here::here("outputs", "figures", "hist_NN_weighted_mean.png") `)
+
+![](`r here::here("outputs", "figures", "hist_NS_weighted_mean.png") `)
+
+NN and NS scores estimated by weighted mean
+:::
+
+### NN on map  
+![](`r here::here("outputs", "figures", "world map with NN score.jpg") `)
+
+### NS on map  
+![](`r here::here("outputs", "figures", "world map with NS score.jpg") `)
+
+## Study NN according to NS  
+### Color scales
+![](`r here::here("outputs", "figures", "Sites in NN and NS scores.jpg") `)  
+*Red color indicates conflict between NN and NS management strategies as both have high score*  
+
+### on map
+::: {layout-nrow=3}
+![](`r here::here("outputs", "figures", "world map with NN and NS score.jpg") `)  
+
+![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.jpg") `)  
+
+![](`r here::here("outputs", "figures", "australia map with NN and NS score.jpg") `)  
+:::
+
+
+# Can we infer the scores?  
+## Correlation with families  
+![Family distributions](`r here::here("outputs", "figures", "families_distribution.png") `)  
+
+### family richness
+![According to NN score](`r here::here("outputs", "figures", "families_richness_according_to_NN_score.png") `)  
+
+![According to NS score](`r here::here("outputs", "figures", "families_richness_according_to_NS_score.png") `)  
+
+### family relative biomass
+![According to NN score](`r here::here("outputs", "figures", "families_pbiom_according_to_NN_score.png") `)  
+
+![According to NS score](`r here::here("outputs", "figures", "families_pbiom_according_to_NS_score.png") `)  
+
+
+
+
+
+# Paper outlines  
+*__Guidelines People and Nature: __*  
+
+  + *Length:*  
+"We do not impose strict length restrictions on submissions to People and Nature. In general Research articles will tend to be around __8000 words__."
+  + *Abstract:*  
+"The abstract must not exceed __350 words__ and should list the main results and conclusions, using simple, factual, numbered statements. The abstract should outline the purpose of the paper and the main results, conclusions and recommendations, using clear, factual, numbered statements.
+__Authors should follow a formula__ in which point __1__ sets the context and need for the work; point __2__ indicates the approach and methods used; the next __2-3__ points outline the main results; and the last point identifies the wider implications and relevance to management or policy. The final point is the most important of all in maximising the impact of the paper. It should synthesise the paper's key messages and should be generic, seminal and accessible to non-specialists, and must carry one of the following subheadings:
+'Synthesis and applications' for articles that identify recommendations for management practices.
+‘Policy implications’ for articles that are less directly tied to on-the-ground management and include discussion on conservation implications or links to policy."
+
+  + *Keywords:*  
+"A list in alphabetical order not exceeding __eight words__ or short phrases."
+
+  + *Introduction:*  
+"This should state the reason for doing the work, the nature of the hypothesis or hypotheses under consideration, and should outline the essential background."
+
+  + *Materials and methods:*  
+"All data, program code, methods and research materials should be appropriately cited. Where specific equipment and materials are named, the manufacturer’s details (name, city and country) should be given so that readers can trace specifications by contacting the manufacturer. Where commercially available software has been used, details of the supplier should be given in brackets or the reference given in full in the reference list. Do not describe or refer to commonplace statistical tests in this section but allude to them briefly in Results."
+
+  + *Results:*  
+__No rules?__ max 6-7 figures in the 10 last published papers in conservation research, __usually 3-5 figures (+1-3 tables) ?__
+
+  + *Discussion:*  
+
+
+## Introduction  
+
+## M&M
+
+## Results
+1. Multidimensionalité des contributions (surtout pour NS), covariations et independance
+ACP: __Fig 1__  
+
+Scores NN et NS (pannel en 3 niveaux: les 2 histogrammes de NN et NS avec gradients de couleurs, Cartes monde NN et NS): __Fig 2__
+
+2. Explication des scores: relation avec les familles? DAG avec les variables socio-envir ? __Fig 3?__
+
+3. Compromis de NN et NS: les cadrans et une carte mondiale +/- zoom ? __Fig 4__
+
+## Discussion  
+=> notion de compromis, gestion multi objectifs (on peut pas tout faire avec une même AMP)
+
+=> imp du contexte ou familles?
+
+=> un peu de tout partout, vert à protéger, bleu pour gestion de pêche durable, rouge à adapter en fonction des besoins des pops locales (floride -> protection)

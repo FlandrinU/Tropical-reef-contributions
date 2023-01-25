@@ -25,98 +25,17 @@ rm(list=ls())
 load(here::here("outputs","all_NCP_site.Rdata"))
 #benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_imputed.txt"), sep= " ")
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
-#load(here::here("data","metadata_surveys.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 ##-------------Correlations between NCPs-------------
-plot_correlation_NCP <- function(NCP_site){
-  
+
   ## Clean data
   NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                  SiteMeanSST, SiteLatitude, SiteLongitude,
                                                  HDI, gravtot2, MarineEcosystemDependency,
                                                  coral_imputation))
   
-  ## With Biomass
-  plot_correlation <- function(x,y,i){  
-    ggplot() +
-      geom_point(aes(y = NCP_site[,y][[y]], x = x),
-                 color = col[i], alpha = 0.6, size = 1) +
-      theme_bw() +
-      labs(x = x_title, y = y) +
-      theme(panel.grid.minor = element_blank(),
-            axis.text = element_text(color = "black"), 
-            axis.title = element_text(size = 17))
-  }
-  
-  x<- NCP_site$Btot
-  x_title = "total Biomass"
-  col <- fishualize::fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
-  
-  plots <- lapply( 1:ncol(NCP_site_clean), function(i){
-              plot_correlation(x,colnames(NCP_site_clean)[i],i)
-          })
-  
-  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] + 
-    plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
-    plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-    plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  ggsave(filename = here::here("outputs", "figures","NCP_correlation_with_biomass.png"), plot, width = 22, height =14 )
-  
-  
-  
-  ## With biodiversity
-  x<- NCP_site$taxo_richness
-  x_title = "taxonomic richness"
-  col <- fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
-  
-  plots <- lapply( 1:ncol(NCP_site_clean), function(i){
-              plot_correlation(x,colnames(NCP_site_clean)[i],i)
-  })
-  
-  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] + 
-    plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
-    plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-    plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]]+ plots[[27]] +
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  ggsave(filename = here::here("outputs", "figures","NCP_correlation_with_biodiversity.png"), plot, width = 22, height =14 )
-  
-  #### NCPs distribution
-  plot_distribution <- function(ncp, data){
-    col <- fishualize::fish(n = 27, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
-    names(col) <- colnames(data)
-    
-    ggplot(data) +
-        aes(x = data[,ncp][[ncp]]) +
-        geom_histogram(bins = 40L,
-                       fill = col[ncp][[1]],
-                       col = "black") +
-        labs(title = ncp) +
-        xlab("") + ylab("") +
-        theme_minimal() +
-        theme( legend.position = "none")
-  }
-  
-  plots <- lapply(colnames(NCP_site_clean), FUN = plot_distribution, data = NCP_site_clean )
-  
-  all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
-    plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
-    plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-    plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  ggsave(filename = here("outputs", "figures","NCP_distribution.png"), all_plot, width = 22, height =14 )
-  
+
   #### NCPs distribution with log correction
   NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
                                "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
@@ -133,17 +52,6 @@ plot_correlation_NCP <- function(NCP_site){
     dplyr::rename_with(.cols = all_of(NCP_skewed_distribution),
                        .fn = ~ paste0("log(", .x, ")"))
   
-  plots <- lapply(colnames(NCP_log_transformed), FUN = plot_distribution, data = NCP_log_transformed )
-  
-  all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
-    plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
-    plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-    plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.png"), all_plot, width = 22, height =14 )
   
   ### Correlation test
   names <- cor <- p_val <- c()
@@ -173,7 +81,7 @@ plot_correlation_NCP <- function(NCP_site){
   # corrplot(M, order = 'hclust', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
   # corrplot(M, order = 'hclust', add= T, type= 'upper', p.mat = testRes$p, insig = 'p-value', 
   #          tl.pos= 'n', cl.pos = 'n')
-  })
+    })
   dev.off() 
   
   #### Corr-matrix for log transformed NCPs
@@ -187,15 +95,9 @@ plot_correlation_NCP <- function(NCP_site){
     })
   dev.off() 
 
-} #end of function plot_correlation_NCP()
 
-## run function
-plot_correlation_NCP(NCP_site)
-
-
-
-##-------------computing pca-------------
-NCP_to_transformed <- c("Btot","recycling_N","recycling_P","Productivity",
+##-------------computing PCA-------------
+NCP_to_transform <- c("Btot","recycling_N","recycling_P","Productivity",
                         "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
                         "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
                         "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
@@ -203,9 +105,9 @@ NCP_to_transformed <- c("Btot","recycling_N","recycling_P","Productivity",
                         "fishery_biomass")
 
 NCP_site <- NCP_site |>
-  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
+  dplyr::mutate(across(.cols = all_of(NCP_to_transform),
                        .fns = ~ .x +1 , .names = "{.col}")) |>     
-  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
+  dplyr::mutate(across(.cols = all_of(NCP_to_transform),
                        .fns = log10 , .names = "{.col}"))
 
 
