@@ -155,7 +155,8 @@ plot_PCA_NCP <- function(NCP_site){
   eig <- factoextra::get_eig(pca)
   variance_explained <- data.frame(
     Dimensions = c(1:nrow(eig)), 
-    cumulative_variance_explained = eig[,3])
+    cumulative_variance_explained = eig[,3],
+    contribution_coefficient = eig[,2]/100)
 
   cumulative_variance <- ggplot(variance_explained) +
     aes(x = Dimensions, y = cumulative_variance_explained) +
@@ -172,11 +173,19 @@ plot_PCA_NCP <- function(NCP_site){
   
   #### Contribution of NCP in dimensions
   var <- get_pca_var(pca)
+  contributions <- var$contrib
+  for( i in 1:ncol(contributions)){ 
+    contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
+  
   png(filename = here("outputs", "figures","contribution_NCP_in_dimensions.png"), 
       width= 12, height = 15, units = "cm", res = 1000)
   print( corrplot::corrplot(var$contrib, is.corr=FALSE) )
   dev.off()
   
+  png(filename = here("outputs", "figures","contribution_NCP_in_total_variance.png"), 
+      width= 12, height = 15, units = "cm", res = 1000)
+  print( corrplot::corrplot(contributions, is.corr=FALSE) )
+  dev.off()
   
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
   png(filename = here("outputs", "figures","PCA_all_NCP.png"), 

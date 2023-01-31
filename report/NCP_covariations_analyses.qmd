@@ -55,10 +55,56 @@ rm(list=ls())
 
 ##-------------loading data-------------
 load(here::here("outputs","all_NCP_site.Rdata"))
-#load(here::here("outputs","all_NCP_surveys.Rdata"))
-#benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_imputed.txt"), sep= " ")
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 load(here::here("data","metadata_surveys.Rdata"))
+
+load(here::here("outputs","NN_NS_score_wheighted_mean.Rdata"))
+load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
+load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_01.Rdata"))
+load(here::here("biodiversity", "outputs", "occurrence_matrix_nb_sp_per_family_survey.Rdata"))
+
+##-------------preping data at the site scale-------------
+#Sum up relative biomass of each family at the site scale
+surveys_family_pbiom <- as.data.frame(surveys_family_pbiom) %>%
+  tibble::rownames_to_column("SurveyID") %>%
+  dplyr::left_join(metadata_surveys[,c("SurveyID", "SiteCode")]) %>%
+  dplyr::select(- SurveyID) 
+
+site_family_pbiom <- surveys_family_pbiom %>%
+  group_by( SiteCode) %>%
+  summarise(across(.cols = everything(),
+                   .fns = mean, 
+                   .names = "{.col}")) %>%
+  dplyr::filter(SiteCode %in% NN_NS_scores$SiteCode) %>%
+  dplyr::select( - SiteCode)
+
+#Sum up richness of each family at the site scale
+surveys_family_richness <- as.data.frame(surveys_nb_sp_per_family) %>%
+  tibble::rownames_to_column("SurveyID") %>%
+  dplyr::left_join(metadata_surveys[,c("SurveyID", "SiteCode")]) %>%
+  dplyr::select(- SurveyID) 
+
+site_family_richness <- surveys_family_richness %>%
+  group_by( SiteCode) %>%
+  summarise(across(.cols = everything(),
+                   .fns = max, 
+                   .names = "{.col}")) %>%
+  dplyr::filter(SiteCode %in% NN_NS_scores$SiteCode) %>%
+  dplyr::select( - SiteCode)
+
+#Sum up occurrences of each family at the site scale
+surveys_family_occ <- as.data.frame(surveys_family_occ) %>%
+  tibble::rownames_to_column("SurveyID") %>%
+  dplyr::left_join(metadata_surveys[,c("SurveyID", "SiteCode")]) %>%
+  dplyr::select(- SurveyID) 
+
+site_family_occ <- surveys_family_occ %>%
+  group_by( SiteCode) %>%
+  summarise(across(.cols = everything(),
+                   .fns = max, 
+                   .names = "{.col}")) %>%
+  dplyr::filter(SiteCode %in% NN_NS_scores$SiteCode) %>%
+  dplyr::select( - SiteCode)
 
 ##-------------computing pca-------------
 rownames(NCP_site) <- NCP_site$SiteCode
@@ -135,7 +181,14 @@ Variance explained by ACP dimensions
 :::
 
 #### Contribution of NCP in dimensions  
-![Corrplot of NCP contributions in dimensions ](`r here::here("outputs", "figures", "contribution_NCP_in_dimensions.png") `){width=80%}  
+
+:::{#fig-NCP_contributions layout-ncol=2}  
+![(a) in each dimensions ](`r here::here("outputs", "figures", "contribution_NCP_in_dimensions.png") `)  
+
+![(b) in total variance: \n (contribution in each dimension) X (importance of this dimension)](`r here::here("outputs", "figures", "contribution_NCP_in_total_variance.png") `)  
+
+NCPs contribution  
+:::  
 
 ### Variables in PCA  
 #### PCA in the 2 first dimensions  
@@ -374,6 +427,8 @@ NN and NS scores estimated by weighted mean
 ## Correlation with families  
 ![Family distributions](`r here::here("outputs", "figures", "families_distribution.png") `)  
 
+![Correlation between family richness and total Biomass](`r here::here("outputs", "figures", "families_richness_according_to_Btot.png") `)  
+
 ### family richness
 ![According to NN score](`r here::here("outputs", "figures", "families_richness_according_to_NN_score.png") `)  
 
@@ -384,9 +439,153 @@ NN and NS scores estimated by weighted mean
 
 ![According to NS score](`r here::here("outputs", "figures", "families_pbiom_according_to_NS_score.png") `)  
 
+### Multiple regressions  
+#### Occurrences  
+```{r}
+#Families occurrences
+site_family <- site_family_occ
+multiple_regression_occ_NN <- lm(NN_NS_scores$NN_score ~ 
+                                  site_family$Pomacentridae + site_family$Labridae +
+                                  site_family$Lethrinidae + site_family$Mullidae + 
+                                  site_family$Scaridae + site_family$Haemulidae +   
+                                  site_family$Kyphosidae + site_family$Acanthuridae +
+                                  site_family$Monacanthidae + site_family$Scorpaenidae + 
+                                  site_family$Chaetodontidae + site_family$Tetraodontidae+
+                                  site_family$Pomacanthidae + site_family$Serranidae  +
+                                  site_family$Ostraciidae + site_family$Holocentridae + 
+                                  site_family$Lutjanidae + site_family$Sciaenidae +   
+                                  site_family$Balistidae + site_family$Fistulariidae +
+                                  site_family$Pempheridae + site_family$Cirrhitidae + 
+                                  site_family$Siganidae + site_family$Zanclidae +    
+                                  site_family$Mugilidae + site_family$Bothidae )
+summary(multiple_regression_occ_NN)
 
 
+multiple_regression_occ_NS <- lm(NN_NS_scores$NS_score ~ 
+                                  site_family$Pomacentridae + site_family$Labridae +
+                                  site_family$Lethrinidae + site_family$Mullidae + 
+                                  site_family$Scaridae + site_family$Haemulidae +   
+                                  site_family$Kyphosidae + site_family$Acanthuridae +
+                                  site_family$Monacanthidae + site_family$Scorpaenidae + 
+                                  site_family$Chaetodontidae + site_family$Tetraodontidae+
+                                  site_family$Pomacanthidae + site_family$Serranidae  +
+                                  site_family$Ostraciidae + site_family$Holocentridae + 
+                                  site_family$Lutjanidae + site_family$Sciaenidae +   
+                                  site_family$Balistidae + site_family$Fistulariidae +
+                                  site_family$Pempheridae + site_family$Cirrhitidae + 
+                                  site_family$Siganidae + site_family$Zanclidae +    
+                                  site_family$Mugilidae + site_family$Bothidae )
+summary(multiple_regression_occ_NS)
+```
 
+#### Richness  
+```{r}
+#Families richness
+site_family <- site_family_richness
+
+multiple_regression_richness_NN <- lm(NN_NS_scores$NN_score ~ 
+                                  site_family$Pomacentridae + site_family$Labridae +
+                                  site_family$Lethrinidae + site_family$Mullidae + 
+                                  site_family$Scaridae + site_family$Haemulidae +   
+                                  site_family$Kyphosidae + site_family$Acanthuridae +
+                                  site_family$Monacanthidae + site_family$Scorpaenidae + 
+                                  site_family$Chaetodontidae + site_family$Tetraodontidae+
+                                  site_family$Pomacanthidae + site_family$Serranidae  +
+                                  site_family$Ostraciidae + site_family$Holocentridae + 
+                                  site_family$Lutjanidae + site_family$Sciaenidae +   
+                                  site_family$Balistidae + site_family$Fistulariidae +
+                                  site_family$Pempheridae + site_family$Cirrhitidae + 
+                                  site_family$Siganidae + site_family$Zanclidae +    
+                                  site_family$Mugilidae + site_family$Bothidae )
+
+summary(multiple_regression_richness_NN)
+
+
+multiple_regression_richness_NS <- lm(NN_NS_scores$NS_score ~ 
+                                  site_family$Pomacentridae + site_family$Labridae +
+                                  site_family$Lethrinidae + site_family$Mullidae + 
+                                  site_family$Scaridae + site_family$Haemulidae +   
+                                  site_family$Kyphosidae + site_family$Acanthuridae +
+                                  site_family$Monacanthidae + site_family$Scorpaenidae + 
+                                  site_family$Chaetodontidae + site_family$Tetraodontidae+
+                                  site_family$Pomacanthidae + site_family$Serranidae  +
+                                  site_family$Ostraciidae + site_family$Holocentridae + 
+                                  site_family$Lutjanidae + site_family$Sciaenidae +   
+                                  site_family$Balistidae + site_family$Fistulariidae +
+                                  site_family$Pempheridae + site_family$Cirrhitidae + 
+                                  site_family$Siganidae + site_family$Zanclidae +    
+                                  site_family$Mugilidae + site_family$Bothidae )
+
+summary(multiple_regression_richness_NS)
+```
+
+#### Relative biomass
+```{r}
+#Families relative biomass
+site_family <- site_family_pbiom
+
+multiple_regression_pbiom_NN <- lm(NN_NS_scores$NN_score ~ 
+                                  site_family$Pomacentridae + site_family$Labridae +
+                                  site_family$Lethrinidae + site_family$Mullidae + 
+                                  site_family$Scaridae + site_family$Haemulidae +   
+                                  site_family$Kyphosidae + site_family$Acanthuridae +
+                                  site_family$Monacanthidae + site_family$Scorpaenidae + 
+                                  site_family$Chaetodontidae + site_family$Tetraodontidae+
+                                  site_family$Pomacanthidae + site_family$Serranidae  +
+                                  site_family$Ostraciidae + site_family$Holocentridae + 
+                                  site_family$Lutjanidae + site_family$Sciaenidae +   
+                                  site_family$Balistidae + site_family$Fistulariidae +
+                                  site_family$Pempheridae + site_family$Cirrhitidae + 
+                                  site_family$Siganidae + site_family$Zanclidae +    
+                                  site_family$Mugilidae + site_family$Bothidae )
+summary(multiple_regression_pbiom_NN)
+
+
+multiple_regression_pbiom_NS <- lm(NN_NS_scores$NN_score ~ 
+                                  site_family$Pomacentridae + site_family$Labridae +
+                                  site_family$Lethrinidae + site_family$Mullidae + 
+                                  site_family$Scaridae + site_family$Haemulidae +   
+                                  site_family$Kyphosidae + site_family$Acanthuridae +
+                                  site_family$Monacanthidae + site_family$Scorpaenidae + 
+                                  site_family$Chaetodontidae + site_family$Tetraodontidae+
+                                  site_family$Pomacanthidae + site_family$Serranidae  +
+                                  site_family$Ostraciidae + site_family$Holocentridae + 
+                                  site_family$Lutjanidae + site_family$Sciaenidae +   
+                                  site_family$Balistidae + site_family$Fistulariidae +
+                                  site_family$Pempheridae + site_family$Cirrhitidae + 
+                                  site_family$Siganidae + site_family$Zanclidae +    
+                                  site_family$Mugilidae + site_family$Bothidae )
+
+summary(multiple_regression_pbiom_NS)
+
+```
+
+
+#### NB: Correlation between families and Btot
+```{r}
+#Families richness
+site_family <- site_family_richness
+
+multiple_regression_richness_Btot <- lm(log(NCP_site$Btot) ~ 
+                                  site_family$Pomacentridae + site_family$Labridae +
+                                  site_family$Lethrinidae + site_family$Mullidae + 
+                                  site_family$Scaridae + site_family$Haemulidae +   
+                                  site_family$Kyphosidae + site_family$Acanthuridae +
+                                  site_family$Monacanthidae + site_family$Scorpaenidae + 
+                                  site_family$Chaetodontidae + site_family$Tetraodontidae+
+                                  site_family$Pomacanthidae + site_family$Serranidae  +
+                                  site_family$Ostraciidae + site_family$Holocentridae + 
+                                  site_family$Lutjanidae + site_family$Sciaenidae +   
+                                  site_family$Balistidae + site_family$Fistulariidae +
+                                  site_family$Pempheridae + site_family$Cirrhitidae + 
+                                  site_family$Siganidae + site_family$Zanclidae +    
+                                  site_family$Mugilidae + site_family$Bothidae )
+summary <- summary(multiple_regression_richness_Btot)
+cat( "Adjusted Rsquared = ", summary[["adj.r.squared"]])
+```
+
+
+--------------------------------------------------------------------------------
 
 # Paper outlines  
 *__Guidelines People and Nature: __*  
@@ -415,8 +614,62 @@ __No rules?__ max 6-7 figures in the 10 last published papers in conservation re
 
 
 ## Introduction  
+-> En dégradant et vidant les océans, notre mode de vie capitaliste et extractiviste met en danger la sécurité alimentaire de plus de 3 milliards de personnes, détruit une histoire évolutive et culturelle irremplaçable par essence.  
+
+-> Depuis ...., les MPAs apparaissent comme l'unique solution pour répondre à ces problèmes environnementaux et sociaux. Mais, en plus d'être difficilement applicable dans des sociétés fortement dépendantes des ecosystemes marins, les MPAs ont aujourd'hui du mal à remplir leurs promesses... (McShane 2011, Gatiso 2022, ... ?). les MPAs vont résoudre tous les problemes d’un coup, il n’y a pas de win-win (McShane 2011)  
+Il semble qu'il soit nécessaire d'expliciter les besoins/objectifs de chaque politique de conservation afin d'optimiser le réseau de réserve (Palacios-Abrantes 2022, Felipe-lucia 2022)
+
+-> volonté d'estimer ~objectivement la valeur de la nature et ce que l'on perd: NCP et indigenous and local knowledge (ILK) systems (christie 2019, Diaz 2018). Ce qui permettrait de mieux comprendre le contexte et les conséquences des MPAs. trade-offs dans les axes de conservations (NFF) (Palacios-Abrantes 2022).
+
+-> l'IPBES (/Diaz 2018) classe ces "natural assets" en Nature Based Contributions: material, regulating, non material assets et en valeur intrinseque de la Nature (Mother Earth). Mais la diffiulté de quantifier les aspects "non material" (et "regulating"), nous ont poussé à regrouper tous les NCPs en une catégorie bénéficiant aux sociétés humaines: Nature to Society, et l'ensemble des "assets" permettant le maintien de la Nature comme une catégorie: Nature to Nature.  
+C'est très dichotomique entre Homme et Nature mais cela répond bien aux enjeux posés par les conflits d'usage dans les parties prenantes...
+
+-> A partir de l'estimation récente de nombreux "natural assets" dans des récifs étudiés par visual census (RLS), nous avons catégoriser ces "assets" en NN et NS afin d'estimer le potentiel de conservation ou de soutien aux sociétés des récifs tropicaux.  
+
+-> Hyp: beaucoup de trade-offs entre les "natural assets", il n'y a pas de sites bons pour tout? Les récifs tropicaux peuvent parfois être intéressant pour la conservation ou leur exploitation durable à fine échelle ?
+
 
 ## M&M
+
++---------------+------------------------------+-------+----------------------+--------------------+
+| Services      | Estimation                   | Unit  |Importance            | References         |
++===============+==============================+=======+======================+====================+
+| Recycling     |                              |       |                      | Schiettekatte 2022 |
+|               |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Productivty   |                              |       |                      | - Morais           |
+|               |                              |       |                      | - Seguin 2022      |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Taxonomic     |                              |       |                      |                    |
+|   richness    |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Functional &  |                              |       |                      |                    |
+| phylo entropy |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Funct & phylo |                              |       |                      |                    |
+| distinctivness|                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Nutrients     |                              |       |                      | Maire 2021         |
+|               |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Aesthetic     |                              |       |                      | Langlois 2022      |
+|               |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| IUCN species  |                              |       |                      |                    |
+|               |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Carbonates    |                              |       |                      | Ghilardi 2023      |
+| flux          |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| Trophic group |                              |       |                      |                    |
+| biomass       |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+| fishery       |                              |       |                      | Reef future ...    |
+|  biomass      |                              |       |                      |                    |
++---------------+------------------------------+-------+----------------------+--------------------+
+
+: Nature Based Contributions.
+
 
 ## Results
 1. Multidimensionalité des contributions (surtout pour NS), covariations et independance

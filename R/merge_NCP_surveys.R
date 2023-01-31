@@ -34,10 +34,6 @@ load( here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata"
 load(here::here("data_raw", "source", "coral_reef_allen_habitat__data.RData"))
 benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_imputed.txt"), sep= " ")
 
-#world coast shapefile
-#coast_high_resolution <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
-coast <- sf::st_read(here::here("data", "coastline_shapefile", "ne_10m_coastline.shp"))
-
 ##-------------Filtering NCP-------------
 recycl <- dplyr::select(task3_data_surveys,
                         SurveyID, Btot, recycling_N, recycling_P) #2399 surveys

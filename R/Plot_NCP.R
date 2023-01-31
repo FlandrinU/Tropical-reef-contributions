@@ -205,9 +205,10 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
               aes(size=0.1)) +
       
       geom_point(data=NCP_site,
-                 size = 2, alpha = 0.7, shape = 20,
+                 size = 4, shape = 20,
                  aes(x = SiteLongitude, y = SiteLatitude,
-                     colour= NCP_site[,NCP][[1]])) +
+                     colour= NCP_site[,NCP][[1]],
+                     alpha = scale(NCP_site[,NCP][[1]]))) +
       scale_colour_gradient(NCP,
                             low = "dodgerblue", high="darkred",
                             na.value=NA) +
