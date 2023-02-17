@@ -182,7 +182,15 @@ summary(data_surveys)
 
 
 
-#change sp name : Abudefduf_luridus should be Similiparma lurida et Rhinesomus_triqueter should be Lactophrys triqueter
+#change sp name : Abudefduf_luridus should be Similiparma lurida 
+#                 Rhinesomus_triqueter should be Lactophrys triqueter
+#                 Chromis_dimidiata shold be Pycnochromis dimidiatus
+#                 Kyphosus_analogus should be Kyphosus vaigiensis
+#                 Abalistes_stellatus has the wrong spec_code:3596 shoud be 9
+species_spec_code$species_corrected[which(species_spec_code$species == "Chromis_dimidiata")] <- "Pycnochromis_dimidiatus"
+species_spec_code$species_corrected[which(species_spec_code$species == "Kyphosus_analogus")] <- "Kyphosus_vaigiensis"
+species_spec_code$spec_code[which(species_spec_code$species == "Abalistes_stellatus")] <- 9
+
 data_species <- data_species %>%
    left_join(species_spec_code) %>%
    select(species, species_corrected, spec_code, family, Size, a, b, Position, Activity, Diet)

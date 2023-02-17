@@ -28,7 +28,8 @@ load(here::here("biodiversity", "outputs", "surveys_biodiversity.Rdata"))
 load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_iucn_and_chondrichtyans_scores.Rdata"))
 load(here::here("aesthetic", "outputs", "survey_aesth_without_outliers.Rdata"))
-load( here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata"))
+load(here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata"))
+load(here::here("trophic_web", "outputs", "trophic_indicators_survey.Rdata"))
 
 #list of coral reef sites
 load(here::here("data_raw", "source", "coral_reef_allen_habitat__data.RData"))
@@ -52,22 +53,30 @@ aesthetic <- dplyr::select(survey_aesth, SurveyID, aesthe_survey) #7005 surveys
 carbonates <- dplyr::select(caco3_per_day_without_outliers, SurveyID, low_mg_calcite, high_mg_calcite,
                             aragonite, monohydrocalcite, amorphous_carbonate) #2156 surveys
 
+troph_ind <- dplyr::select(as.data.frame(trophic_indicators_survey), SurveyID, 
+                           Ntop, b_power_law, Modularity) |> #3627 surveys
+             dplyr::rename(top_predator_proportion = Ntop, robustness = b_power_law, modularity = Modularity) |>
+             dplyr::mutate(across(.cols = c("SurveyID"),.fns = as.character, .names = "{.col}" ))
+ 
+
 coral_cover <- dplyr::select(benthic_imputed, SurveyID, coral_imputation) %>%
   mutate( SurveyID = as.character(SurveyID))
 
 NCP <- metadata_surveys %>%
-  select(SurveyID, SiteCode, SiteCountry, SiteEcoregion, SiteLatitude, SiteLongitude, 
+  dplyr::select(SurveyID, SiteCode, SiteCountry, SiteEcoregion, SiteLatitude, SiteLongitude, 
          SurveyDepth, SiteMeanSST, gravtot2, HDI, MarineEcosystemDependency ) %>%
-  left_join(coral_cover) %>%
-  left_join(recycl) %>%
-  left_join(prod) %>%
-  left_join(biodiv) %>%
-  left_join(nutrients) %>%
-  left_join(surveys_fishery_biom) %>%
-  left_join(phylo) %>%
-  left_join(aesthetic) %>%
-  left_join(iucn_and_elasmo_by_surveys)%>%
-  left_join(carbonates)
+  dplyr::left_join(coral_cover) %>%
+  dplyr::left_join(recycl) %>%
+  dplyr::left_join(prod) %>%
+  dplyr::left_join(biodiv) %>%
+  dplyr::left_join(nutrients) %>%
+  dplyr::left_join(surveys_fishery_biom) %>%
+  dplyr::left_join(phylo) %>%
+  dplyr::left_join(aesthetic) %>%
+  dplyr::left_join(iucn_and_elasmo_by_surveys)%>%
+  dplyr::left_join(carbonates) %>%
+  dplyr::left_join(troph_ind) 
+  
 
 
 #### No filter
@@ -145,7 +154,8 @@ NCP_site <- NCP_surveys %>%
                        "funct_distinctiveness","Selenium_C","Zinc_C","Omega_3_C","Calcium_C","Iron_C","Vitamin_A_C",
                        "phylo_entropy","ED_Mean","aesthe_survey", "iucn_species", "elasmobranch_diversity",
                        "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                       "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL", "fishery_biomass"),
+                       "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL", "fishery_biomass",
+                       "top_predator_proportion", "robustness", "modularity"),
                    .fns = mean, .names = "{.col}"))
 
 summary(NCP_site) # 1223 sites

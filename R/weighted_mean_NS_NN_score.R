@@ -1,6 +1,6 @@
 ################################################################################
 ##
-## Calculates NN and NS scores of sites
+## Calculate NN and NS scores of sites
 ##
 ## weighted_mean_NS_NN_score.R
 ##
@@ -11,7 +11,7 @@
 ################################################################################
 
 #-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats")
+pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats", "ggrepel")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -19,6 +19,7 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
+load(here::here("data","metadata_surveys.Rdata"))
 load(here::here("outputs","all_NCP_site.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
@@ -33,7 +34,7 @@ NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoreg
 
 #### NCPs distribution
 plot_distribution <- function(ncp, data){
-  col <- fishualize::fish(n = 27, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+  col <- fishualize::fish(n = 30, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   names(col) <- colnames(data)
   
   ggplot(data) +
@@ -54,6 +55,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
+  plots[[28]] + plots[[29]] + plots[[30]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -66,7 +68,7 @@ NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
                              "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
                              "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
                              "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                             "fishery_biomass")
+                             "fishery_biomass", "modularity")
 
 NCP_log_clean <- NCP_site_clean |>
   dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
@@ -83,6 +85,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
+  plots[[28]] + plots[[29]] + plots[[30]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -100,14 +103,15 @@ corrplot::corrplot(correlations_between_NCPs, add = TRUE, type = 'upper', method
 
 
 
-##-------------compute correlation weighted mean of NCP (Kark 2002): NN and NS scores-------------
+##-------------compute weighted mean of NCP (Kark 2002): NN and NS scores-------------
 
 grp <- as.factor( c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
                     funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
                     Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
                     elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
                     monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-                    biom_highTL="NN", fishery_biomass="NS")) 
+                    biom_highTL="NN", fishery_biomass="NS", top_predator_proportion = "NN", modularity = "NN", 
+                    robustness = "NN")) 
 
 corr_pearson_NCPs <- stats::cor(NCP_log_clean, method="pearson")
 NCP_log_scale_clean <- scale(NCP_log_clean)
@@ -167,128 +171,205 @@ save(NN_NS_scores, file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdat
 
 ##-------------plot NN and NS scores-------------
 library(ggplot2)
+
+plot_histogram <- function(data = NN_NS_scores, 
+                           x=NN_NS_scores$NN_score, col= "forestgreen",
+                           title="Nature for nature score site's evaluation"){
+  ggplot(data, aes(x) ) +
+    geom_histogram( bins = 40, color="grey60", fill= "white", linewidth=0.2)+
+    
+    ggnewscale::new_scale_fill() +
+    geom_histogram( bins = 40, color="grey60", aes(fill = after_stat(x)), 
+                    linewidth=0.2)+
+    scale_fill_gradient2(low="white", mid="white", high = col ,
+                         midpoint= quantile(x,0.75), 
+                         limits =quantile(x, probs=c( 0.75,1))+ c(-0.1,0.1),
+                         na.value="transparent")+
+    
+    ggnewscale::new_scale_fill() +
+    geom_histogram( bins = 40, aes(fill=after_stat(x)), color="grey60", linewidth=0.2)+
+    scale_fill_gradient2(low="black", mid="white", high="white",
+                         midpoint= quantile(x,0.25), 
+                         limits =quantile(x, probs=c(0,0.25)) + c(-0.1,0.1),
+                         na.value="transparent")+
+  
+    labs(title = title)+
+    geom_vline(xintercept = quantile(x, 0.25), linetype = 3, col= "black")+
+    geom_vline(xintercept = quantile(x, 0.75), linetype = 3, col= "black")+
+    theme_minimal()+
+    theme(legend.position = "none")
+} #end of plot_histogram function
+
 ## NN
-histo_NN <- ggplot(NN_NS_scores, aes(x = NN_score)) +
-  geom_histogram( bins = 40, aes(fill=after_stat(x)), color="grey50", linewidth=0.3)+
-  scale_fill_gradient2(low = "black", mid = "white", high = "forestgreen", guide = "colourbar")+
-  labs(x = "Nature for nature score site's evaluation")+
-  geom_vline(xintercept = 0, linetype = 2, col= "black")+
-  theme_minimal()
-histo_NN
+# histo_NN <- ggplot(NN_NS_scores, aes(x = NN_score)) +
+#   geom_histogram( bins = 40, aes(fill=after_stat(x)), color="grey50", linewidth=0.3)+
+#   scale_fill_gradient2(low = "black", mid = "white", high = "forestgreen", 
+#                        midpoint = median(NN_NS_scores$NN_score),
+#                        guide = "colourbar")+
+#   labs(x = "Nature for nature score site's evaluation")+
+#   geom_vline(xintercept = 0, linetype = 2, col= "black")+
+#   theme_minimal()
+# histo_NN
+# ggsave(filename = here("outputs", "figures","hist_NN_weighted_mean.png"), histo_NN, width = 8, height =6 )
+histo_NN <- plot_histogram(data = NN_NS_scores, x=NN_NS_scores$NN_score, col= "forestgreen",
+                           title="Nature for nature score site's evaluation")
 ggsave(filename = here("outputs", "figures","hist_NN_weighted_mean.png"), histo_NN, width = 8, height =6 )
 
 
 ##NS
-histo_NS <- ggplot(NN_NS_scores, aes(x = NS_score)) +
-  geom_histogram( bins = 40, aes(fill=after_stat(x)), color="grey30", linewidth=0.3)+
-  scale_fill_gradient2(low = "black", mid = "white", high = "dodgerblue3", guide = "colourbar")+
-  labs(x = "Nature to People score site's evaluation")+
-  geom_vline(xintercept = 0, linetype = 2, col= "black")+
-  theme_minimal()
-histo_NS
+# histo_NS <- ggplot(NN_NS_scores, aes(x = NS_score)) +
+#   geom_histogram( bins = 40, aes(fill=after_stat(x)), color="grey30", linewidth=0.3)+
+#   scale_fill_gradient2(low = "black", mid = "white", high = "dodgerblue3", guide = "colourbar")+
+#   labs(x = "Nature to People score site's evaluation")+
+#   geom_vline(xintercept = 0, linetype = 2, col= "black")+
+#   theme_minimal()
+# histo_NS
+# ggsave(filename = here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
+histo_NS <- plot_histogram(data = NN_NS_scores, x=NN_NS_scores$NS_score, col= "dodgerblue3",
+                           title="Nature to People score site's evaluation")
 ggsave(filename = here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
 
 
 ## --------------- NN against NS -------------
 #### Define colors by quarter ####
 library(dplyr)
-#up right
-quarter_up_right <- NN_NS_scores |>
-  filter(NN_score > 0 & NS_score > 0) |>
-  mutate(product_u_r =  (NN_score * NS_score)) |>
-  arrange(product_u_r) |>
-  tibble::rownames_to_column(var="scale_u_r")
 
-#up left
-quarter_up_left <- NN_NS_scores |>
-  filter(NN_score < 0 & NS_score > 0) |>
-  mutate(product_u_l =  (-NN_score * NS_score) ) |>
-  arrange(product_u_l) |>
-  tibble::rownames_to_column(var="scale_u_l")
+NN_NS_with_product <- NN_NS_scores |>
+  dplyr::mutate(NNxNS = abs(NN_score * NS_score)) |>
+  dplyr::bind_cols(rank = rank(abs(NN_NS_scores$NN_score * NN_NS_scores$NS_score))) |>
+  dplyr::bind_cols(up_right = ifelse(NN_NS_scores$NN_score > 0 & NN_NS_scores$NS_score > 0,1,NA)) |>
+  dplyr::bind_cols(up_left = ifelse(NN_NS_scores$NN_score < 0 & NN_NS_scores$NS_score > 0,1,NA)) |>
+  dplyr::bind_cols(down_right = ifelse(NN_NS_scores$NN_score > 0 & NN_NS_scores$NS_score < 0,1,NA)) |>
+  dplyr::bind_cols(down_left = ifelse(NN_NS_scores$NN_score < 0 & NN_NS_scores$NS_score < 0,1,NA))
 
-#down right
-quarter_down_right <- NN_NS_scores |>
-  filter(NN_score > 0 & NS_score < 0) |>
-  mutate(product_d_r =  (NN_score * -NS_score)) |>
-  arrange(product_d_r) |>
-  tibble::rownames_to_column(var="scale_d_r")
+NN_NS_with_product <- NN_NS_with_product |>
+  dplyr::bind_cols(rank_u_r = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.last="keep")) |>
+  dplyr::bind_cols(rank_u_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$up_left, na.last="keep")) |>
+  dplyr::bind_cols(rank_d_r = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_right, na.last="keep")) |>
+  dplyr::bind_cols(rank_d_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_left, na.last="keep"))
+  
+median_curve_u_r <- data.frame(x_curve=
+                                 c(0,0.05,sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+                                   na.rm=T)), 3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+                                   na.rm=T)), 4* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+                                                             na.rm=T))), 
+                               y_curve=c(4* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+                                                        na.rm=T)), 
+                                         3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+                                                        na.rm=T)), 
+                                         sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+                                  na.rm=T)) , 0.01,0))
 
-#down left
-quarter_down_left <- NN_NS_scores |>
-  filter(NN_score < 0 & NS_score < 0) |>
-  mutate(product_d_l =  (NN_score * NS_score)  ) |>
-  arrange(product_d_l) |>
-  tibble::rownames_to_column(var="scale_d_l")
-
-#Merge the 4 quarters
-NN_NS_with_product <- quarter_down_left |>
-  full_join(quarter_down_right) |>
-  full_join(quarter_up_left) |>
-  full_join(quarter_up_right)
 
 #### plot NN against NN ####
 NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
-  geom_point(data= dplyr::filter(NN_NS_with_product, is.na(scale_u_r)==F),
-             size = 2,
-             aes(colour= as.integer(scale_u_r), alpha = as.integer(scale_u_r))) +
-  scale_colour_gradient(name="scale_u_r",
-                        low = "white", high="darkred",
-                        na.value=NA) +
+  geom_point(data= dplyr::filter(NN_NS_with_product, up_right == 1),
+             size = 2, aes(colour= rank_u_r)) +
+  scale_colour_gradient(name="up_right",
+                        low = "white", high="firebrick",
+                        limits =quantile(NN_NS_with_product$rank_u_r,
+                                         probs=c( 0.5,1), na.rm=T), na.value=NA) +
   geom_point(aes( y= NS_score, x = NN_score),
              shape = 1, size = 2, stroke = 1,
-             color= "black",
-             data = head(NN_NS_with_product[order(NN_NS_with_product$product_u_r, decreasing = T),], 10)) +
+             color= "darkred",
+             data = NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
+                    quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+             data=NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
+                  quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
   
   ggnewscale::new_scale("colour") +
   
   #up left quarter
-  geom_point(data= dplyr::filter(NN_NS_with_product, is.na(product_u_l)==F),
-             size = 2,
-             aes(colour= as.integer(scale_u_l), alpha = as.integer(scale_u_l))) +
-  scale_colour_gradient(name="scale_u_l",
+  geom_point(data= dplyr::filter(NN_NS_with_product, up_left == 1),
+             size = 2, aes(colour= rank_u_l)) +
+  scale_colour_gradient(name="up_left",
                         low = "white", high="dodgerblue3",
-                        na.value=NA) +
+                        limits =quantile(NN_NS_with_product$rank_u_l,
+                                         probs=c( 0.5,1), na.rm=T), na.value=NA) +
   geom_point(aes( y= NS_score, x = NN_score),
              shape = 1, size = 2, stroke = 1,
              color= "dodgerblue4",
-             data = head(NN_NS_with_product[order(NN_NS_with_product$product_u_l, decreasing = T),], 10)) +
-  
-  
+             data = NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
+                                               quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+                             data=NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
+                                                             quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
   ggnewscale::new_scale("colour") +
   
   #down right quarter
-  geom_point(data= dplyr::filter(NN_NS_with_product, is.na(product_d_r)==F),
-             size = 2,
-             aes(colour= as.integer(scale_d_r), alpha = as.integer(scale_d_r))) +
-  scale_colour_gradient(name="scale_d_r",
+  geom_point(data= dplyr::filter(NN_NS_with_product, down_right == 1),
+             size = 2, aes(colour= rank_d_r)) +
+  scale_colour_gradient(name="down_right",
                         low = "white", high="forestgreen",
-                        na.value=NA) +
+                        limits =quantile(NN_NS_with_product$rank_d_r,
+                                         probs=c( 0.5,1), na.rm=T), na.value=NA) +
   geom_point(aes( y= NS_score, x = NN_score),
              shape = 1, size = 2, stroke = 1,
              color= "darkgreen",
-             data = head(NN_NS_with_product[order(NN_NS_with_product$product_d_r, decreasing = T),], 10)) +
-  
+             data = NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
+                                               quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+                             data=NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
+                                                             quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
   ggnewscale::new_scale("colour") +
   
   #down left quarter
-  geom_point(data= dplyr::filter(NN_NS_with_product, is.na(product_d_l)==F),
-             size = 2,
-             aes(colour= as.integer(scale_d_l), alpha = as.integer(scale_d_l))) +
-  scale_colour_gradient(name="scale_d_l",
+  geom_point(data= dplyr::filter(NN_NS_with_product, down_left == 1),
+             size = 2, aes(colour= rank_d_l)) +
+  scale_colour_gradient(name="down_left",
                         low = "white", high="grey20",
-                        na.value=NA) +
-  
-  scale_alpha_continuous(range = c(-0.5, 0.8)) +
+                        limits =quantile(NN_NS_with_product$rank_d_l,
+                                         probs=c( 0.5,1), na.rm=T), na.value=NA) +
+  geom_point(aes( y= NS_score, x = NN_score),
+             shape = 1, size = 2, stroke = 1,
+             color= "black",
+             data = NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
+                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+                             data=NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
+                                                             quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
   
   #add lines
-  geom_vline(xintercept = 0, linetype = 2, col = "black")+
-  geom_hline(yintercept = 0, linetype = 2, col = "black")+
+  geom_vline(xintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
+  geom_hline(yintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
+  
+  #add 50% square:
+  # geom_function(aes(x= NN_score, y = NS_score),
+  #               fun = function(x){median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+  #                                        na.rm=T) / x},
+  #               xlim=c(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+  #                             na.rm=T) / max(NN_NS_with_product$NS_score),
+  #                      max(NN_NS_with_product$NN_score))) +
+  # geom_polygon(data = data.frame(x=c(0,2*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+  #                                    na.rm=T)), 0, -2*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+  #                                    na.rm=T))),
+  #                                y = c(2*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+  #                                    na.rm=T)),0, -2*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+  #                                    na.rm=T)),0)),
+  #              aes(x, y), alpha= 0, color = "black",  linetype = 3,) +
+  # geom_smooth(data = median_curve_u_r, aes(x_curve, y_curve), se=F, span = 1, linetype= 3,
+  #             size=0.5, method = "loess", color="black" ) +
+  geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
+                y=4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+                curvature=0.4, linetype=3, size=0.1)+  #up_right
+  geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
+                 y=-4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+             curvature=-0.4, linetype=3, size=0.1)+   #down_right
+  geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
+                 y=4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+             curvature=-0.4, linetype=3, size=0.1)+ #up_left
+  geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
+                 y=-4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+             curvature=0.4, linetype=3, size=0.1)+ #down_right
+  
+
   labs( x=  "Nature to Nature", y = "Nature to People")+
   theme_minimal()+
   theme(legend.position = "none")
 
 NN_NS_plot
-ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.jpg"), plot = NN_NS_plot, width=10, height = 8 )
+ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.png"), plot = NN_NS_plot, width=10, height = 8 )
 
 
 
@@ -299,57 +380,58 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
     geom_sf(data = coast, color = NA, fill = "lightgrey") +
     
     #down left quarter
-    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_d_l)==F),
+    geom_point(data= dplyr::filter(coord_NN_NS,  down_left == 1),
                size = 2, alpha = 0.5,
-               aes(x = SiteLongitude, y = SiteLatitude,
-                   colour= as.integer(scale_d_l), alpha = as.integer(scale_d_l))) +
-    scale_colour_gradient(name="scale_d_l",
+               aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
+    scale_colour_gradient(name="down_left",
                           low = "white", high="grey20",
-                          na.value=NA) +
+                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$down_left,
+                                           probs=c( 0.5,1), na.rm=T), na.value=NA) +
     ggnewscale::new_scale("colour") +
     
     #up left quarter
-    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_u_l)==F),
+    geom_point(data= dplyr::filter(coord_NN_NS,  up_left == 1),
                size = 2, alpha = 0.5,
-               aes(x = SiteLongitude, y = SiteLatitude,
-                   colour= as.integer(scale_u_l), alpha = as.integer(scale_u_l))) +
-    scale_colour_gradient(name="scale_u_l",
+               aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
+    scale_colour_gradient(name="up_left",
                           low = "white", high="dodgerblue3",
-                          na.value=NA) +
-    geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-               shape = 1, size = 2, stroke = 1,
-               color= "dodgerblue4",
-               data = head(coord_NN_NS[order(coord_NN_NS$product_u_l, decreasing = T),], 15)) +
+                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$up_left,
+                                           probs=c( 0.5,1), na.rm=T), na.value=NA) +
+    # geom_point(aes(x = SiteLongitude, y = SiteLatitude),
+    #            shape = 1, size = 2, stroke = 1,
+    #            color= "dodgerblue4",
+    #            data = head(coord_NN_NS[order(coord_NN_NS$product_u_l, decreasing = T),], 15)) +
     
     ggnewscale::new_scale("colour") +
     
     #down right quarter
-    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_d_r)==F),
+    geom_point(data= dplyr::filter(coord_NN_NS,  down_right == 1),
                size = 2, alpha = 0.5,
-               aes(x = SiteLongitude, y = SiteLatitude,
-                   colour= as.integer(scale_d_r), alpha = as.integer(scale_d_r))) +
-    scale_colour_gradient(name="scale_d_r",
+               aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
+    scale_colour_gradient(name="down_right",
                           low = "white", high="forestgreen",
-                          na.value=NA) +
-    geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-               shape = 1, size = 2, stroke = 1,
-               color= "darkgreen",
-               data = head(coord_NN_NS[order(coord_NN_NS$product_d_r, decreasing = T),], 15)) +
+                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$down_right,
+                                           probs=c( 0.5,1), na.rm=T), na.value=NA) +
+    # geom_point(aes(x = SiteLongitude, y = SiteLatitude),
+    #            shape = 1, size = 2, stroke = 1,
+    #            color= "darkgreen",
+    #            data = head(coord_NN_NS[order(coord_NN_NS$product_d_r, decreasing = T),], 15)) +
     
     ggnewscale::new_scale("colour") +
     
     #up right quarter
-    geom_point(data= dplyr::filter(coord_NN_NS, is.na(product_u_r)==F),
-               size = 2,
-               aes(x = SiteLongitude, y = SiteLatitude,
-                   colour= as.integer(scale_u_r), alpha = as.integer(scale_u_r))) +
-    scale_colour_gradient(name="scale_u_r",
+    geom_point(data= dplyr::filter(coord_NN_NS,  up_right == 1),
+               size = 2, alpha = 0.5,
+               aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
+    scale_colour_gradient(name="up_right",
                           low = "white", high="darkred",
-                          na.value=NA) +
-    geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-               shape = 1, size = 2, stroke = 1,
-               color= "black",
-               data = head(coord_NN_NS[order(coord_NN_NS$product_u_r, decreasing = T),], 15)) +
+                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$up_right,
+                                           probs=c( 0.5,1), na.rm=T), na.value=NA) +
+    
+    # geom_point(aes(x = SiteLongitude, y = SiteLatitude),
+    #            shape = 1, size = 2, stroke = 1,
+    #            color= "black",
+    #            data = head(coord_NN_NS[order(coord_NN_NS$product_u_r, decreasing = T),], 15)) +
     
     #add transparency
     scale_alpha_continuous(range = c(-0.5, 0.6)) +
@@ -373,7 +455,7 @@ world_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product,
                                           ylim = c(-36, 31),
                                           xlim= c(-180,180),
                                           title = "Trade-offs in Nature Based Contribution Worldwide")
-ggsave( here::here("outputs", "figures", "world map with NN and NS score.jpg"), plot = world_map_NN_NS, width=10, height = 6 )
+ggsave( here::here("outputs", "figures", "world map with NN and NS score.png"), plot = world_map_NN_NS, width=10, height = 6 )
 
 
 australia_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product, 
@@ -381,21 +463,21 @@ australia_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product,
                                               xlim= c(100,180),
                                               title = "Trade-offs in Nature Based Contribution in Australia")
 
-ggsave( here::here("outputs", "figures", "australia map with NN and NS score.jpg"), plot = australia_map_NN_NS, width=10, height = 6 )
+ggsave( here::here("outputs", "figures", "australia map with NN and NS score.png"), plot = australia_map_NN_NS, width=10, height = 6 )
 
 
 polynesia_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product, 
                                               ylim = c(-25, -10),
                                               xlim= c(-180,-130),
                                               title = "Trade-offs in Nature Based Contribution in polynesia")
-ggsave( here::here("outputs", "figures", "polynesia map with NN and NS score.jpg"), plot = polynesia_map_NN_NS, width=10, height = 6 )
+ggsave( here::here("outputs", "figures", "polynesia map with NN and NS score.png"), plot = polynesia_map_NN_NS, width=10, height = 6 )
 
 
 caraib_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product, 
                                               ylim = c(-5, 30),
                                               xlim= c(-100,-55),
                                               title = "Trade-offs in Nature Based Contribution in caraïbe")
-ggsave( here::here("outputs", "figures", "caraïbe map with NN and NS score.jpg"), plot = caraib_map_NN_NS, width=10, height = 6 )
+ggsave( here::here("outputs", "figures", "caraïbe map with NN and NS score.png"), plot = caraib_map_NN_NS, width=10, height = 6 )
 
 
 #### NN or NS only ####
@@ -433,7 +515,7 @@ NN_worldwide <- map_NN_or_NS(coord_NN_NS = NN_NS_with_product,
                             col_NCP= "forestgreen",
                             ylim = c(-36, 31),
                             xlim= c(-180,180), title="Nature to nature contributions worldwide")
-ggsave( here::here("outputs", "figures", "world map with NN score.jpg"), plot = NN_worldwide, width=10, height = 6 )
+ggsave( here::here("outputs", "figures", "world map with NN score.png"), plot = NN_worldwide, width=10, height = 6 )
 
 
 
@@ -443,5 +525,22 @@ NS_worldwide <- map_NN_or_NS(coord_NN_NS = NN_NS_with_product,
                              col_NCP= "dodgerblue3",
                              ylim = c(-36, 31),
                              xlim= c(-180,180), title="Nature to People contributions worldwide")
-ggsave( here::here("outputs", "figures", "world map with NS score.jpg"), plot = NS_worldwide, width=10, height = 6 )
+ggsave( here::here("outputs", "figures", "world map with NS score.png"), plot = NS_worldwide, width=10, height = 6 )
 
+## According to latitude
+latitude_NN <- ggplot(NN_NS_scores, aes(SiteLatitude, NN_score , alpha = 0.5)) +
+  geom_point()+
+  geom_smooth() +
+  labs(x = "Latitude", y = "NN score", title = "Importance of lattitude in NN score") +
+  theme_minimal()+
+  theme(legend.position = 'none')
+ggsave(filename = here::here("outputs", "figures", "NN score according to latitude.png"), latitude_NN, width = 15, height = 12)
+
+latitude_NS <- ggplot(NN_NS_scores, aes(SiteLatitude, NS_score , alpha = 0.5)) +
+  geom_point()+
+  geom_smooth() +
+  labs(x = "Latitude", y = "NN score", title = "Importance of lattitude in NN score") +
+  theme_minimal()+
+  theme(legend.position = 'none')
+
+ggsave(filename = here::here("outputs", "figures", "NS score according to latitude.png"), latitude_NS, width = 15, height = 12)

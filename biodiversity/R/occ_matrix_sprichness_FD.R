@@ -24,21 +24,22 @@ trees <- ape::read.tree(file = here::here("biodiversity", "data","Code&Data_Siqu
                                           "TACT", "Reef_fish_all_combined.trees")) 
 tree <- trees[[1]]; rm(trees)
 
-# -------------------biomass of species in each survey as a classical matrix -------------------
-surveys_sp_biom <- data_surveys %>% 
-  select(SurveyID, species, biomass) %>%
-  group_by(SurveyID, species) %>%
-  summarize( sp_biom=sum(biomass) ) %>%
-  pivot_wider(names_from = species, values_from = sp_biom, values_fill = 0) %>%
-  column_to_rownames(var="SurveyID") %>%
+# -------------------occurrence and biomass of species in each survey as a classical matrix -------------------
+surveys_sp_biom <- data_surveys |> 
+  dplyr::select(SurveyID, species, biomass) |>
+  dplyr::group_by(SurveyID, species) |>
+  dplyr::summarize( sp_biom=sum(biomass) ) |>
+  tidyr::pivot_wider(names_from = species, values_from = sp_biom, values_fill = 0) |>
+  tibble::column_to_rownames(var="SurveyID") |>
   as.matrix()
 
 dim(surveys_sp_biom) # OK
 
-#Change species names:  Abudefduf_luridus should be Similiparma_lurida and
-#                       Rhinesomus_triqueter should be Lactophrys_triqueter
-colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Abudefduf_luridus")] <- "Similiparma_lurida"
-colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Rhinesomus_triqueter")] <- "Lactophrys_triqueter"
+# # #Change species names:  Abudefduf_luridus should be Similiparma_lurida and
+# # #                       Rhinesomus_triqueter should be Lactophrys_triqueter
+# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Abudefduf_luridus")] <- "Similiparma_lurida"
+# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Rhinesomus_triqueter")] <- "Lactophrys_triqueter"
+
 
 # occurrence of species in surveys ----
 surveys_sp_occ <- surveys_sp_biom
@@ -51,27 +52,27 @@ save(surveys_sp_occ, file=here::here("biodiversity", "outputs", "occurrence_matr
 save(surveys_sp_pbiom, file=here::here("biodiversity", "outputs", "occurrence_matrix_sp_survey_relative_biomass.Rdata"))
 
 
-# -------------------relative biomass of families in each survey as a classical matrix -------------------
-data_surveys_fam <- data_species %>% 
-  dplyr::select(species, family) %>%
+# -------------------occurrence and relative biomass of families in each survey as a classical matrix -------------------
+data_surveys_fam <- data_species |> 
+  dplyr::select(species, family) |>
   dplyr::right_join(data_surveys)
 
-surveys_family_biom <- data_surveys_fam %>% 
-  select(SurveyID, family, biomass) %>%
-  group_by(SurveyID, family) %>%
-  summarize( family_biom = sum(biomass) ) %>%
-  pivot_wider(names_from = family, values_from = family_biom, values_fill = 0) %>%
-  column_to_rownames(var="SurveyID") %>%
+surveys_family_biom <- data_surveys_fam |> 
+  dplyr::select(SurveyID, family, biomass) |>
+  dplyr::group_by(SurveyID, family) |>
+  dplyr::summarize( family_biom = sum(biomass) ) |>
+  tidyr::pivot_wider(names_from = family, values_from = family_biom, values_fill = 0) |>
+  tibble::column_to_rownames(var="SurveyID") |>
   as.matrix()
 
 dim(surveys_family_biom) # OK
 
-surveys_nb_sp_per_family <- data_surveys_fam %>% 
-  select(SurveyID, family, species) %>%
-  group_by(SurveyID, family) %>%
-  summarize( family_richness = length(unique(species)) ) %>%
-  pivot_wider(names_from = family, values_from = family_richness, values_fill = 0) %>%
-  column_to_rownames(var="SurveyID") %>%
+surveys_nb_sp_per_family <- data_surveys_fam |> 
+  dplyr::select(SurveyID, family, species) |>
+  dplyr::group_by(SurveyID, family) |>
+  dplyr::summarize( family_richness = length(unique(species)) ) |>
+  tidyr::pivot_wider(names_from = family, values_from = family_richness, values_fill = 0) |>
+  tibble::column_to_rownames(var="SurveyID") |>
   as.matrix()
 
 # occurrence of families in surveys ----
@@ -87,10 +88,18 @@ save(surveys_family_pbiom, file=here::here("biodiversity", "outputs", "occurrenc
 
 
 #-------------------same process but only with species known in our phylogeny-------------------
-surveys_sp_biom <- surveys_sp_biom[, colnames(surveys_sp_biom) %in% tree[["tip.label"]] ]
-dim(surveys_sp_biom) # 10 species missing in the phylogeny:
+# #Change species names:  Abudefduf_luridus should be Similiparma_lurida and
+# #                       Rhinesomus_triqueter should be Lactophrys_triqueter
+colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Abudefduf_luridus")] <- "Similiparma_lurida"
+colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Rhinesomus_triqueter")] <- "Lactophrys_triqueter"
+
+colnames(surveys_sp_biom)[which( colnames(surveys_sp_biom) %in% tree[["tip.label"]] ==F)]
+# 10 species missing in the phylogeny:
 #[1] "Pareques_acuminatus"   "Odontoscion_dentex"    "Equetus_punctatus"     "Mugil_cephalus"        "Crenimugil_crenilabis"
-#[6] "Bothus_mancus"         "Odontoscion_xanthops"  "Pareques_viola"        "Mugil_galapagensis"    "Neomyxus_leuciscus" 
+#[6] "Bothus_mancus"   "Odontoscion_xanthops"  "Pareques_viola"        "Mugil_galapagensis"    "Neomyxus_leuciscus" 
+
+surveys_sp_biom <- surveys_sp_biom[, colnames(surveys_sp_biom) %in% tree[["tip.label"]] ]
+dim(surveys_sp_biom)      
 
 surveys_sp_occ <- surveys_sp_biom
 surveys_sp_occ[surveys_sp_occ!=0] <- 1
@@ -102,9 +111,10 @@ save(surveys_sp_pbiom, file=here::here("biodiversity", "outputs", "occurrence_ma
 
 
 ### -------------------taxonomic diversity in surveys -------------------####
+data_species$species_corrected[which(data_species$species_corrected =="Pycnochromis_dimidiatus")] <- "Chromis_dimidiata"  #old name in the phylogeny
 #Select species in the phylogeny
-data_species <- data_species %>% filter(species_corrected %in% tree[["tip.label"]] )
-data_surveys <- data_surveys %>% filter(species %in% data_species$species ) #loss of 115 rls observation
+data_species <- data_species |>  dplyr::filter(species_corrected %in% tree[["tip.label"]] )
+data_surveys <- data_surveys |>  dplyr::filter(species %in% data_species$species ) #loss of 115 rls observation
 
 
 # taxo richness and Shannon-like entropy (eq number of species, exp(H))
@@ -118,9 +128,10 @@ surveys_biodiversity <- data.frame(
 ##------------------- functional diversity in surveys -------------------####
 
 # dataframe with species as row names and traits as variables
-sp_traits<-data_species
-row.names(sp_traits)<-sp_traits$species_corrected
-sp_traits<-sp_traits[,c("Size", "Diet", "Position", "Activity")]
+sp_traits <- data_species
+sp_traits$species_corrected[which(sp_traits$species == "Kyphosus_analogus")] <- "Kyphosus_analogus"  # old name issue
+row.names(sp_traits) <- sp_traits$species_corrected
+sp_traits <- sp_traits[,c("Size", "Diet", "Position", "Activity")]
 
 # type of traits
 traits_cat<-data.frame(trait_name=c("Size", "Diet", "Position", "Activity"),
@@ -128,7 +139,7 @@ traits_cat<-data.frame(trait_name=c("Size", "Diet", "Position", "Activity"),
 )
 
 # Gower distance between species ----
-sp_gower<-funct.dist(sp_tr = sp_traits, tr_cat = traits_cat, metric = "gower")
+sp_gower <- mFD::funct.dist(sp_tr = sp_traits, tr_cat = traits_cat, metric = "gower")
 summary(as.numeric(sp_gower)) # most distances are small (Q3=0.32) 
 # warning message means some species have same trait values
 # => not an issue for computation of Chao et al 2019 indices
@@ -170,20 +181,20 @@ summary(surveys_biodiversity)
 summary(data_species$Diet)
 
 # species with low TL = herbivores_microvores_detritivores diet
-species_lowTL<- data_species %>%
-  filter(Diet=="herbivores_microvores_detritivores") %>%
-  pull(species_corrected) 
+species_lowTL<- data_species |>
+  dplyr::filter(Diet=="herbivores_microvores_detritivores") |>
+  dplyr::pull(species_corrected) 
 length(species_lowTL) # 196 species
 
 biom_lowTL <- rowSums(surveys_sp_biom[,species_lowTL]) 
 summary(biom_lowTL) # from 0 to 1123316 , Q1=3643, median=21833, Q3=24280
 
 # species with medium TL = all type of invertivorous diet (including planktivores and corrallivores)
-species_mediumTL<- data_species %>%
-  filter(Diet %in% c("corallivores", "sessile_invertivores", 
+species_mediumTL<- data_species |>
+  dplyr::filter(Diet %in% c("corallivores", "sessile_invertivores", 
                      "microinvertivores", "macroinvertivores", "crustacivores", 
-                     "planktivores")  ) %>%
-  pull(species_corrected) 
+                     "planktivores")  ) |>
+  dplyr::pull(species_corrected) 
 length(species_mediumTL) # 743 species
 
 biom_mediumTL <- rowSums(surveys_sp_biom[,species_mediumTL]) 
@@ -191,27 +202,27 @@ summary(biom_mediumTL) # from 0 to 5629533, Q1=5653, median=13216, Q3=28245
 
 
 # species with high TL = piscivores diet
-species_highTL<- data_species %>%
-  filter(Diet=="piscivores") %>%
-  pull(species_corrected) 
+species_highTL<- data_species |>
+  dplyr::filter(Diet=="piscivores") |>
+  dplyr::pull(species_corrected) 
 length(species_highTL) # 75 species
 
 biom_highTL <- rowSums(surveys_sp_biom[,species_highTL])
 summary(biom_highTL) # from 0 to 474937.1, Q1=7.7, median=685.6, Q3=2511.0
 
 # merging
-surveys_biomTL<-data.frame(biom_lowTL, biom_mediumTL, biom_highTL) %>%
-  rownames_to_column("SurveyID")
+surveys_biomTL<-data.frame(biom_lowTL, biom_mediumTL, biom_highTL) |>
+  tibble::rownames_to_column("SurveyID")
 summary(surveys_biomTL)
 
 
 # size_structure of fishes (weighted by number of individuals)
-surveys_size<- data_surveys %>%
-  select(SurveyID, species, size_class, number) %>%
-  uncount( number ) %>%
-  select( - species) %>%
-  group_by(SurveyID) %>%
-  summarize( size_Q1=quantile(size_class,0.25) ,
+surveys_size<- data_surveys |>
+  dplyr::select(SurveyID, species, size_class, number) |>
+  tidyr::uncount( number ) |>
+  dplyr::select( - species) |>
+  dplyr::group_by(SurveyID) |>
+  dplyr::summarize( size_Q1=quantile(size_class,0.25) ,
              size_median=quantile(size_class,0.5) ,
              size_Q3=quantile(size_class, 0.75),
              size_p90=quantile(size_class, 0.90)
@@ -219,21 +230,22 @@ surveys_size<- data_surveys %>%
 summary(surveys_size)  
 
 # merging 
-surveys_biodiversity <- surveys_biodiversity %>%
-  rownames_to_column("SurveyID")  %>%
-  left_join(surveys_size) %>%
-  left_join(surveys_biomTL)
+surveys_biodiversity <- surveys_biodiversity |>
+  tibble::rownames_to_column("SurveyID")  |>
+  dplyr::left_join(surveys_size) |>
+  dplyr::left_join(surveys_biomTL)
 summary(surveys_biodiversity)
 
 # filtering 0.1% outliers
-surveys_biodiversity_without_outliers <- surveys_biodiversity %>%
-  filter(taxo_richness < quantile(surveys_biodiversity$taxo_richness,0.999)) %>% 
-  filter(funct_distinctiveness < quantile(surveys_biodiversity$funct_distinctiveness,0.999)) %>% 
-  #filter(taxo_entropy < quantile(surveys_biodiversity$taxo_entropy,0.999)) %>% 
-  #filter(funct_richness < quantile(surveys_biodiversity$funct_richness,0.999)) %>% 
-  filter(biom_lowTL < quantile(surveys_biodiversity$biom_lowTL ,0.999)) %>%
-  filter(biom_mediumTL < quantile(surveys_biodiversity$biom_mediumTL ,0.999)) %>%
-  filter(biom_highTL < quantile(surveys_biodiversity$biom_highTL ,0.999))
+surveys_biodiversity_without_outliers <- surveys_biodiversity |>
+  dplyr::filter(taxo_richness < quantile(surveys_biodiversity$taxo_richness,0.999)) |> 
+  dplyr::filter(funct_distinctiveness < quantile(surveys_biodiversity$funct_distinctiveness,0.999)) |> 
+  # dplyr::filter(taxo_entropy < quantile(surveys_biodiversity$taxo_entropy,0.999)) |> 
+  # dplyr::filter(funct_richness < quantile(surveys_biodiversity$funct_richness,0.999)) |> 
+  dplyr::filter(biom_lowTL < quantile(surveys_biodiversity$biom_lowTL ,0.999)) |>
+  dplyr::filter(biom_mediumTL < quantile(surveys_biodiversity$biom_mediumTL ,0.999)) |>
+  dplyr::filter(biom_highTL < quantile(surveys_biodiversity$biom_highTL ,0.999))
 
 ## saving as Rdata ##
 save(surveys_biodiversity_without_outliers, file=here::here("biodiversity","outputs", "surveys_biodiversity.Rdata") )
+

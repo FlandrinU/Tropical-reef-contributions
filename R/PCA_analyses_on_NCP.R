@@ -42,7 +42,7 @@ coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
                                "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
                                "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
                                "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                               "fishery_biomass")
+                               "fishery_biomass", "modularity")
   
   NCP_log_transformed <- NCP_site_clean |>
     dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
@@ -73,8 +73,8 @@ coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
       width= 40, height = 30, units = "cm", res = 1000)
   print({
   # ## circle + black number
-  corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
-  corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
+  corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
+  corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
              diag = FALSE, tl.pos = 'n', cl.pos = 'n')
   
   # corrplot(M, p.mat = testRes$p, insig = 'p-value')
@@ -89,8 +89,8 @@ coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
       width= 40, height = 30, units = "cm", res = 1000)
   print({
     M <- cor(NCP_log_transformed)
-    corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
-    corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
+    corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
+    corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
              diag = FALSE, tl.pos = 'n', cl.pos = 'n')
     })
   dev.off() 
@@ -102,13 +102,13 @@ NCP_to_transform <- c("Btot","recycling_N","recycling_P","Productivity",
                         "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
                         "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
                         "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                        "fishery_biomass")
+                        "fishery_biomass", "modularity")
 
 NCP_site <- NCP_site |>
   dplyr::mutate(across(.cols = all_of(NCP_to_transform),
                        .fns = ~ .x +1 , .names = "{.col}")) |>     
   dplyr::mutate(across(.cols = all_of(NCP_to_transform),
-                       .fns = log10 , .names = "{.col}"))
+                       .fns = log10 , .names = "{.col}")) 
 
 
 plot_PCA_NCP <- function(NCP_site){
@@ -119,7 +119,8 @@ plot_PCA_NCP <- function(NCP_site){
       Iron_C, Vitamin_A_C, phylo_entropy, ED_Mean, aesthe_survey, iucn_species,
       elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
       monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
-      biom_highTL, fishery_biomass))
+      biom_highTL, fishery_biomass, top_predator_proportion, modularity, robustness))
+  
   # non_correlated_NCP_site_for_pca <- subset(NCP_site_clean, 
   #                             select = c(
   #                              #independents NCP
@@ -134,7 +135,7 @@ plot_PCA_NCP <- function(NCP_site){
   #                            ))
   
   NCP_site_for_pca <- scale(NCP_site_selected)
-  pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=10)
+  pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=10) 
   
   summary(NCP_site$SiteCountry)
   
@@ -208,13 +209,14 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   ## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
-  var <- get_pca_var(pca)
+  #var <- factoextra::get_pca_var(pca)
   grp <- c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
            funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
            Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
            elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
            monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-           biom_highTL="NN", fishery_biomass="NS") # /!\ the order matter
+           biom_highTL="NN", fishery_biomass="NS", top_predator_proportion = "NN", modularity = "NN", 
+           robustness = "NN") # /!\ the order matter
   
   
   grp <- as.factor(grp)
@@ -283,7 +285,8 @@ plot_PCA_NCP <- function(NCP_site){
                 iucn_species="nature", elasmobranch_diversity="nature", low_mg_calcite="regulating",
                 high_mg_calcite="regulating", aragonite="regulating", monohydrocalcite="regulating",
                 amorphous_carbonate="regulating", biom_lowTL="regulating", biom_mediumTL="regulating",
-                biom_highTL="regulating", fishery_biomass="material") 
+                biom_highTL="regulating", fishery_biomass="material", top_predator_proportion = "nature",
+                modularity = "nature", robustness = "nature") 
   
   grp_3cat <- as.factor(grp_3cat)
   
@@ -593,7 +596,8 @@ plot_PCA_NCP <- function(NCP_site){
            Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
            elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
            monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-           biom_highTL="NN", fishery_biomass="NS")) # /!\ the order matter
+           biom_highTL="NN", fishery_biomass="NS",top_predator_proportion = "NN", modularity = "NN",
+           robustness = "NN")) # /!\ the order matter
   
   library(ggplot2)
   
@@ -718,6 +722,7 @@ plot_PCA_NCP <- function(NCP_site){
                                   NS_PC1=NS_PC1_surveys)
   rownames(NN_NS_PC1_surveys) <- rownames(NCP_site)
   
+  save(NN_NS_PC1_surveys, file = here::here("outputs", "NN_NS_score_PC1.Rdata"))
   
   ##NS
   histo_NS <- ggplot(NN_NS_PC1_surveys, aes(x = NS_PC1)) +

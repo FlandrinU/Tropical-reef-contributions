@@ -382,7 +382,7 @@ Separated studies of NN and NS help us to say that NN services are quite positiv
 We used the Estimator in Dependant Sample method (Kark 2002), to make a weighted mean of NN and NS: 
 
 $$
-EDS_{abs} = \frac{\mathrm 1}{\mathrm S_{i=1}^N} . \mathrm S_{i=1}^N (\mathrm a_i . w_{i}^{abs})
+EDS_{abs} = \frac{\mathrm 1}{\mathrm S_{i=1}^N w_{i}^{abs}} . \mathrm S_{i=1}^N (\mathrm a_i . w_{i}^{abs})
 \\  
 \text{with: } \mathrm w_{i}^{abs} =  \frac{1}{2} + \mathrm S_{j=1}^N(1 -\frac{\mathrm |r_{ij}| }{2})
 \\
@@ -410,7 +410,7 @@ NN and NS scores estimated by weighted mean
 
 ## Study NN according to NS  
 ### Color scales
-![](`r here::here("outputs", "figures", "Sites in NN and NS scores.jpg") `)  
+![](`r here::here("outputs", "figures", "Sites in NN and NS scores.png") `)  
 *Red color indicates conflict between NN and NS management strategies as both have high score*  
 
 ### on map
@@ -585,6 +585,15 @@ cat( "Adjusted Rsquared = ", summary[["adj.r.squared"]])
 ```
 
 
+## DAG, study the "causality" of socio-environmental variables on NN and NS scores
+
+-> variables socio-environnementales: idem que reef future
+
+-> ex du DAG pour la productivity:
+
+![]( `r here::here("outputs", "figures", "DAG_productivity.jpg")`)
+
+
 --------------------------------------------------------------------------------
 
 # Paper outlines  
@@ -626,10 +635,15 @@ C'est très dichotomique entre Homme et Nature mais cela répond bien aux enjeux
 
 -> A partir de l'estimation récente de nombreux "natural assets" dans des récifs étudiés par visual census (RLS), nous avons catégoriser ces "assets" en NN et NS afin d'estimer le potentiel de conservation ou de soutien aux sociétés des récifs tropicaux.  
 
--> Hyp: beaucoup de trade-offs entre les "natural assets", il n'y a pas de sites bons pour tout? Les récifs tropicaux peuvent parfois être intéressant pour la conservation ou leur exploitation durable à fine échelle ?
+-> Question: Comment les contributions des récifs covarient? Quels sites sont interressant pour les NN et NS? Comment adapter nos stratégies de management en fonction des récifs?
+
+-> Hyp: beaucoup de trade-offs entre les "natural assets", il n'y a pas de sites bons pour tout? Les récifs tropicaux peuvent parfois être intéressant pour la conservation ou pour une exploitation durable ? ce trade offs entre les natural assets peut se faire à une échelle fine ?
 
 
-## M&M
+## Materials and methods
+
+-> RLS, filtres associés, data gardées, nombres de transects, sites, espèces, ...
+-> Calcul des natural assets à partir de cees données:
 
 +---------------+------------------------------+-------+----------------------+--------------------+
 | Services      | Estimation                   | Unit  |Importance            | References         |
@@ -671,19 +685,70 @@ C'est très dichotomique entre Homme et Nature mais cela répond bien aux enjeux
 : Nature Based Contributions.
 
 
-## Results
-1. Multidimensionalité des contributions (surtout pour NS), covariations et independance
-ACP: __Fig 1__  
+## Results  
+  1. ACP des services  
 
-Scores NN et NS (pannel en 3 niveaux: les 2 histogrammes de NN et NS avec gradients de couleurs, Cartes monde NN et NS): __Fig 2__
+::: {#fig-fig1 layout-ncol=2}
 
-2. Explication des scores: relation avec les familles? DAG avec les variables socio-envir ? __Fig 3?__
+![PCA of all services](`r here::here("outputs", "figures", "PCA_NS_NN_axes1-2.png") `){width=65%}
 
-3. Compromis de NN et NS: les cadrans et une carte mondiale +/- zoom ? __Fig 4__
+![Contribution of NCP in total variance](`r here::here("outputs", "figures", "contribution_NCP_in_total_variance.png") `){width=35%}
+
+Covariations des services dans les récifs tropicaux
+
+:::
+
+_A changer: rassembler les flèches très proches dans ACP: recycling, calcium et fer, elasmo et iucn_
+
+=> Beaucoup de services sont représentés en axes 1 car directement influencés par la biomasse, ou corrélés. Mais certains services se retrouvent uniquement dans les dimensions suivantes: l'entropy fonctionnelle, la productivité, distinctivness, vitamine A, iucn...  
+__= Multidimensionalité des contributions (surtout pour NS)__
+
+-NN sont tous corrélés positivement, mais pas le cas des NS
+
+-> Moyenne pondérée des services en NN et NS pour déterminer quels sites seraient plus propices à la protection ou à la pêche:
+
+::: {layout="[[1,1],[1],[1]]"}  
+![Nature to Nature scores](`r here::here("outputs", "figures", "hist_NN_weighted_mean.png") `)
+
+![Nature to Society scores](`r here::here("outputs", "figures", "hist_NS_weighted_mean.png") `)
+
+![](`r here::here("outputs", "figures", "world map with NN score.jpg") `)
+
+![](`r here::here("outputs", "figures", "world map with NS score.jpg") `)  
+
+:::
+
+  2. Comment peut-on expliquer ces scores?
+
+- relation avec les familles? ~49% de la variance de NN est expliquée par la richesse des familles (nombre d'espèce dans chaque famille), ~20% pour les NS. 
+= considération écologique: assez intuitivement, les sites avec beaucoup d'espèces ont des écosystèmes avec des meilleurs scores NN ... -> implication?
+
+_NB: peu d'explication par les biomasses relatives. i.e. pas terrible quand on a un déséquilibre_
+
+
+
+- DAG avec les variables socio-envir ? => qu'est ce qu'on peut avoir où ? (carte Australie: influence de la distance à la côte)
+
+
+
+  3. Compromis de NN et NS: Comment concilier MPAs et pêche? 
+  
+::: {layout="[[1],[1],[1,1]]"}  
+![NN vs NS](`r here::here("outputs", "figures", "Sites in NN and NS scores.jpg") `)
+
+![](`r here::here("outputs", "figures", "world map with NN and NS score.jpg") `)
+
+![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.jpg") `)
+
+![](`r here::here("outputs", "figures", "australia map with NN and NS score.jpg") `)  
+
+:::
+
+
 
 ## Discussion  
 => notion de compromis, gestion multi objectifs (on peut pas tout faire avec une même AMP)
 
-=> imp du contexte ou familles?
+=> imp du contexte ?
 
 => un peu de tout partout, vert à protéger, bleu pour gestion de pêche durable, rouge à adapter en fonction des besoins des pops locales (floride -> protection)
