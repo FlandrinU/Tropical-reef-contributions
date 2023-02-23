@@ -2,11 +2,13 @@
 rm(list=ls())
 
 #-----------------Loading packages-------------------
-pkgs <- c("here", "googledrive", "tidyverse", "fishflux", "curl", "rfishbase")
+pkgs <- c("here", "googledrive", "tidyverse", "devtools", "curl", "rfishbase", "vctrs")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
+devtools::install_github("nschiett/fishflux", dependencies=TRUE)
+library(fishflux)
 #-----------------set directory---------------------
 path <- here::here()
 setwd(path)
@@ -31,6 +33,6 @@ source(here::here("R", "0e_filling_fish_biomass.R")) #takes few minutes due to t
 source(here::here("R", "0f_fish_datasets.R")) #keep only species existing in fishflux package
 
 ##extract data for elamsobranch species
-source(here::here("R", "0g_elasmobranchii_datasets.R")) #keep only species existing in fishflux package
+source(here::here("R", "0g_elasmobranchii_datasets.R")) 
 
 

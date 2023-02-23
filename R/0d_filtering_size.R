@@ -14,10 +14,10 @@ head(rls_trop_fish)
 
 # looking for large fish to check for errors ----
 # as they can have large effect on biomass
-fish_mlsupp80cm<-rls_trop_fish %>% 
-  filter(MaxLength>80) %>%
-  distinct(taxa, MaxLength) %>%
-  arrange(taxa)
+fish_mlsupp80cm<-rls_trop_fish |> 
+  dplyr::filter(MaxLength>80) |>
+  dplyr::distinct(taxa, MaxLength) |>
+  dplyr::arrange(taxa)
 nrow(fish_mlsupp80cm)
 # 146 cases
 # have a look to fish_mlsupp80cm table
@@ -32,9 +32,9 @@ rls_trop_fish[which(rls_trop_fish$taxa=="Epinephelus_spp."),"MaxLength"]<-270
 # filling missing values of Max length ----
 
 # number of cases
-sp_MaxLengthNA<-rls_trop_fish %>%
-  filter (is.na(MaxLength) ) %>%
-  distinct(taxa, genus, family, MaxLength)
+sp_MaxLengthNA<-rls_trop_fish |>
+  dplyr::filter (is.na(MaxLength) ) |>
+  dplyr::distinct(taxa, genus, family, MaxLength)
 # open sp_MaxLengthNA 
 nrow(sp_MaxLengthNA) # => 110 taxa, many Genus spp.
 
@@ -44,19 +44,19 @@ nrow(sp_MaxLengthNA) # => 110 taxa, many Genus spp.
 for (k in 1:nrow(sp_MaxLengthNA) ) { 
   
   # median of species from same genus
-  samegenus_k<-rls_trop_fish %>%
-    filter( genus==sp_MaxLengthNA[k,"genus"] &
-              (!is.na(MaxLength))  ) %>%
-    distinct(taxa, MaxLength)
+  samegenus_k<-rls_trop_fish |>
+    dplyr::filter( genus==sp_MaxLengthNA[k,"genus"] &
+              (!is.na(MaxLength))  ) |>
+    dplyr::distinct(taxa, MaxLength)
   
   if (length(samegenus_k$MaxLength)>=1) {
     sp_MaxLengthNA[k,"MaxLength"]<-median(samegenus_k$MaxLength)
   }else {
     # median of species from same family
-    samefamily_k<-rls_trop_fish %>%
-      filter( family==sp_MaxLengthNA[k,"family"] &
-                (!is.na(MaxLength))  ) %>%
-      distinct(taxa, MaxLength)
+    samefamily_k<-rls_trop_fish |>
+      dplyr::filter( family==sp_MaxLengthNA[k,"family"] &
+                (!is.na(MaxLength))  ) |>
+      dplyr::distinct(taxa, MaxLength)
     
     if (length(samefamily_k$MaxLength)>=1) {
       sp_MaxLengthNA[k,"MaxLength"]<-median(samefamily_k$MaxLength)
@@ -68,20 +68,20 @@ for (k in 1:nrow(sp_MaxLengthNA) ) {
 }# end of k    
 
 # checking remaining NA  
-sp_MaxLengthNA %>% 
-  filter(is.na(MaxLength)) # 3 taxa
+sp_MaxLengthNA |> 
+  dplyr::filter(is.na(MaxLength)) # 3 taxa
 
 # Latropiscis_purpurissatus filling based on data from Fishbase  
 sp_MaxLengthNA[which(sp_MaxLengthNA$taxa=="Latropiscis_purpurissatus"),"MaxLength"]<-60
 
 # for Aseraggodes_spp. based on observed size *2
-rls_trop_fish %>%
-  filter( family=="Soleidae")
+rls_trop_fish |>
+  dplyr::filter( family=="Soleidae")
 sp_MaxLengthNA[which(sp_MaxLengthNA$taxa=="Aseraggodes_spp."),"MaxLength"]<-20
 
 # for Pseudomugil_spp. based on observed size *2
-rls_trop_fish %>%
-  filter( family=="Pseudomugilidae")
+rls_trop_fish |>
+  dplyr::filter( family=="Pseudomugilidae")
 sp_MaxLengthNA[which(sp_MaxLengthNA$taxa=="Pseudomugil_spp."),"MaxLength"]<-5
 
 
@@ -100,45 +100,45 @@ summary(rls_trop_fish$MaxLength) # OK no NA remaining
 ## removing small fish ####
 
 # species with size == 2.5cm ----
-taxa_small<-rls_trop_fish %>%
-  filter(rls_trop_fish$size_class==2.5)
-n_distinct(taxa_small$taxa) # 642 taxa
-n_distinct(taxa_small$family) # 39 families
+taxa_small<-rls_trop_fish |>
+  dplyr::filter(rls_trop_fish$size_class==2.5)
+dplyr::n_distinct(taxa_small$taxa) # 642 taxa
+dplyr::n_distinct(taxa_small$family) # 39 families
 # => small cryptobenthic or juveniles of larger fish
 
 # removing fish<2.5cm, and juveniles (5cm) of fish larger than 25cm ----
 # keeping missing size (except if Maxlength<5cm)
 
 # keeping fish larger than 5cm and fish of 5cm if Maxsize <25cm
-rls_trop_fish_nosmall<-rls_trop_fish %>%
-  filter ( (is.na(size_class) & MaxLength>=5) | 
+rls_trop_fish_nosmall<-rls_trop_fish |>
+  dplyr::filter ( (is.na(size_class) & MaxLength>=5) | 
              (size_class>5 & MaxLength >=5 ) | 
              (size_class==5 & MaxLength<25) )
 
 # diversity remaining
-n_distinct(rls_trop_fish_nosmall$family) # 84 families
-n_distinct(rls_trop_fish_nosmall$taxa) # 1 697 taxa
+dplyr::n_distinct(rls_trop_fish_nosmall$family) # 84 families
+dplyr::n_distinct(rls_trop_fish_nosmall$taxa) # 1 697 taxa
 summary(rls_trop_fish_nosmall$size_class) # from 5 to 300cm with 146 NA
 
 
 ## surveys with missing size for not small fishes ####   
-sizeNA<-rls_trop_fish_nosmall %>%
-  filter ( is.na(size_class) )
+sizeNA<-rls_trop_fish_nosmall |>
+  dplyr::filter ( is.na(size_class) )
 summary(sizeNA$number) # from 1 to 905 individuals, median =3
 summary(sizeNA$MaxLength) # Q1=12cm ; Q3>30cm
 
-surveys_sizeNA <- sizeNA %>%
-  distinct(SurveyID)
+surveys_sizeNA <- sizeNA |>
+  dplyr::distinct(SurveyID)
 nrow(surveys_sizeNA) # 43 surveys
 
 # removing transects with missing size data ----
-rls_trop_fish_nosmall <- rls_trop_fish_nosmall %>%
-  filter ( !(SurveyID %in% surveys_sizeNA$SurveyID ) )
+rls_trop_fish_nosmall <- rls_trop_fish_nosmall |>
+  dplyr::filter ( !(SurveyID %in% surveys_sizeNA$SurveyID ) )
 
 # diversity remaining
-n_distinct(rls_trop_fish_nosmall$SurveyID) # 3 751 surveys
-n_distinct(rls_trop_fish_nosmall$family) # 83 families
-n_distinct(rls_trop_fish_nosmall$taxa) # 1 694 taxa
+dplyr::n_distinct(rls_trop_fish_nosmall$SurveyID) # 3 751 surveys
+dplyr::n_distinct(rls_trop_fish_nosmall$family) # 83 families
+dplyr::n_distinct(rls_trop_fish_nosmall$taxa) # 1 694 taxa
 
 
 
@@ -154,7 +154,7 @@ length(taxa_trop) # 1 694 taxa
 summary(rls_trop_fish_nosmall$MaxLength) 
 # from 2.5 (while size filtered to be >5 ) to 333
 
-rls_trop_fish_nosmall %>% filter(MaxLength<5) %>% distinct(family, taxa)
+rls_trop_fish_nosmall |> dplyr::filter(MaxLength<5) |> dplyr::distinct(family, taxa)
 # small fish from only 8 taxa
 
 # threshold = 2*(maxLength) or (maxlength+50)
@@ -163,13 +163,13 @@ list_outlier_size<-list()
 # loop on taxa
 for (k in taxa_trop) {
   # observations
-  ind_k<- rls_trop_fish_nosmall %>%
-    filter(taxa==k)
+  ind_k<- rls_trop_fish_nosmall |>
+    dplyr::filter(taxa==k)
   
-  ind_k<- ind_k %>%
-    select(taxa, family, MaxLength,  SurveyID, size_class, number)
+  ind_k<- ind_k |>
+    dplyr::select(taxa, family, MaxLength,  SurveyID, size_class, number)
   
-  list_outlier_size[[k]]<-filter(ind_k, 
+  list_outlier_size[[k]]<-dplyr::filter(ind_k, 
                                  (size_class > (MaxLength)*2 )  | 
                                  (size_class > (MaxLength+50) )
   )
@@ -186,21 +186,21 @@ write.csv( outlier_size, here::here("data_raw", "outlier_size.csv") )
 
 # summary of potential errors
 nrow(outlier_size) # 132 cases
-n_distinct(outlier_size$SurveyID) # 112 transects
+dplyr::n_distinct(outlier_size$SurveyID) # 112 transects
 unique(outlier_size$family) # 22 families
-outlier_size %>% filter(MaxLength>30) # 14 cases of error on large fish
+outlier_size |> dplyr::filter(MaxLength>30) # 14 cases of error on large fish
 summary(outlier_size$number) # >50% cases with 1 indiv
-outlier_size %>% filter(number>10) # 9 cases with >10 indiv for small species
+outlier_size |> dplyr::filter(number>10) # 9 cases with >10 indiv for small species
 
 
 # removing observations with erroneous size data ----
-rls_trop_fish_sizeok <- rls_trop_fish_nosmall %>%
-  filter( ! (SurveyID %in% unique(outlier_size$SurveyID) ) )
+rls_trop_fish_sizeok <- rls_trop_fish_nosmall |>
+  dplyr::filter( ! (SurveyID %in% unique(outlier_size$SurveyID) ) )
 
 # diversity remaining
-n_distinct(rls_trop_fish_sizeok$SurveyID) # 3 639 surveys
-n_distinct(rls_trop_fish_sizeok$family) # 81 families
-n_distinct(rls_trop_fish_sizeok$taxa) # 1 684 taxa
+dplyr::n_distinct(rls_trop_fish_sizeok$SurveyID) # 3 639 surveys
+dplyr::n_distinct(rls_trop_fish_sizeok$family) # 81 families
+dplyr::n_distinct(rls_trop_fish_sizeok$taxa) # 1 684 taxa
 
 
 ## saving as Rdata ####

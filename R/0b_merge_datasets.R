@@ -10,15 +10,22 @@ rm(list=ls())
   # loading raw dataset ----
   rls_surveys<-readRDS(here::here("data_raw", "source", "RLS_sites.rds"))
   head(rls_surveys)
+  rls_mpa<-readRDS(here::here("data_raw", "source", "RLS_mpa.rds"))
+  head(rls_mpa)
     
   # recoding ID as character string ----
   class(rls_surveys$SurveyID) # integer but better as a character
   rls_surveys$SurveyID<-as.character(rls_surveys$SurveyID)
-  n_distinct(rls_surveys$SurveyID) # 7100 surveys
+  dplyr::n_distinct(rls_surveys$SurveyID) # 7100 surveys
+  rls_mpa$SurveyID<-as.character(rls_mpa$SurveyID)
+  dplyr::n_distinct(rls_mpa$SurveyID) # 7100 surveys
+  
+  identical( sort( unique(rls_mpa$SurveyID)), 
+             sort( unique(rls_surveys$SurveyID) ) ) #OK
   
   # site code ----
   class(rls_surveys$SiteCode) # factor
-  n_distinct(rls_surveys$SiteCode) # 3544 sites
+  dplyr::n_distinct(rls_surveys$SiteCode) # 3544 sites
 
 
 ## environment #####
@@ -28,19 +35,19 @@ rm(list=ls())
   head(rls_env)
 
  #plot(rls_env$min_sst_1year, rls_env$min_sst_5year)
- rls_env %>% filter(min_sst_1year>=17) %>% nrow()
- rls_env %>% filter(min_sst_5year>=17) %>% nrow()
+ rls_env |> dplyr::filter(min_sst_1year>=17) |> nrow()
+ rls_env |> dplyr::filter(min_sst_5year>=17) |> nrow()
   # keeping 5 years average, to be more representative
     
   # keeping only SST ----
-  rls_env_sst<- rls_env %>%
-    select(SurveyID, 
+  rls_env_sst<- rls_env |>
+    dplyr::select(SurveyID, 
            SiteMinSST=min_sst_5year, 
            SiteMeanSST=mean_sst_5year, 
            SiteMaxSST=max_sst_5year)
   rls_env_sst$SurveyID<-as.character(rls_env_sst$SurveyID) # recoding variable
   
-  n_distinct(rls_env_sst$SurveyID) # 7100 surveys
+  dplyr::n_distinct(rls_env_sst$SurveyID) # 7100 surveys
   identical( sort( unique(rls_env_sst$SurveyID)), 
              sort( unique(rls_surveys$SurveyID) ) ) # OK
   
@@ -53,34 +60,34 @@ rm(list=ls())
   # ID of surveys recoded and checked ---
   class(rls_uvc$SurveyID) # integer but better as a character
   rls_uvc$SurveyID<-as.character(rls_uvc$SurveyID) # recoding variables
-  n_distinct(rls_uvc$SurveyID) # 7100 surveys as in rls_surveys
+  dplyr::n_distinct(rls_uvc$SurveyID) # 7100 surveys as in rls_surveys
   
   identical( sort( unique(rls_uvc$SurveyID)), 
              sort( unique(rls_surveys$SurveyID) ) ) # OK
   
   # Check for duplicates ---
   nrow(rls_uvc) # 380132
-  n_distinct(rls_uvc) # 380118
+  dplyr::n_distinct(rls_uvc) # 380118
   # There are 14 repeated observations
-  rls_uvc %>% 
-    group_by(across()) %>%
-    count() %>% 
-    filter(n > 1)
+  rls_uvc |> 
+    dplyr::group_by(across()) |>
+    dplyr::count() |> 
+    dplyr::filter(n > 1)
   # Mainly observations from a species of wrasse (Ophthalmolepis lineolata)
   # Remove these
   rls_uvc <- unique(rls_uvc)
   nrow(rls_uvc) # 380 118 observations
   
   # taxonomy ----
-  n_distinct(rls_uvc$SPECIES_NAME) # 2832 "species" in original dataset), useless
+  dplyr::n_distinct(rls_uvc$SPECIES_NAME) # 2832 "species" in original dataset), useless
   class(rls_uvc$TAXONOMIC_NAME) # factor
-  n_distinct(rls_uvc$TAXONOMIC_NAME) # 2801 valid taxonomic names
-  nrow (filter(rls_uvc, is.null(TAXONOMIC_NAME)) ) # all obs have a valid name
+  dplyr::n_distinct(rls_uvc$TAXONOMIC_NAME) # 2801 valid taxonomic names
+  nrow (dplyr::filter(rls_uvc, is.null(TAXONOMIC_NAME)) ) # all obs have a valid name
   
   # number of individuals ----
   class(rls_uvc$Num) # number of individuals is a numeric variable (integer)
   summary(rls_uvc$Num) # min=0, no NAs
-  rls_uvc %>% filter(Num==0) # only one obs with no individual, Error ?
+  rls_uvc |> dplyr::filter(Num==0) # only one obs with no individual, Error ?
   
   # size class ----
   class(rls_uvc$Sizeclass) # size classes are categories
@@ -96,7 +103,7 @@ rm(list=ls())
   # recoding as numeric variable, NULL replaced by NA
   rls_uvc$Biomass <- as.numeric(as.character(rls_uvc$Biomass))
   summary(rls_uvc$Biomass) # 0 and 3308 NAs
-  rls_uvc %>% filter(Biomass==0) # only one obs with no individual, Error ?
+  rls_uvc |> dplyr::filter(Biomass==0) # only one obs with no individual, Error ?
   
   nrow(rls_uvc) # 380 118 entries
   
@@ -110,9 +117,9 @@ rm(list=ls())
   
   # unique valid latin name from TAXONOMIC_NAME variable
   nrow(rls_species) # 2847
-  n_distinct(rls_species$SPECIES_NAME) # 2 836 species
-  n_distinct(rls_species$TAXONOMIC_NAME) # 2 805 species
-  rls_species<-distinct(rls_species, TAXONOMIC_NAME,.keep_all = TRUE)
+  dplyr::n_distinct(rls_species$SPECIES_NAME) # 2 836 species
+  dplyr::n_distinct(rls_species$TAXONOMIC_NAME) # 2 805 species
+  rls_species<-dplyr::distinct(rls_species, TAXONOMIC_NAME,.keep_all = TRUE)
   nrow(rls_species) # 2 805 species
   
   # valid species names recoded ----
@@ -134,7 +141,7 @@ rm(list=ls())
   # recoding species name and keeping unique valid names ----
   rls_traits$CURRENT_TAXONOMIC_NAME<-gsub(" ", replacement ="_", x=rls_traits$CURRENT_TAXONOMIC_NAME)
   nrow(rls_traits) # 3 189 species
-  rls_traits<-distinct(rls_traits, CURRENT_TAXONOMIC_NAME,.keep_all = TRUE)
+  rls_traits<-dplyr::distinct(rls_traits, CURRENT_TAXONOMIC_NAME,.keep_all = TRUE)
   nrow(rls_traits) # 3 073 unique valid species
   
   
@@ -159,15 +166,15 @@ rm(list=ls())
 ## Merging data about species #####
 
   # taxonomy + trait  ----
-  rls_species_data<- left_join(
-                              select(rls_species, 
+  rls_species_data<- dplyr::left_join(
+                              dplyr::select(rls_species, 
                                                   taxa = TAXONOMIC_NAME, 
                                                   taxo_level = Level,
                                                   genus = Genus_FishBase, 
                                                   family = Family_FishBase,
                                                   class = Class_FishBase)
                               ,
-                              select(rls_traits,
+                              dplyr::select(rls_traits,
                                                 CURRENT_TAXONOMIC_NAME,
                                                 MaxLength,
                                                 Diet=Trophic.group2, 
@@ -180,15 +187,15 @@ rm(list=ls())
 
   head(rls_species_data )
   nrow(rls_species_data)  # 2805 taxa
-  n_distinct(rls_species$TAXONOMIC_NAME)  # 2805 taxa
-  n_distinct(rls_species_data$taxa) # 2805 taxa
+  dplyr::n_distinct(rls_species$TAXONOMIC_NAME)  # 2805 taxa
+  dplyr::n_distinct(rls_species_data$taxa) # 2805 taxa
   
   
   
   # checking species with missing MaxLength ----
-  nrow( rls_species_data %>% 
-    filter(is.na(MaxLength)) %>%
-    select(taxa, family) )
+  nrow( rls_species_data |> 
+    dplyr::filter(is.na(MaxLength)) |>
+    dplyr::select(taxa, family) )
   # 307 taxa with unknown max length
 
 
@@ -197,8 +204,8 @@ rm(list=ls())
 ## Building a single database with all relevant variables from RLS datasets ####
 
   # keeping only relevant variable from uvc data ----
-  rls_all_raw<- rls_uvc %>%
-                  select(SurveyID,
+  rls_all_raw<- rls_uvc |>
+    dplyr::select(SurveyID,
                           taxa = TAXONOMIC_NAME, 
                           number = Num,
                           size_class = Sizeclass,
@@ -206,22 +213,35 @@ rm(list=ls())
                          )
   
   # left merging with species data ----
-  rls_all_raw<- rls_all_raw %>% 
-                  left_join( rls_species_data,
+  rls_all_raw<- rls_all_raw |> 
+                  dplyr::left_join( rls_species_data,
                              by="taxa")
 
   # left merging with survey geography data ----
-  rls_all_raw <- rls_all_raw %>%
-                left_join( select(rls_surveys, 
+  rls_all_raw <- rls_all_raw |>
+                dplyr::left_join( 
+                  dplyr::select(rls_surveys, 
                                   SurveyID, SurveyDate, SurveyDepth=Depth,
                                   SiteCode, SiteLatitude, SiteLongitude, 
                                   SiteCountry=Country, SiteEcoregion=Ecoregion),
                            by="SurveyID")
 
-
+  # left merging with survey MPA data ----
+  rls_all_raw <- rls_all_raw |>
+    dplyr::left_join( 
+      dplyr::select(rls_mpa, 
+                      SurveyID, mpa_name = MPA, 
+                      mpa_enforcement = Effectiveness,
+                      protection_status = No.take.multizoned, 
+                      year_of_protection = X.year.of.protection,
+                      gears_allowed = Gears.allowed,
+                      mpa_iucn_cat = IUCN_CAT_wdpa),
+               by="SurveyID")
+  
   # left merging with SST data ----
-  rls_all_raw <- rls_all_raw %>%
-                left_join( select(rls_env_sst, 
+  rls_all_raw <- rls_all_raw |>
+                dplyr::left_join( 
+                  dplyr::select(rls_env_sst, 
                                   SurveyID,
                                   SiteMinSST, SiteMeanSST, SiteMaxSST),
                            by="SurveyID")
@@ -231,8 +251,8 @@ head(rls_all_raw)
 summary(rls_all_raw)
 nrow(rls_uvc) == nrow(rls_all_raw) # OK
 nrow(rls_all_raw) # 380 118 observations
-n_distinct(rls_all_raw$SurveyID) # 7100 surveys
-n_distinct(rls_all_raw$taxa) # 2 801 taxa
+dplyr::n_distinct(rls_all_raw$SurveyID) # 7100 surveys
+dplyr::n_distinct(rls_all_raw$taxa) # 2 801 taxa
 unique(rls_all_raw$taxo_level) #  "genus"   "species" "higher"  "family" 
 length(which(rls_all_raw$taxo_level=="species"))/nrow(rls_uvc) # 98.8% of observations at species level
 

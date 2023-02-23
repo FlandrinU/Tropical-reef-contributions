@@ -23,55 +23,55 @@ head(rls_all_raw)
 ## filtering to keep only transects from tropical sites #####
 # i.e with min(SST)>=17°C
 
-rls_trop<-rls_all_raw %>% 
-  filter( SiteMinSST >= 17)
+rls_trop<-rls_all_raw |> 
+  dplyr::filter( SiteMinSST >= 17)
 
-n_distinct(rls_trop$SurveyID) # 3 794 surveys
-n_distinct(rls_trop$SiteCode) # 2 057 sites
-n_distinct(rls_trop$taxa) # 2 321 taxa
-n_distinct(rls_trop$family) # 123 families
+dplyr::n_distinct(rls_trop$SurveyID) # 3 794 surveys
+dplyr::n_distinct(rls_trop$SiteCode) # 2 057 sites
+dplyr::n_distinct(rls_trop$taxa) # 2 321 taxa
+dplyr::n_distinct(rls_trop$family) # 123 families
 
 
 ##  keeping only elasmobranchii ##
 # looking at names of NO family and NO class
-rls_trop %>%
-  filter(class=="" | family=="") %>% 
-  distinct(taxa, taxo_level, family, class)
+rls_trop |>
+  dplyr::filter(class=="" | family=="") |> 
+  dplyr::distinct(taxa, taxo_level, family, class)
 # 83 taxa => check, only Actinopterygii except "Dasyatid"  ###### @@@@@ some xxid spp from families not removed in next scripts (e.g. Acanthurid spp, Scarid Scarus spp)
 
 # filtering to remove all Actinopterygii #
-rls_trop_elasmo<- rls_trop %>%
-  filter(class=="Elasmobranchii")
+rls_trop_elasmo<- rls_trop |>
+  dplyr::filter(class=="Elasmobranchii")
 
 head(rls_trop_elasmo)
 
 # diversity remaining
-n_distinct(rls_trop_elasmo$SurveyID) # 730 surveys
-n_distinct(rls_trop_elasmo$family) # 17 families
-n_distinct(rls_trop_elasmo$taxa) # 60 taxa
+dplyr::n_distinct(rls_trop_elasmo$SurveyID) # 730 surveys
+dplyr::n_distinct(rls_trop_elasmo$family) # 17 families
+dplyr::n_distinct(rls_trop_elasmo$taxa) # 60 taxa
 
 
 names <- sort(rls_trop_elasmo$taxa) 
 unique(names)
-names[str_detect(names, pattern="spp.")]
+names[stringr::str_detect(names, pattern="spp.")]
 
 
 
 #### species dataset ####
-data_species_elasmo<-rls_trop_elasmo %>%
-  select( species=taxa, family, 
-          Size=MaxLength, Position, Activity ) %>%
-  distinct(species,.keep_all = TRUE) %>%
-  mutate(species=as.character(species))   %>%
-  mutate(family=as_factor(family))
+data_species_elasmo<-rls_trop_elasmo |>
+  dplyr::select( species=taxa, family, 
+          Size=MaxLength, Position, Activity ) |>
+  dplyr::distinct(species,.keep_all = TRUE) |>
+  dplyr::mutate(species=as.character(species))   |>
+  dplyr::mutate(family=forcats::as_factor(family))
 
 summary(data_species_elasmo)
-n_distinct(data_species_elasmo$species) # 60 taxa
+dplyr::n_distinct(data_species_elasmo$species) # 60 taxa
 unique(data_species_elasmo$family) # 17 families
 
 # recoding Position as an ordinal trait after merging the 2 types of Pelagic
 # capital letter for all categories
-data_species_elasmo$Position <- fct_recode(data_species_elasmo$Position,
+data_species_elasmo$Position <- forcats::fct_recode(data_species_elasmo$Position,
                                   Benthic="benthic", 
                                   Pelagic="pelagic site attached", Pelagic="pelagic non-site attached")
 data_species_elasmo$Position<-factor(data_species_elasmo$Position, 
@@ -79,14 +79,14 @@ data_species_elasmo$Position<-factor(data_species_elasmo$Position,
 
 
 #### surveys dataset ####
-data_surveys_elasmo <- rls_trop_elasmo %>%
-  select(SurveyID, species=taxa, size_class, number, biomass )
+data_surveys_elasmo <- rls_trop_elasmo |>
+  dplyr::select(SurveyID, species=taxa, size_class, number, biomass )
 
 summary(data_surveys_elasmo) #1130 surveys data
 length(unique(data_surveys_elasmo$SurveyID)) #730 surveys
 
-data_surveys_elasmo <- data_surveys_elasmo %>%
-  filter(SurveyID %in% metadata_surveys$SurveyID)
+data_surveys_elasmo <- data_surveys_elasmo |>
+  dplyr::filter(SurveyID %in% metadata_surveys$SurveyID)
 
 #elasmobranchii data remaining
 summary(data_surveys_elasmo) #1038 surveys data 
@@ -96,12 +96,12 @@ length(unique(data_surveys_elasmo$SurveyID)) #686 surveys (44 surveys absent in 
 
 #check scientific names
 names <- data_species_elasmo$species
-corrected_name <- rfishbase::validate_names( str_replace(names, "_", " ") )
-corrected_name <- str_replace(corrected_name, " ", "_")  
+corrected_name <- rfishbase::validate_names( stringr::str_replace(names, "_", " ") )
+corrected_name <- stringr::str_replace(corrected_name, " ", "_")  
 
 #order data
-data_species_elasmo <- cbind(data_species_elasmo, species_corrected = corrected_name) %>%
-  dplyr::mutate(class = "elasmobranchii") %>%
+data_species_elasmo <- cbind(data_species_elasmo, species_corrected = corrected_name) |>
+  dplyr::mutate(class = "elasmobranchii") |>
   dplyr::select(species, species_corrected, family, class, Size, Position, Activity)
  
 ## saving as Rdata ##

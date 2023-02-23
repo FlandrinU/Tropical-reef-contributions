@@ -399,19 +399,20 @@ $$
 \text{!! les valeurs de NCPs (} \ \mathrm a_i \ \text{) sont} \ log10() \ \text{(pour les distribution right skewed), et toutes centrées réduites}
 $$
 Kark formula test: ( _in adapted formula, we removed both 1/2 in the weight parameter_ )  
-:::
-![](`r here::here("outputs", "figures", "test_weighted_mean_formula.png") `)
-:::
+
+:::  
+![](`r here::here("outputs", "figures", "test_weighted_mean_formula.png") `)  
+:::  
 
 ## NN and NS scores  
 ### In the PCA  
-:::{#fig-scoreinpca}
-![](`r here::here("outputs", "figures", "PCA_NS_NN_axes1-2_with_NN_NS_kark.png") `)
+:::{#fig-scoreinpca}  
+![](`r here::here("outputs", "figures", "PCA_NS_NN_axes1-2_with_NN_NS_scores.png") `)
 
-![](`r here::here("outputs", "figures", "PCA_NS_NN_axes3-4_with_NN_NS_kark.png") `)
+![](`r here::here("outputs", "figures", "PCA_NS_NN_axes3-4_with_NN_NS_scores.png") `)
 
 NN and NS scores estimated by weighted mean
-:::
+:::  
 
 ### Distribution  
 :::{#fig-histogram layout-ncol=2}
