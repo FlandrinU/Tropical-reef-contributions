@@ -54,7 +54,14 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
-load(here::here("outputs","all_NCP_site.Rdata"))
+# load(here::here("outputs","all_NCP_site.Rdata"))
+# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
+load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+NCP_site <- NCP_site_condition
+
+
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 load(here::here("data","metadata_surveys.Rdata"))
 
@@ -110,7 +117,7 @@ site_family_occ <- surveys_family_occ %>%
 rownames(NCP_site) <- NCP_site$SiteCode
 NCP_site_for_pca <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                  SiteMeanSST, SiteLatitude, SiteLongitude, Btot,
-                                                 HDI, gravtot2, MarineEcosystemDependency,
+                                                 HDI, MarineEcosystemDependency,
                                                  coral_imputation))
                                                  #fishery_biomass, biom_lowTL, biom_mediumTL, biom_highTL))
 pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = T, graph=F, ncp=10)
@@ -391,10 +398,23 @@ $$
 $$
 \text{!! les valeurs de NCPs (} \ \mathrm a_i \ \text{) sont} \ log10() \ \text{(pour les distribution right skewed), et toutes centrées réduites}
 $$
+Kark formula test: ( _in adapted formula, we removed both 1/2 in the weight parameter_ )  
+:::
+![](`r here::here("outputs", "figures", "test_weighted_mean_formula.png") `)
+:::
 
-## NN and NS scores
+## NN and NS scores  
+### In the PCA  
+:::{#fig-scoreinpca}
+![](`r here::here("outputs", "figures", "PCA_NS_NN_axes1-2_with_NN_NS_kark.png") `)
 
-:::{#fig-temperature layout-ncol=2}
+![](`r here::here("outputs", "figures", "PCA_NS_NN_axes3-4_with_NN_NS_kark.png") `)
+
+NN and NS scores estimated by weighted mean
+:::
+
+### Distribution  
+:::{#fig-histogram layout-ncol=2}
 ![](`r here::here("outputs", "figures", "hist_NN_weighted_mean.png") `)
 
 ![](`r here::here("outputs", "figures", "hist_NS_weighted_mean.png") `)
@@ -403,10 +423,15 @@ NN and NS scores estimated by weighted mean
 :::
 
 ### NN on map  
-![](`r here::here("outputs", "figures", "world map with NN score.jpg") `)
+![](`r here::here("outputs", "figures", "world map with NN score.png") `)
 
 ### NS on map  
-![](`r here::here("outputs", "figures", "world map with NS score.jpg") `)
+![](`r here::here("outputs", "figures", "world map with NS score.png") `)
+
+### NN and NS according to latitude  
+![](`r here::here("outputs", "figures", "NN score according to latitude.png") `)  
+![](`r here::here("outputs", "figures", "NS score according to latitude.png") `)  
+
 
 ## Study NN according to NS  
 ### Color scales
@@ -415,11 +440,11 @@ NN and NS scores estimated by weighted mean
 
 ### on map
 ::: {layout-nrow=3}
-![](`r here::here("outputs", "figures", "world map with NN and NS score.jpg") `)  
+![](`r here::here("outputs", "figures", "world map with NN and NS score.png") `)  
 
-![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.jpg") `)  
+![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.png") `)  
 
-![](`r here::here("outputs", "figures", "australia map with NN and NS score.jpg") `)  
+![](`r here::here("outputs", "figures", "australia map with NN and NS score.png") `)  
 :::
 
 
@@ -712,9 +737,9 @@ __= Multidimensionalité des contributions (surtout pour NS)__
 
 ![Nature to Society scores](`r here::here("outputs", "figures", "hist_NS_weighted_mean.png") `)
 
-![](`r here::here("outputs", "figures", "world map with NN score.jpg") `)
+![](`r here::here("outputs", "figures", "world map with NN score.png") `)
 
-![](`r here::here("outputs", "figures", "world map with NS score.jpg") `)  
+![](`r here::here("outputs", "figures", "world map with NS score.png") `)  
 
 :::
 
@@ -734,13 +759,13 @@ _NB: peu d'explication par les biomasses relatives. i.e. pas terrible quand on a
   3. Compromis de NN et NS: Comment concilier MPAs et pêche? 
   
 ::: {layout="[[1],[1],[1,1]]"}  
-![NN vs NS](`r here::here("outputs", "figures", "Sites in NN and NS scores.jpg") `)
+![NN vs NS](`r here::here("outputs", "figures", "Sites in NN and NS scores.png") `)
 
-![](`r here::here("outputs", "figures", "world map with NN and NS score.jpg") `)
+![](`r here::here("outputs", "figures", "world map with NN and NS score.png") `)
 
-![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.jpg") `)
+![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.png") `)
 
-![](`r here::here("outputs", "figures", "australia map with NN and NS score.jpg") `)  
+![](`r here::here("outputs", "figures", "australia map with NN and NS score.png") `)  
 
 :::
 

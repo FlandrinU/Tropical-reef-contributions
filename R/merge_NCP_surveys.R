@@ -54,27 +54,27 @@ carbonates <- dplyr::select(caco3_per_day_without_outliers, SurveyID, low_mg_cal
                             aragonite, monohydrocalcite, amorphous_carbonate) #2156 surveys
 
 troph_ind <- dplyr::select(as.data.frame(trophic_indicators_survey), SurveyID, 
-                           Ntop, b_power_law, Modularity) |> #3627 surveys
-             dplyr::rename(top_predator_proportion = Ntop, robustness = b_power_law, modularity = Modularity) |>
+                           Ntop, b_power_law, weighted_mTL) |> #3627 surveys
+             dplyr::rename(top_predator_proportion = Ntop, robustness = b_power_law, mean_TL = weighted_mTL) |>
              dplyr::mutate(across(.cols = c("SurveyID"),.fns = as.character, .names = "{.col}" ))
  
 
-coral_cover <- dplyr::select(benthic_imputed, SurveyID, coral_imputation) %>%
-  mutate( SurveyID = as.character(SurveyID))
+coral_cover <- dplyr::select(benthic_imputed, SurveyID, coral_imputation) |>
+  dplyr::mutate( SurveyID = as.character(SurveyID))
 
-NCP <- metadata_surveys %>%
+NCP <- metadata_surveys |>
   dplyr::select(SurveyID, SiteCode, SiteCountry, SiteEcoregion, SiteLatitude, SiteLongitude, 
-         SurveyDepth, SiteMeanSST, gravtot2, HDI, MarineEcosystemDependency ) %>%
-  dplyr::left_join(coral_cover) %>%
-  dplyr::left_join(recycl) %>%
-  dplyr::left_join(prod) %>%
-  dplyr::left_join(biodiv) %>%
-  dplyr::left_join(nutrients) %>%
-  dplyr::left_join(surveys_fishery_biom) %>%
-  dplyr::left_join(phylo) %>%
-  dplyr::left_join(aesthetic) %>%
-  dplyr::left_join(iucn_and_elasmo_by_surveys)%>%
-  dplyr::left_join(carbonates) %>%
+         SurveyDepth, SiteMeanSST, HDI, MarineEcosystemDependency ) |> #gravtot2, HDI, MarineEcosystemDependency ) |>
+  dplyr::left_join(coral_cover) |>
+  dplyr::left_join(recycl) |>
+  dplyr::left_join(prod) |>
+  dplyr::left_join(biodiv) |>
+  dplyr::left_join(nutrients) |>
+  dplyr::left_join(surveys_fishery_biom) |>
+  dplyr::left_join(phylo) |>
+  dplyr::left_join(aesthetic) |>
+  dplyr::left_join(iucn_and_elasmo_by_surveys)|>
+  dplyr::left_join(carbonates) |>
   dplyr::left_join(troph_ind) 
   
 
@@ -84,57 +84,57 @@ NCP_surveys <- questionr::na.rm(NCP) #remains 1817 surveys with HDI and Marine d
 save(NCP_surveys, file = here::here("outputs", "all_NCP_surveys.Rdata"))
 
 
-#### keep only coral reef sites (according to Allen Atlas)
-# allen_list <- dplyr::mutate(hab_filt, SurveyID = as.character(SurveyID))
-# NCP_coral <- dplyr::filter(NCP, SurveyID %in% allen_list$SurveyID)
-# NCP_surveys <- questionr::na.rm(NCP_coral) #remains 1576
+### keep only coral reef sites (according to Allen Atlas)
+allen_list <- dplyr::mutate(hab_filt, SurveyID = as.character(SurveyID))
+NCP_coral <- dplyr::filter(NCP, SurveyID %in% allen_list$SurveyID)
+NCP_surveys_coral_reef <- questionr::na.rm(NCP_coral) #remains 1576
 
-# #### test without Australia
-# NCP_wo_aust <- dplyr::filter(NCP, SiteCountry != "Australia")
-# NCP_surveys <- questionr::na.rm(NCP_wo_aust) #remains 731
+#### test without Australia
+NCP_wo_aust <- dplyr::filter(NCP, SiteCountry != "Australia")
+NCP_surveys_wo_australia <- questionr::na.rm(NCP_wo_aust) #remains 731
 
 # #### test without Spain
 # NCP_wo_spain <- dplyr::filter(NCP, SiteCountry != "Spain")
 # NCP_surveys <- questionr::na.rm(NCP_wo_spain) #remains 1576
 
-# #### remove non-coral tropical reef
-# ID_wo_no_coral <- dplyr::filter(benthic_imputed, coral_imputation >0) %>%
-#   dplyr::mutate(SurveyID = as.character(SurveyID))
-# NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_no_coral$SurveyID)
-# NCP_surveys <- questionr::na.rm(NCP_wo_no_coral) #remains 1682
+#### remove non-coral tropical reef
+ID_wo_no_coral <- dplyr::filter(benthic_imputed, coral_imputation >0) |>
+  dplyr::mutate(SurveyID = as.character(SurveyID))
+NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_no_coral$SurveyID)
+NCP_surveys_coral_0_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1682
 
 
 # #### tropical reef with more than 1% coral cover
-# ID_wo_1_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.01) %>%
+# ID_wo_1_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.01) |>
 #   dplyr::mutate(SurveyID = as.character(SurveyID))
 # NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_1_coral$SurveyID)
 # NCP_surveys <- questionr::na.rm(NCP_wo_no_coral) #remains 1607
 
 
-# #### tropical reef with more than 5% coral cover
-# ID_wo_5_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.05) %>%
-#   dplyr::mutate(SurveyID = as.character(SurveyID))
-# NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_5_coral$SurveyID)
-# NCP_surveys <- questionr::na.rm(NCP_wo_no_coral) #remains 1607
+#### tropical reef with more than 5% coral cover
+ID_wo_5_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.05) |>
+ dplyr::mutate(SurveyID = as.character(SurveyID))
+NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_5_coral$SurveyID)
+NCP_surveys_coral_5_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1607
 
 
-# #### tropical reef with more than 10% coral cover
-# ID_wo_10_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.1) %>%
-#   dplyr::mutate(SurveyID = as.character(SurveyID))
-# NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_10_coral$SurveyID)
-# NCP_surveys <- questionr::na.rm(NCP_wo_no_coral) #remains 1313
+#### tropical reef with more than 10% coral cover
+ID_wo_10_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.1) |>
+ dplyr::mutate(SurveyID = as.character(SurveyID))
+NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_10_coral$SurveyID)
+NCP_surveys_coral_10_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1313
 
 
 
-# #### Site with minSST > 20
-# survey_sst20 <- dplyr::filter(metadata_surveys, SiteMinSST > 20)
-# NCP_surveys <- dplyr::filter(NCP, SurveyID %in% survey_sst20$SurveyID) %>%
-#   questionr::na.rm() #remains 1475
+#### Site with minSST > 20
+survey_sst20 <- dplyr::filter(metadata_surveys, SiteMinSST > 20)
+NCP_surveys_SST20 <- dplyr::filter(NCP, SurveyID %in% survey_sst20$SurveyID) |>
+  questionr::na.rm() #remains 1475
 
 
-# #### test with only Australia
-# NCP_only_aust <- dplyr::filter(NCP, SiteCountry == "Australia")
-# NCP_surveys <- questionr::na.rm(NCP_only_aust) #remains 1061
+#### test with only Australia
+NCP_only_aust <- dplyr::filter(NCP, SiteCountry == "Australia")
+NCP_surveys_only_australia <- questionr::na.rm(NCP_only_aust) #remains 1061
 
 # #### test with only in french polynesia and galapagos
 # NCP_only_aust <- dplyr::filter(NCP, SiteCountry == "French Polynesia" | SiteCountry == "Ecuador")
@@ -146,18 +146,29 @@ save(NCP_surveys, file = here::here("outputs", "all_NCP_surveys.Rdata"))
 
 
 #Mean per site
-NCP_site <- NCP_surveys %>%
-  group_by( SiteCode, SiteCountry, SiteEcoregion) %>%
-  summarise(across(.cols = c("SurveyDepth","SiteMeanSST", "gravtot2","HDI", "MarineEcosystemDependency",
-                        "SiteLatitude", "SiteLongitude", "coral_imputation",
-                       "Btot","recycling_N","recycling_P","Productivity","taxo_richness", "funct_entropy",
-                       "funct_distinctiveness","Selenium_C","Zinc_C","Omega_3_C","Calcium_C","Iron_C","Vitamin_A_C",
-                       "phylo_entropy","ED_Mean","aesthe_survey", "iucn_species", "elasmobranch_diversity",
-                       "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                       "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL", "fishery_biomass",
-                       "top_predator_proportion", "robustness", "modularity"),
-                   .fns = mean, .names = "{.col}"))
+mean_per_site <- function(var_survey = NCP_surveys){
+  var_survey |> group_by( SiteCode, SiteCountry, SiteEcoregion) |>
+    summarise(across(.cols = c("SurveyDepth","SiteMeanSST","HDI", "MarineEcosystemDependency",
+                               "SiteLatitude", "SiteLongitude", "coral_imputation",
+                               "Btot","recycling_N","recycling_P","Productivity","taxo_richness", "funct_entropy",
+                               "funct_distinctiveness","Selenium_C","Zinc_C","Omega_3_C","Calcium_C","Iron_C","Vitamin_A_C",
+                               "phylo_entropy","ED_Mean","aesthe_survey", "iucn_species", "elasmobranch_diversity",
+                               "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
+                               "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL", "fishery_biomass",
+                               "robustness", "mean_TL"),
+                     .fns = mean, .names = "{.col}"))
+}
 
+NCP_site <- mean_per_site(NCP_surveys)
 summary(NCP_site) # 1223 sites
-
 save(NCP_site, file = here::here("outputs", "all_NCP_site.Rdata"))
+
+#save with different filter
+for(condition in c("coral_reef", "coral_0_imputed", "wo_australia", "coral_5_imputed",  "coral_10_imputed",
+"only_australia", "SST20")){
+  NCP_surveys_condition <- get(paste0("NCP_surveys_", condition))
+  NCP_site_condition <- mean_per_site(NCP_surveys_condition)
+  save(NCP_site_condition, file = here::here("outputs", paste0("NCP_site_", condition,".Rdata")))
+}
+
+

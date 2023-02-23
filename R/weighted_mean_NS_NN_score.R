@@ -18,9 +18,17 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 rm(list=ls())
 
-##-------------loading data-------------
+##-------------loading data------------
+# load(here::here("outputs","all_NCP_site.Rdata"))
+# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
+load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+
+NCP_site <- NCP_site_condition
+
+
 load(here::here("data","metadata_surveys.Rdata"))
-load(here::here("outputs","all_NCP_site.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 ##-------------compute correlation coefficients-------------
@@ -28,13 +36,13 @@ coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 ## Clean data
 NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                SiteMeanSST, SiteLatitude, SiteLongitude,
-                                               HDI, gravtot2, MarineEcosystemDependency,
+                                               HDI, MarineEcosystemDependency,
                                                coral_imputation))
 
 
 #### NCPs distribution
 plot_distribution <- function(ncp, data){
-  col <- fishualize::fish(n = 30, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+  col <- fishualize::fish(n = ncol(data), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   names(col) <- colnames(data)
   
   ggplot(data) +
@@ -55,7 +63,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] +
+  plots[[28]] + plots[[29]] + 
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -68,7 +76,7 @@ NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
                              "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
                              "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
                              "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                             "fishery_biomass", "modularity")
+                             "fishery_biomass")
 
 NCP_log_clean <- NCP_site_clean |>
   dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
@@ -85,7 +93,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] +
+  plots[[28]] + plots[[29]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -110,8 +118,7 @@ grp <- as.factor( c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_ri
                     Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
                     elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
                     monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-                    biom_highTL="NN", fishery_biomass="NS", top_predator_proportion = "NN", modularity = "NN", 
-                    robustness = "NN")) 
+                    biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN")) 
 
 corr_pearson_NCPs <- stats::cor(NCP_log_clean, method="pearson")
 NCP_log_scale_clean <- scale(NCP_log_clean)
@@ -213,7 +220,7 @@ plot_histogram <- function(data = NN_NS_scores,
 # ggsave(filename = here("outputs", "figures","hist_NN_weighted_mean.png"), histo_NN, width = 8, height =6 )
 histo_NN <- plot_histogram(data = NN_NS_scores, x=NN_NS_scores$NN_score, col= "forestgreen",
                            title="Nature for nature score site's evaluation")
-ggsave(filename = here("outputs", "figures","hist_NN_weighted_mean.png"), histo_NN, width = 8, height =6 )
+ggsave(filename = here::here("outputs", "figures","hist_NN_weighted_mean.png"), histo_NN, width = 8, height =6 )
 
 
 ##NS
@@ -227,7 +234,7 @@ ggsave(filename = here("outputs", "figures","hist_NN_weighted_mean.png"), histo_
 # ggsave(filename = here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
 histo_NS <- plot_histogram(data = NN_NS_scores, x=NN_NS_scores$NS_score, col= "dodgerblue3",
                            title="Nature to People score site's evaluation")
-ggsave(filename = here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
+ggsave(filename = here::here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
 
 
 ## --------------- NN against NS -------------
@@ -247,18 +254,18 @@ NN_NS_with_product <- NN_NS_with_product |>
   dplyr::bind_cols(rank_u_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$up_left, na.last="keep")) |>
   dplyr::bind_cols(rank_d_r = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_right, na.last="keep")) |>
   dplyr::bind_cols(rank_d_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_left, na.last="keep"))
-  
-median_curve_u_r <- data.frame(x_curve=
-                                 c(0,0.05,sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
-                                   na.rm=T)), 3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
-                                   na.rm=T)), 4* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
-                                                             na.rm=T))), 
-                               y_curve=c(4* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
-                                                        na.rm=T)), 
-                                         3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
-                                                        na.rm=T)), 
-                                         sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
-                                  na.rm=T)) , 0.01,0))
+#   
+# median_curve_u_r <- data.frame(x_curve=
+#                                  c(0,0.05,sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+#                                    na.rm=T)), 3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+#                                    na.rm=T)), 4* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+#                                                              na.rm=T))), 
+#                                y_curve=c(4* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+#                                                         na.rm=T)), 
+#                                          3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+#                                                         na.rm=T)), 
+#                                          sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
+#                                   na.rm=T)) , 0.01,0))
 
 
 #### plot NN against NN ####
@@ -351,17 +358,17 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
   # geom_smooth(data = median_curve_u_r, aes(x_curve, y_curve), se=F, span = 1, linetype= 3,
   #             size=0.5, method = "loess", color="black" ) +
   geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
-                y=4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+                y=3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
                 curvature=0.4, linetype=3, size=0.1)+  #up_right
   geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
-                 y=-4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+                 y=-3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
              curvature=-0.4, linetype=3, size=0.1)+   #down_right
   geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
-                 y=4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+                 y=3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
              curvature=-0.4, linetype=3, size=0.1)+ #up_left
   geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
-                 y=-4*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-             curvature=0.4, linetype=3, size=0.1)+ #down_right
+                 y=-3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
+             curvature=0.3, linetype=3, size=0.1)+ #down_right
   
 
   labs( x=  "Nature to Nature", y = "Nature to People")+
@@ -539,7 +546,7 @@ ggsave(filename = here::here("outputs", "figures", "NN score according to latitu
 latitude_NS <- ggplot(NN_NS_scores, aes(SiteLatitude, NS_score , alpha = 0.5)) +
   geom_point()+
   geom_smooth() +
-  labs(x = "Latitude", y = "NN score", title = "Importance of lattitude in NN score") +
+  labs(x = "Latitude", y = "NN score", title = "Importance of lattitude in NS score") +
   theme_minimal()+
   theme(legend.position = 'none')
 

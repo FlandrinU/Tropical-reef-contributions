@@ -22,7 +22,14 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
-load(here::here("outputs","all_NCP_site.Rdata"))
+# load(here::here("outputs","all_NCP_site.Rdata"))
+# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
+load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+
+NCP_site <- NCP_site_condition
+
 load(here::here("outputs","NN_NS_score_wheighted_mean.Rdata"))
 load(here::here("outputs","NN_NS_score_PC1.Rdata"))
 
@@ -32,7 +39,7 @@ grp <- as.factor(c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_ric
                    Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
                    elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
                    monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-                   biom_highTL="NN", fishery_biomass="NS")) # /!\ the order matter
+                   biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN")) # /!\ the order matter
 
 
 NCP_to_transform <- c("Btot","recycling_N","recycling_P","Productivity",
@@ -47,8 +54,8 @@ NCP_site <- NCP_site |>
                        .fns = ~ .x +1 , .names = "{.col}")) |>     
   dplyr::mutate(across(.cols = all_of(NCP_to_transform),
                        .fns = log10 , .names = "{.col}")) |>
-  dplyr::left_join(NN_NS_scores) |>
-  dplyr::left_join(NN_NS_PC1_surveys) |>
+  dplyr::left_join(NN_NS_scores) |>  #Add NN and NS scores calculated from Kark formula
+  dplyr::left_join(NN_NS_PC1_surveys) |> 
   dplyr::rename(NN_kark = "NN_score", NS_kark = "NS_score")
 
 NCP_site_selected <- subset(NCP_site, select = 
@@ -57,7 +64,7 @@ NCP_site_selected <- subset(NCP_site, select =
                                 Iron_C, Vitamin_A_C, phylo_entropy, ED_Mean, aesthe_survey, iucn_species,
                                 elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
                                 monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
-                                biom_highTL, fishery_biomass,
+                                biom_highTL, fishery_biomass, mean_TL , robustness,
                                 NN_kark, NS_kark, NN_PC1, NS_PC1)) 
 
 NCP_site_for_pca <- scale(NCP_site_selected)
@@ -107,25 +114,25 @@ factoextra::fviz_pca_var(pca_test, repel = TRUE )
 
 
 ####### Test new formula #######
-set.seed(6)
-dat <- faux::rnorm_multi(n = 1000, ## 5 variables totaly correlated
-                         mu = c(0, 10, 20, 25,10),
-                         sd = c(1, 5, 5,1,2),
-                         r = c(.999,.999,.999,.999,.999,.999,.999,.999,.999,.999), 
-                         varnames = c("A", "B", "C", "D","E"),
-                         empirical = FALSE)
-dat <- faux::rnorm_multi(n = 1000, 
-                         mu = c(0, 10, 20, 25,10),
-                         sd = c(1, 5, 5,1,2),
-                         r = c(0.9,0.9, 0.7, 0,0.9,0.7,0,0.7,0,0), 
-                         varnames = c("A", "B", "C", "D","E"),
-                         empirical = FALSE)
-dat <- faux::rnorm_multi(n = 1000, 
-                         mu = c(0, 10, 20, 25,10),
-                         sd = c(1, 5, 5,1,2),
-                         r = c(0.9,0, 0.3, 0,0,0.3,0,-0.5,0,0), 
-                         varnames = c("A", "B", "C", "D","E"),
-                         empirical = FALSE)
+# set.seed(6)
+# dat <- faux::rnorm_multi(n = 1000, ## 5 variables totaly correlated
+#                          mu = c(0, 10, 20, 25,10),
+#                          sd = c(1, 5, 5,1,2),
+#                          r = c(.999,.999,.999,.999,.999,.999,.999,.999,.999,.999), 
+#                          varnames = c("A", "B", "C", "D","E"),
+#                          empirical = FALSE)
+# dat <- faux::rnorm_multi(n = 1000, 
+#                          mu = c(0, 10, 20, 25,10),
+#                          sd = c(1, 5, 5,1,2),
+#                          r = c(0.9,0.9, 0.7, 0,0.9,0.7,0,0.7,0,0), 
+#                          varnames = c("A", "B", "C", "D","E"),
+#                          empirical = FALSE)
+# dat <- faux::rnorm_multi(n = 1000, 
+#                          mu = c(0, 10, 20, 25,10),
+#                          sd = c(1, 5, 5,1,2),
+#                          r = c(0.9,0, 0.3, 0,0,0.3,0,-0.5,0,0), 
+#                          varnames = c("A", "B", "C", "D","E"),
+#                          empirical = FALSE)
 
 dat <- scale(dat)
 corr_pearson <- stats::cor(dat, method="pearson")
@@ -140,19 +147,24 @@ for( i in colnames(dat)){
 }
 
 ## calculates mean score: Estimator in Dependant Sample (Kark 2002):
-EDS <- c()
+EDS_adapted <- c()
 for( site in 1:nrow(dat)){
   EDS_site <- sum(weighting_par * dat[site,]) / sum(weighting_par)
-  EDS <- c(EDS, EDS_site)
+  EDS_adapted <- c(EDS_adapted, EDS_site)
 }
 
 mean <- rowMeans(dat)
 
 ## add mean score:
-dat <- cbind(dat, EDS, mean)
+dat <- cbind(dat, EDS_adapted)
 pca_test <- FactoMineR::PCA(dat, scale.unit = FALSE, graph=F, ncp=3,
-                            quanti.sup = c("EDS", "mean")) 
-factoextra::fviz_pca_var(pca_test, repel = TRUE )
+                            quanti.sup = c("EDS", "mean", "EDS_adapted")) 
+
+png(filename = here::here("outputs", "figures","test_weighted_mean_formula.png"), 
+    width= 20, height = 17, units = "cm", res = 1000)
+print( factoextra::fviz_pca_var(pca_test, repel = TRUE ))
+dev.off()
+
 
 
 ##-------------adapted formula from kark 2002-------------
@@ -225,9 +237,13 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
                                         "NN_mean", "NS_mean", "NN_adapted_from_kark",
                                         "NS_adapted_from_kark")) 
   
+  NCP_site_kark <- dplyr::select(as.data.frame(NCP_site_for_pca),  -c(NN_PC1, NS_PC1, 
+                      NN_mean, NS_mean, NN_adapted_from_kark, NS_adapted_from_kark))
+  pca_score <- FactoMineR::PCA(NCP_site_kark, scale.unit = FALSE, graph=F, ncp=10,
+                         quanti.sup = c("NN_kark", "NS_kark")) 
 
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
-  png(filename = here("outputs", "figures","PCA_all_NCP_with_NN_NS_scores.png"), 
+  png(filename = here::here("outputs", "figures","PCA_all_NCP_with_NN_NS_scores.png"), 
       width= 20, height = 17, units = "cm", res = 1000)
   print( factoextra::fviz_pca_var(pca, col.var = "cos2",
                                   gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
@@ -236,8 +252,17 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
   dev.off()
   
   
+  png(filename = here::here("outputs", "figures","PCA_NS_NN_axes1-2_with_NN_NS_kark.png"), 
+      width= 35, height = 25, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca_score, col.var = grp, 
+                                  palette = c("forestgreen", "dodgerblue3"),
+                                  legend.title = "Nature Based Contributions",
+                                  repel = TRUE,
+                                  col.quanti.sup = "darkred"))
+  dev.off()
   
-  png(filename = here("outputs", "figures","PCA_NS_NN_axes1-2_with_NN_NS_scores.png"), 
+  
+  png(filename = here::here("outputs", "figures","PCA_NS_NN_axes1-2_with_NN_NS_scores.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
   print( factoextra::fviz_pca_var(pca, col.var = grp, 
                                   palette = c("forestgreen", "dodgerblue3"),
@@ -246,7 +271,8 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
                                   col.quanti.sup = "darkred"))
   dev.off()
   
-  png(filename = here("outputs", "figures","PCA_NS_NN_axes3-4_with_NN_NS_scores.png"), 
+  
+  png(filename = here::here("outputs", "figures","PCA_NS_NN_axes3-4_with_NN_NS_kark.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
   print( factoextra::fviz_pca_var(pca, col.var = grp, 
                                   axe = c(3,4),
@@ -256,7 +282,18 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
                                   col.quanti.sup = "darkred"))
   dev.off()
   
-  png(filename = here("outputs", "figures","PCA_NS_NN_axes5-6_with_NN_NS_scores.png"), 
+  
+  png(filename = here::here("outputs", "figures","PCA_NS_NN_axes3-4_with_NN_NS_scores.png"), 
+      width= 35, height = 25, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_var(pca, col.var = grp, 
+                                  axe = c(3,4),
+                                  palette = c("forestgreen", "dodgerblue3"),
+                                  legend.title = "Nature Based Contributions",
+                                  repel = TRUE,
+                                  col.quanti.sup = "darkred"))
+  dev.off()
+  
+  png(filename = here::here("outputs", "figures","PCA_NS_NN_axes5-6_with_NN_NS_scores.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
   print( factoextra::fviz_pca_var(pca, col.var = grp, 
                                   axe = c(5,6),

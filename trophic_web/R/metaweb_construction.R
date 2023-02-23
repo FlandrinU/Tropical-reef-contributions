@@ -156,23 +156,33 @@ save(initial_metaweb, file = here::here("trophic_web", "outputs", "initial_metaw
 
 ##------------- Metaweb correction -------------
 
-## Herbivory correction
-herb_corrected_MW <- initial_metaweb
+## Diet corrections
+diet_corrected_MW <- initial_metaweb
 
 sp_herb <- data_species_trophic_web$species[
   which(data_species_trophic_web$Diet == "herbivores_microvores_detritivores")]
 
 for(herb in sp_herb){
-  herb_corrected_MW[which(herb_corrected_MW[, herb] > 0), herb] <- 0
+  diet_corrected_MW[which(diet_corrected_MW[, herb] > 0), herb] <- 0
   }
 
 
+sp_invertivores <- data_species_trophic_web$species[
+  which(data_species_trophic_web$Diet %in% c("sessile_invertivores",
+                                             "corallivores",
+                                             "microinvertivores",
+                                             "planktivores"))]
+for(invertivores in sp_invertivores){
+  diet_corrected_MW[which(diet_corrected_MW[, invertivores] > 0), invertivores] <- 0
+}
+
+
 ## self interaction: no cannibalism in general case
-diag(herb_corrected_MW) <- 0 
+diag(diet_corrected_MW) <- 0 
 
 
 ## Small fish correction
-small_corrected_MW <- herb_corrected_MW
+small_corrected_MW <- diet_corrected_MW
 small_species <- data_species_trophic_web$species[which(data_species_trophic_web$common_length<10)]
 small_corrected_MW[, small_species] <- 0
 

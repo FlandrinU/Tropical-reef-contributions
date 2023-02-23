@@ -19,16 +19,22 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
-load(here::here("outputs","all_NCP_site.Rdata"))
 load(here::here("data","metadata_surveys.Rdata"))
-
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
+
+# load(here::here("outputs","all_NCP_site.Rdata"))
+# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
+load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+
+NCP_site <- NCP_site_condition
 
 # Preping data  
 ## Clean data  
 NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                SiteMeanSST, SiteLatitude, SiteLongitude,
-                                               HDI, gravtot2, MarineEcosystemDependency,
+                                               HDI, MarineEcosystemDependency,
                                                coral_imputation))
 
 ## NCPs distribution with right skewed distribution
@@ -37,7 +43,7 @@ NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
                              "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
                              "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
                              "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                             "fishery_biomass", "modularity")
+                             "fishery_biomass")
 
 NCP_log_transformed <- NCP_site_clean |>
   dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
@@ -50,7 +56,7 @@ NCP_log_transformed <- NCP_site_clean |>
 ##-------------Histograms of NCPs-------------
 #### NCPs distribution
 plot_distribution <- function(ncp, data){
-  col <- fishualize::fish(n = 30, option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+  col <- fishualize::fish(n = ncol(data), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   names(col) <- colnames(data)
   
   ggplot(data) +
@@ -64,18 +70,19 @@ plot_distribution <- function(ncp, data){
     theme( legend.position = "none")
 }
 
+library(ggplot2)
+library(patchwork)
 plots <- lapply(colnames(NCP_site_clean), FUN = plot_distribution, data = NCP_site_clean )
-
 all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]]+
+  plots[[28]] + plots[[29]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
 
-ggsave(filename = here("outputs", "figures","NCP_distribution.png"), all_plot, width = 22, height =14 )
+ggsave(filename = here::here("outputs", "figures","NCP_distribution.png"), all_plot, width = 22, height =14 )
 
 
 #### NCPs distribution with log correction
@@ -85,12 +92,12 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]]+
+  plots[[28]] + plots[[29]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
 
-ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.png"), all_plot, width = 22, height =14 )
+ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribution.png"), all_plot, width = 22, height =14 )
 
 
 
@@ -120,7 +127,7 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
     plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
     plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
     plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    plots[[28]] + plots[[29]] + plots[[30]]+
+    plots[[28]] + plots[[29]] +
     
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
@@ -143,7 +150,7 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
     plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
     plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
     plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    plots[[28]] + plots[[29]] + plots[[30]]+
+    plots[[28]] + plots[[29]] +
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
@@ -153,7 +160,7 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
   
   
   #### Corr-matrix for all NCPs
-  png(filename = here("outputs", "figures","corr_matrix.png"), 
+  png(filename = here::here("outputs", "figures","corr_matrix.png"), 
       width= 40, height = 30, units = "cm", res = 1000)
   print({
     M <- cor(NCP_site_clean)
@@ -170,7 +177,7 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
   dev.off() 
   
   #### Corr-matrix for log transformed NCPs
-  png(filename = here("outputs", "figures","corr_matrix_log_transformed_NCP.png"), 
+  png(filename = here::here("outputs", "figures","corr_matrix_log_transformed_NCP.png"), 
       width= 40, height = 30, units = "cm", res = 1000)
   print({
     M <- cor(NCP_log_transformed)
@@ -181,7 +188,7 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
   dev.off() 
   
 ##-------------Links of socio-envir with biomass -------------
-  socio_envir <- c("HDI", "gravtot2", "MarineEcosystemDependency", "coral_imputation",
+  socio_envir <- c("HDI", "MarineEcosystemDependency", "coral_imputation",
                    "SiteLatitude")
   
   x <- as.list(NCP_log_transformed[,"log(Btot)"])[["log(Btot)"]]
@@ -193,7 +200,7 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
     coord_flip() 
   })
   
-  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] +
+  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + 
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
@@ -237,9 +244,9 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
   }
   
   # save maps
-  for( NCP in colnames(NCP_site_clean)){
+parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
     plot_NCP_on_world_map(NCP, xlim=c(-180,180), ylim = c(-36, 31), title="world_map_with_")
-  }
+})
   
   #focus on Biomass
   plot_NCP_on_world_map(NCP= "Btot", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
@@ -249,11 +256,12 @@ ggsave(filename = here("outputs", "figures","NCP_log_transformed_distribution.pn
   plot_NCP_on_world_map(NCP= "robustness", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
   plot_NCP_on_world_map(NCP= "robustness", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
-  #focus on modularity
-  plot_NCP_on_world_map(NCP= "modularity", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "modularity", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  #focus on mean TL
+  plot_NCP_on_world_map(NCP= "mean_TL", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
+  plot_NCP_on_world_map(NCP= "mean_TL", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
-  #focus on Ntop
-  plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
-  
+  # #focus on Ntop
+  # plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
+  # plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  # 
+  # 

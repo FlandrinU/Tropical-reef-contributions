@@ -56,6 +56,7 @@ plot(DHARMa::simulateResiduals(reg))
 summary(reg)
 
 #plot the regression
+library(ggplot2)
 ggplot(species_traits, aes(y=log10(CommonLength), x=log10(Length)))+
   geom_point()+
   geom_smooth(colour="red", method="lm", fill="red") +

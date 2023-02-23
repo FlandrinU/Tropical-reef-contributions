@@ -24,6 +24,9 @@ rm(list=ls())
 load(file = here::here("trophic_web","outputs", "final_metaweb.Rdata"))
 # Presence/absence matrix
 load(file=here::here("biodiversity", "outputs", "occurrence_matrix_sp_survey_01.Rdata"))
+# relative biomass matrix
+load(file=here::here("biodiversity", "outputs", "occurrence_matrix_sp_survey_relative_biomass.Rdata"))
+
 
 # ## Presence/absence at the survey scale
 # PA_matrix_site <- as.data.frame(surveys_sp_occ) |>
@@ -46,32 +49,35 @@ PA_matrix_survey <- cbind(as.data.frame(surveys_sp_occ),
 #                     Lniche: Metaweb
 #                     mc.cores: number of core for parrallel computing
 
-get_indic_cells  <-  function(P_A_data = PA_matrix_survey, Lniche = final_metaweb, 
+get_indic_cells  <-  function(P_A_data = PA_matrix_survey, 
+                              biomass_data = surveys_sp_pbiom,
+                              Lniche = final_metaweb, 
                               mc.cores=1, bin_threshold= 0.6){ 
   
   pkg <- c("NetIndices","igraph","gtools")
   sapply(pkg,require,character.only = TRUE)  
   
-  reseau_cell <-  mclapply(1:nrow(P_A_data),mc.cores=mc.cores,function(i){
+  reseau_cell <-  parallel::mclapply(1:nrow(P_A_data),mc.cores=mc.cores,function(i){
     if((i%%100)==0) cat("i=",i,"\n")
     Names <- names(P_A_data[i,which(P_A_data[i,]>0)])
-    Calc_indic_proba(x=Lniche[Names,Names], bin_threshold = bin_threshold)
+    Calc_indic_proba(x=Lniche[Names,Names], biomass_data, bin_threshold = bin_threshold,
+                     local_web = i)
   })
   reseau_cell
 } # get_indic_cells 
 
 
 
-Calc_indic_proba  <- function(x=Lniche[Names,Names], bin_threshold=0.8) {
+Calc_indic_proba  <- function(x=Lniche[Names,Names], biomass_data, bin_threshold=0.8, local_web = 1) {
   
   #cat("### Indicator proba calculation ###", "\n")
   Species <- nrow(x)
   Connectance_p <- sum(x)/Species^2
   
   #cat("### Binary calculation indicators ###","\n")
-  bin_net <- round(x,3); bin_net[bin_net<bin_threshold] <- 0 
+  bin_net <- round(x,4); bin_net[bin_net<bin_threshold] <- 0 
   bin_net[bin_net>=bin_threshold] <- 1
-  binary_indic <- get_binary_indic(web=bin_net, S=Species)
+  binary_indic <- get_binary_indic(web=bin_net, S=Species, biomass_data, local_web=local_web)
   
   web=data.matrix(bin_net)
   #cat("### Path calculation indicators ###","\n")
@@ -80,17 +86,20 @@ Calc_indic_proba  <- function(x=Lniche[Names,Names], bin_threshold=0.8) {
   #cat("### Igraph indicator calculation ###", "\n")
   igraph_res <- Calc_indic_igraph(web=web)
   
-  
   c(Species=Species,Connectance_p=Connectance_p,binary_indic,igraph_res,Path_stat)
   
 }  # end of function Calc_ind
 
 
 
-get_binary_indic <- function(web=mat, S=Species){
+get_binary_indic <- function(web=mat, S=Species, biomass_data = surveys_sp_pbiom, local_web = 1){
   TL <- NetIndices::TrophInd(Flow =web,Tij = t(web))
   length_chain <- ceiling(round(max(TL[,1]),1))
   TL_moy  <- mean(TL[,1])
+  
+  sp <- rownames(TL)[-which(rownames(TL) %in% c("primary_producers", "secondary_producers"))]
+  biom_weighted_mTL <- sum(TL[sp, "TL"] * biomass_data[local_web, sp])
+  
   Omn_moy <- mean(TL[,2])
   if ( nrow(TL)>20){
     Plankt <- length(which(TL[,1] > 2.4 & TL[,1] < 3.7 )) / nrow(TL) #proportion of plantivores
@@ -118,7 +127,8 @@ get_binary_indic <- function(web=mat, S=Species){
   Vul <-  mean(Npred) ; Vulsd<- sd(Npred)
   Gen <- mean(Nprey); Gensd <- sd(Nprey)
   
-  c(Link=Link,Link_max=Link_max,Connectance=Connectance, b_power_law=b, Ntop=Ntop,Nbas=Nbas,Nint=Nint,Vul=Vul,Vulsd=Vulsd,Gen=Gen,Gensd=Gensd,TL_moy=TL_moy,
+  c(Link=Link,Link_max=Link_max,Connectance=Connectance, b_power_law=b, Ntop=Ntop,
+    Nbas=Nbas,Nint=Nint,Vul=Vul,Vulsd=Vulsd,Gen=Gen,Gensd=Gensd,TL_moy=TL_moy, weighted_mTL = biom_weighted_mTL,
     length_chain=length_chain,Omn_moy=Omn_moy, Planktivores=Plankt, HTI=HTI, MTI=MTI)
   
 } # end of get_binary_indic
@@ -173,8 +183,10 @@ Calc_indic_igraph<- function(web=mat){
 
 
 ##------------- Calculation of network indicators for each survey -------------
-trophic_indicators <- get_indic_cells(P_A_data= PA_matrix_survey ,Lniche= final_metaweb,
-                                           mc.cores=15, bin_threshold=0.6) 
+trophic_indicators <- get_indic_cells(P_A_data= PA_matrix_survey ,
+                                      biomass_data = surveys_sp_pbiom,
+                                      Lniche= final_metaweb,
+                                      mc.cores=15, bin_threshold=0.6) 
 
 trophic_indicators_survey <- do.call(rbind, trophic_indicators)
 trophic_indicators_survey <- as.data.frame(cbind(SurveyID = rownames(PA_matrix_survey), 
@@ -193,7 +205,7 @@ load(file= here::here("trophic_web", "outputs", "trophic_indicators_survey.Rdata
 
 TI_pca <- dplyr::select(trophic_indicators_survey, -c(SurveyID, Shortest_path_2,
           Shortest_path_3, Shortest_path_4, Shortest_path_5)) |>
-  na.rm()
+  questionr::na.rm()
 
 pca <- FactoMineR::PCA(TI_pca, scale.unit = TRUE, graph=F, ncp=10) 
 plot(pca)
