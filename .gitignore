@@ -28,8 +28,8 @@ renv/
 _targets/
 
 # Outputs
-.png
-.jpg
+*.png
+*.jpg
 
 # large files
 data/ShapeFiles Coast/
@@ -37,4 +37,4 @@ biodiversity/data/Code&Data_Siquiera2020/
 
 #Report
 NCP_covariations_analyses.html
-
+tests_filter_sites/
