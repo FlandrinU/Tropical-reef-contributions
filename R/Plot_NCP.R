@@ -22,20 +22,21 @@ rm(list=ls())
 load(here::here("data","metadata_surveys.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
-# load(here::here("outputs","all_NCP_site.Rdata"))
+load(here::here("outputs","all_NCP_site.Rdata"))
 # load(here::here("outputs","NCP_site_coral_reef.Rdata"))
 # load(here::here("outputs","NCP_site_SST20.Rdata"))
 # load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-
-NCP_site <- NCP_site_condition
+# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+# NCP_site <- NCP_site_condition
 
 # Preping data  
 ## Clean data  
 NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                SiteMeanSST, SiteLatitude, SiteLongitude,
                                                HDI, MarineEcosystemDependency,
-                                               coral_imputation))
+                                               coral_imputation, gravtot2, mpa_name,
+                                               mpa_enforcement, protection_status, 
+                                               mpa_iucn_cat))
 
 ## NCPs distribution with right skewed distribution
 NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
@@ -189,7 +190,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
 ##-------------Links of socio-envir with biomass -------------
   socio_envir <- c("HDI", "MarineEcosystemDependency", "coral_imputation",
-                   "SiteLatitude")
+                   "SiteLatitude", "mpa_iucn_cat")
   
   x <- as.list(NCP_log_transformed[,"log(Btot)"])[["log(Btot)"]]
   x_title = "log(total Biomass)"
@@ -200,7 +201,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
     coord_flip() 
   })
   
-  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + 
+  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]]+
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
@@ -263,5 +264,33 @@ parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
   # #focus on Ntop
   # plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
   # plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
-  # 
-  # 
+  
+##-------------plot MPAs on map-------------
+NCP_site$mpa_iucn_cat[which(NCP_site$mpa_iucn_cat == "Not Applicable" |
+                              NCP_site$mpa_iucn_cat == "Not Reported")] <- NA
+mpa <- ggplot(NCP_site) +
+      geom_sf(data = coast, color = "grey30", fill = "lightgrey",
+              aes(size=0.1)) +
+      
+      geom_point(data=NCP_site,
+                 size = 3, shape = 20,
+                 aes(x = SiteLongitude, y = SiteLatitude,
+                     colour= mpa_iucn_cat,
+                     alpha = 0.3), na.rm = T) +
+      
+      coord_sf(xlim=c(-180,180), ylim = c(-36, 31), expand = FALSE) +
+      guides(alpha = "none", size = "none") +
+      theme_minimal()+
+      labs(title = paste0("MPA geographic distribution"),
+           x="", y= "") +
+      theme(legend.position = "right",
+            plot.title = element_text(size=10, face="bold"),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
+      )
+    
+ggsave(filename = here::here("outputs", "figures", "MPAs_on_world_map.jpg"),
+       plot = mpa, width=15, height = 7 )
+
+  

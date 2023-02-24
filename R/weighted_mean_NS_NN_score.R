@@ -11,7 +11,8 @@
 ################################################################################
 
 #-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats", "ggrepel")
+pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats", "ggrepel",
+          "ggfun")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -19,13 +20,12 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data------------
-# load(here::here("outputs","all_NCP_site.Rdata"))
+load(here::here("outputs","all_NCP_site.Rdata"))
 # load(here::here("outputs","NCP_site_coral_reef.Rdata"))
 # load(here::here("outputs","NCP_site_SST20.Rdata"))
 # load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-
-NCP_site <- NCP_site_condition
+# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+# NCP_site <- NCP_site_condition
 
 
 load(here::here("data","metadata_surveys.Rdata"))
@@ -37,8 +37,9 @@ coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                SiteMeanSST, SiteLatitude, SiteLongitude,
                                                HDI, MarineEcosystemDependency,
-                                               coral_imputation))
-
+                                               coral_imputation, gravtot2, mpa_name,
+                                               mpa_enforcement, protection_status, 
+                                               mpa_iucn_cat))
 
 #### NCPs distribution
 plot_distribution <- function(ncp, data){
@@ -172,7 +173,9 @@ for( site in 1:nrow(NCP_NS)){
 
 
 
-NN_NS_scores <- cbind(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude")],
+NN_NS_scores <- cbind(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude", 
+                                  "mpa_name", "mpa_enforcement", "protection_status",
+                                  "mpa_iucn_cat")],
                       data.frame(NN_score = EDS_NN, NS_score = EDS_NS) )
 save(NN_NS_scores, file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
 
@@ -223,15 +226,17 @@ histo_NN <- plot_histogram(data = NN_NS_scores, x=NN_NS_scores$NN_score, col= "f
 ggsave(filename = here::here("outputs", "figures","hist_NN_weighted_mean.png"), histo_NN, width = 8, height =6 )
 
 
+mpa_NN <- ggplot(NN_NS_scores, aes(mpa_iucn_cat , NN_score , alpha = 0.5)) +
+  geom_point()+
+  geom_smooth() +
+  labs(x = "IUCN categories", y = "NN score", title = "") +
+  theme_minimal()+
+  theme(legend.position = 'none')
+ggsave(filename = here::here("outputs", "figures", "NN_scores according to MPA categories.png"),
+       mpa_NN, width = 15, height = 12)
+
+
 ##NS
-# histo_NS <- ggplot(NN_NS_scores, aes(x = NS_score)) +
-#   geom_histogram( bins = 40, aes(fill=after_stat(x)), color="grey30", linewidth=0.3)+
-#   scale_fill_gradient2(low = "black", mid = "white", high = "dodgerblue3", guide = "colourbar")+
-#   labs(x = "Nature to People score site's evaluation")+
-#   geom_vline(xintercept = 0, linetype = 2, col= "black")+
-#   theme_minimal()
-# histo_NS
-# ggsave(filename = here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
 histo_NS <- plot_histogram(data = NN_NS_scores, x=NN_NS_scores$NS_score, col= "dodgerblue3",
                            title="Nature to People score site's evaluation")
 ggsave(filename = here::here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
@@ -239,9 +244,12 @@ ggsave(filename = here::here("outputs", "figures","hist_NS_weighted_mean.png"), 
 
 ## --------------- NN against NS -------------
 #### Define colors by quarter ####
-library(dplyr)
-
 NN_NS_with_product <- NN_NS_scores |>
+  dplyr::bind_cols(
+    protection = ifelse(is.na(NN_NS_scores$mpa_name)==F &
+                       NN_NS_scores$mpa_enforcement != "Low" &
+                       stringr::str_detect(NN_NS_scores$protection_status, "No take"),
+                       "protected","not protected")) |>
   dplyr::mutate(NNxNS = abs(NN_score * NS_score)) |>
   dplyr::bind_cols(rank = rank(abs(NN_NS_scores$NN_score * NN_NS_scores$NS_score))) |>
   dplyr::bind_cols(up_right = ifelse(NN_NS_scores$NN_score > 0 & NN_NS_scores$NS_score > 0,1,NA)) |>
@@ -254,7 +262,8 @@ NN_NS_with_product <- NN_NS_with_product |>
   dplyr::bind_cols(rank_u_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$up_left, na.last="keep")) |>
   dplyr::bind_cols(rank_d_r = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_right, na.last="keep")) |>
   dplyr::bind_cols(rank_d_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_left, na.last="keep"))
-#   
+   
+summary(NN_NS_with_product)
 # median_curve_u_r <- data.frame(x_curve=
 #                                  c(0,0.05,sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
 #                                    na.rm=T)), 3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
@@ -270,14 +279,15 @@ NN_NS_with_product <- NN_NS_with_product |>
 
 #### plot NN against NN ####
 NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
+  #up right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_right == 1),
-             size = 2, aes(colour= rank_u_r)) +
+             size = 2, aes(colour= rank_u_r, shape = protection)) +
   scale_colour_gradient(name="up_right",
                         low = "white", high="firebrick",
                         limits =quantile(NN_NS_with_product$rank_u_r,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(aes( y= NS_score, x = NN_score),
-             shape = 1, size = 2, stroke = 1,
+  geom_point(aes( y= NS_score, x = NN_score, shape = protection),
+             size = 2, stroke = 1,
              color= "darkred",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
                     quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
@@ -285,51 +295,51 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              data=NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
                   quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
   
-  ggnewscale::new_scale("colour") +
+  guides(color = "none") + ggnewscale::new_scale("colour") +
   
   #up left quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_left == 1),
-             size = 2, aes(colour= rank_u_l)) +
+             size = 2, aes(colour= rank_u_l, shape = protection)) +
   scale_colour_gradient(name="up_left",
                         low = "white", high="dodgerblue3",
                         limits =quantile(NN_NS_with_product$rank_u_l,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(aes( y= NS_score, x = NN_score),
-             shape = 1, size = 2, stroke = 1,
+  geom_point(aes( y= NS_score, x = NN_score, shape = protection),
+             size = 2, stroke = 1,
              color= "dodgerblue4",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
                                                quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
   ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
                              data=NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
                                                              quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
-  ggnewscale::new_scale("colour") +
+  guides(color = "none") + ggnewscale::new_scale("colour") +
   
   #down right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, down_right == 1),
-             size = 2, aes(colour= rank_d_r)) +
+             size = 2, aes(colour= rank_d_r, shape = protection)) +
   scale_colour_gradient(name="down_right",
                         low = "white", high="forestgreen",
                         limits =quantile(NN_NS_with_product$rank_d_r,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(aes( y= NS_score, x = NN_score),
-             shape = 1, size = 2, stroke = 1,
+  geom_point(aes( y= NS_score, x = NN_score, shape = protection),
+             size = 2, stroke = 1,
              color= "darkgreen",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
                                                quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
   ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
                              data=NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
                                                              quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
-  ggnewscale::new_scale("colour") +
+  guides(color = "none") + ggnewscale::new_scale("colour") +
   
   #down left quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, down_left == 1),
-             size = 2, aes(colour= rank_d_l)) +
+             size = 2, aes(colour= rank_d_l, shape = protection)) +
   scale_colour_gradient(name="down_left",
                         low = "white", high="grey20",
                         limits =quantile(NN_NS_with_product$rank_d_l,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(aes( y= NS_score, x = NN_score),
-             shape = 1, size = 2, stroke = 1,
+  geom_point(aes( y= NS_score, x = NN_score, shape = protection),
+             size = 2, stroke = 1,
              color= "black",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
                                                quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
@@ -337,6 +347,8 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
                              data=NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
                                                              quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
   
+  # see MPAs
+  scale_shape_manual(values=c(20,17))+
   #add lines
   geom_vline(xintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
   geom_hline(yintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
@@ -357,6 +369,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
   #              aes(x, y), alpha= 0, color = "black",  linetype = 3,) +
   # geom_smooth(data = median_curve_u_r, aes(x_curve, y_curve), se=F, span = 1, linetype= 3,
   #             size=0.5, method = "loess", color="black" ) +
+  
   geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                 y=3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
                 curvature=0.4, linetype=3, size=0.1)+  #up_right
@@ -373,11 +386,20 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
 
   labs( x=  "Nature to Nature", y = "Nature to People")+
   theme_minimal()+
-  theme(legend.position = "none")
+  theme(legend.position = c(0.9,0.1),
+        legend.background = element_rect())+
+  guides(color = "none", shape = guide_legend("Protection status")) 
+
+#NN_NS_plot_legend <- ggfun::keybox( "roundrect", gp = ggfun::gpar(lty="dashed"))
 
 NN_NS_plot
 ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.png"), plot = NN_NS_plot, width=10, height = 8 )
 
+par(mfrow=c(1,4))
+pie(table(dplyr::filter(NN_NS_with_product, is.na(up_right)==F)$protection), col= c("grey","firebrick"))
+pie(table(dplyr::filter(NN_NS_with_product, is.na(up_left)==F)$protection), col= c("grey","dodgerblue3"))
+pie(table(dplyr::filter(NN_NS_with_product, is.na(down_right)==F)$protection), col= c("grey","forestgreen"))
+pie(table(dplyr::filter(NN_NS_with_product, is.na(down_left)==F)$protection), col= c("grey","grey20"))
 
 
 ## on map 

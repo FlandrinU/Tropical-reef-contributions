@@ -22,36 +22,36 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
-# load(here::here("outputs","all_NCP_site.Rdata"))
+load(here::here("outputs","all_NCP_site.Rdata"))
 # load(here::here("outputs","NCP_site_coral_reef.Rdata"))
 # load(here::here("outputs","NCP_site_SST20.Rdata"))
 # load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-
-NCP_site <- NCP_site_condition
+# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+# NCP_site <- NCP_site_condition
 
 #benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_imputed.txt"), sep= " ")
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 ##-------------Correlations between NCPs-------------
+## Clean data
+NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                               SiteMeanSST, SiteLatitude, SiteLongitude,
+                                               HDI, MarineEcosystemDependency,
+                                               coral_imputation, gravtot2, mpa_name,
+                                               mpa_enforcement, protection_status, 
+                                               mpa_iucn_cat))
 
-  ## Clean data
-  NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
-                                                 SiteMeanSST, SiteLatitude, SiteLongitude,
-                                                 HDI, MarineEcosystemDependency,
-                                                 coral_imputation))
-  
 
-  #### NCPs distribution with log correction
-  NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
-                               "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
-                               "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
-                               "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                               "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                               "fishery_biomass")
-  
-  NCP_log_transformed <- NCP_site_clean |>
+#### NCPs distribution with log correction
+NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
+                             "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
+                             "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
+                             "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
+                             "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
+                             "fishery_biomass")
+
+NCP_log_transformed <- NCP_site_clean |>
     dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
                      .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed
     dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
@@ -60,18 +60,18 @@ coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
                        .fn = ~ paste0("log(", .x, ")"))
   
   
-  ### Correlation test
-  names <- cor <- p_val <- c()
-  for( i in colnames(NCP_site_clean)){
-    for(j in colnames(NCP_site_clean)){
-      correlation <- stats::cor.test(get("NCP_site_clean")[[i]], get("NCP_site_clean")[[j]] )
-    names <- c(names, paste0(i,"-",j))
-    cor <- c(cor, correlation[["estimate"]][["cor"]])
-    p_val <- c(p_val, correlation[["p.value"]])}
+### Correlation test
+names <- cor <- p_val <- c()
+for( i in colnames(NCP_site_clean)){
+   for(j in colnames(NCP_site_clean)){
+     correlation <- stats::cor.test(get("NCP_site_clean")[[i]], get("NCP_site_clean")[[j]] )
+     names <- c(names, paste0(i,"-",j))
+     cor <- c(cor, correlation[["estimate"]][["cor"]])
+     p_val <- c(p_val, correlation[["p.value"]])}
   }
   
-  correlations_between_NCPs <- data.frame(name=names, cor = cor, p_val=p_val)
-  signif_correlations__NCPs <- dplyr::filter(correlations_between_NCPs, abs(cor) > 0.5)
+correlations_between_NCPs <- data.frame(name=names, cor = cor, p_val=p_val)
+signif_correlations__NCPs <- dplyr::filter(correlations_between_NCPs, abs(cor) > 0.5)
   
  
 
@@ -348,6 +348,33 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   ##----- Sites distribution-----
+  ### mpa categories
+  png(filename = here::here("outputs", "figures","PCA_mpa_categories.png"), 
+      width= 30, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot(pca,
+                                     select.var = list(cos2 = 0.4),
+                                     geom="point", pointshape=21,
+                                     addEllipses = T,
+                                     fill.ind = NCP_site$mpa_iucn_cat,
+                                     col.ind = NCP_site$mpa_iucn_cat,
+                                     gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                     col.var = "black", repel = TRUE,
+                                     legend.title = "IUCN categories of MPAs"))
+  dev.off()
+  
+  png(filename = here::here("outputs", "figures","PCA_mpa_protection_status.png"), 
+      width= 30, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot(pca,
+                                     select.var = list(cos2 = 0.4),
+                                     geom="point", pointshape=21,
+                                     addEllipses = T,
+                                     fill.ind = NCP_site$protection_status,
+                                     col.ind = NCP_site$protection_status,
+                                     gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                     col.var = "black", repel = TRUE,
+                                     legend.title = "Protection status of MPAs"))
+  dev.off()
+  
   ### By countries
   ind.p <- factoextra::fviz_pca_ind(pca, geom = "point",
                         pointshape=21,
@@ -420,7 +447,7 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   # ### Gravity pattern:  log10(gravtot2)
-  # png(filename = here::here("outputs", "figures","PCA_gravity_pattern.png"), 
+  # png(filename = here::here("outputs", "figures","PCA_gravity_pattern.png"),
   #     width= 30, height = 20, units = "cm", res = 1000)
   # print( factoextra::fviz_pca_biplot(pca,
   #                 axes=c(1,2),

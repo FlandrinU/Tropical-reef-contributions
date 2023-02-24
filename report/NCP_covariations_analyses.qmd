@@ -288,26 +288,34 @@ Temperature pattern in PCA
  *=> Strong temperature pattern, notably due to Spain with high omega 3 richness*
 
 
+```{r}
+#| eval: false
 
 ### Gravity pattern:  log10(gravtot2)
 
 ![Gravity pattern in PCA](`r here::here("outputs", "figures", "PCA_gravity_pattern.png") `)
+=> no pattern
 
 ### Country HDI
 
 ![HDI pattern in PCA](`r here::here("outputs", "figures", "PCA_HDI_pattern.png") `)
+=> no pattern
 
 ### Marine Ecosystem Dependency
 
 ![MED pattern in PCA](`r here::here("outputs", "figures", "PCA_MED_pattern.png") `)
+=> no pattern
 
 ### Imputed coral cover
 
 ![coral cover pattern in PCA](`r here::here("outputs", "figures", "PCA_coral_cover_pattern.png") `)
+=> no pattern
 
 ### Depth pattern
 
 ![depth pattern in PCA](`r here::here("outputs", "figures", "PCA_depth_pattern.png") `)
+=> no pattern
+```
 
 ### Lattitude pattern
 
