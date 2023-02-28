@@ -12,7 +12,7 @@
 
 #-----------------Loading packages-------------------
 pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats", "ggrepel",
-          "ggfun")
+          "ggfun", "scatterpie", "scales")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -64,7 +64,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + 
+  plots[[28]] + plots[[29]] +  plots[[30]] + plots[[31]] + 
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -94,7 +94,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] +
+  plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] + 
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -119,7 +119,9 @@ grp <- as.factor( c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_ri
                     Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
                     elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
                     monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-                    biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN")) 
+                    biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN",
+                    scientific_interest = "NS", public_interest = "NS")) # /!\ the order matter
+
 
 corr_pearson_NCPs <- stats::cor(NCP_log_clean, method="pearson")
 NCP_log_scale_clean <- scale(NCP_log_clean)
@@ -249,6 +251,9 @@ NN_NS_with_product <- NN_NS_scores |>
     protection = ifelse(is.na(NN_NS_scores$mpa_name)==F &
                        NN_NS_scores$mpa_enforcement != "Low" &
                        stringr::str_detect(NN_NS_scores$protection_status, "No take"),
+    # protection = ifelse(is.na(NN_NS_scores$mpa_iucn_cat)==F &
+    #                     ( NN_NS_scores$mpa_iucn_cat == "Ia" |
+    #                         NN_NS_scores$mpa_iucn_cat == "II") ,
                        "protected","not protected")) |>
   dplyr::mutate(NNxNS = abs(NN_score * NS_score)) |>
   dplyr::bind_cols(rank = rank(abs(NN_NS_scores$NN_score * NN_NS_scores$NS_score))) |>
@@ -275,6 +280,7 @@ summary(NN_NS_with_product)
 #                                                         na.rm=T)), 
 #                                          sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
 #                                   na.rm=T)) , 0.01,0))
+
 
 
 #### plot NN against NN ####
@@ -395,12 +401,47 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
 NN_NS_plot
 ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.png"), plot = NN_NS_plot, width=10, height = 8 )
 
-par(mfrow=c(1,4))
-pie(table(dplyr::filter(NN_NS_with_product, is.na(up_right)==F)$protection), col= c("grey","firebrick"))
-pie(table(dplyr::filter(NN_NS_with_product, is.na(up_left)==F)$protection), col= c("grey","dodgerblue3"))
-pie(table(dplyr::filter(NN_NS_with_product, is.na(down_right)==F)$protection), col= c("grey","forestgreen"))
-pie(table(dplyr::filter(NN_NS_with_product, is.na(down_left)==F)$protection), col= c("grey","grey20"))
 
+## with piechart
+plot_piechart <- function(quarter= "up_right", col="firebrick"){
+  df <- as.data.frame(table(dplyr::filter(NN_NS_with_product, is.na(get(quarter))==F)$protection)) |>
+    dplyr::mutate(csum = rev(cumsum(rev(Freq))),
+                  pct = Freq / sum(Freq) *100,
+                  pos = Freq/2 + dplyr::lead(csum, 1),
+                  pos = dplyr::if_else(is.na(pos), Freq/2, pos))
+  
+  ggplot(df, aes(x = "", y = Freq, 
+                 fill = forcats::fct_inorder(Var1))) +
+    geom_col(width = 1, color = 1, position = "stack") +
+    geom_text(aes(label = paste(round(pct,1), "%")),
+              position = position_stack(vjust = 0.5)) +
+    coord_polar(theta = "y") +
+    guides(fill = guide_legend(title = "status")) +
+    scale_y_continuous(breaks = df$pos, labels = df$Var1) +
+    scale_fill_manual(values = c("grey", col))+
+    theme_void()+
+    theme(axis.ticks = element_blank(),
+          axis.title = element_blank(),
+          # axis.text = element_text(size = 10),
+          legend.position = "none") # Removes the legend
+}
+
+NN_NS_plot_piechart <- NN_NS_plot + 
+  annotation_custom(grob = ggplotGrob(plot_piechart("up_right","firebrick")),
+                    xmin = 1.1, xmax = 1.7, 
+                    ymin = 0.85, ymax =1.45 )+ 
+  annotation_custom(grob = ggplotGrob(plot_piechart("down_right","forestgreen")),
+                    xmin = 0.5, xmax = 1.1, 
+                    ymin = -2, ymax =-1.4 )+ 
+  annotation_custom(grob = ggplotGrob(plot_piechart("down_left","grey20")),
+                    xmin = -2, xmax = -1.4, 
+                    ymin = -2, ymax =-1.4 )+ 
+  annotation_custom(grob = ggplotGrob(plot_piechart("up_left","dodgerblue3")),
+                    xmin = -2, xmax = -1.4, 
+                    ymin = 0.85, ymax =1.45 )
+NN_NS_plot_piechart
+ggsave(here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png"),
+        plot = NN_NS_plot_piechart, width=10, height = 8 )
 
 ## on map 
 function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36, 31),
@@ -507,6 +548,42 @@ caraib_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product,
                                               xlim= c(-100,-55),
                                               title = "Trade-offs in Nature Based Contribution in caraïbe")
 ggsave( here::here("outputs", "figures", "caraïbe map with NN and NS score.png"), plot = caraib_map_NN_NS, width=10, height = 6 )
+
+
+#### which proportion of mpa in quantiles: ####
+df_plot_mpa <- NN_NS_with_product |>
+  dplyr::filter(NN_score > quantile(NN_NS_with_product$NN_score, 0.75)) |>
+  dplyr::mutate(score = "Nature to Nature", quantile = "best 25%") |>
+  dplyr::bind_rows( dplyr::mutate(
+      dplyr::filter(NN_NS_with_product,
+                    NN_score < quantile(NN_NS_with_product$NN_score, 0.25)),
+      score = "Nature to Nature", quantile = "worst 25%")) |>
+  dplyr::bind_rows( dplyr::mutate(
+      dplyr::filter(NN_NS_with_product,
+                    NS_score > quantile(NN_NS_with_product$NS_score, 0.75)),
+      score = "Nature to Society", quantile = "best 25%")) |>
+  dplyr::bind_rows( dplyr::mutate(
+      dplyr::filter(NN_NS_with_product,
+                    NS_score < quantile(NN_NS_with_product$NS_score, 0.25)),
+      score = "Nature to Society", quantile = "worst 25%")) |>
+  dplyr::group_by(score, quantile) |>
+  dplyr::summarize(prop_protect = sum(protection == "protected") / dplyr::n())
+
+  
+prop_plot <- ggplot(df_plot_mpa) +
+  aes(x = quantile, y = prop_protect, fill = score) +
+  geom_col() +
+  geom_hline(yintercept =  sum(NN_NS_with_product$protection == "protected")/nrow(NN_NS_with_product),
+             color = "black", linetype = "dashed")+
+  scale_fill_manual(values = c("forestgreen", "dodgerblue3"))+
+  labs( x = "Externe quartiles in NN and NS scores",
+        y = "Percentage of protected sites") +
+  theme_light() +
+  theme(legend.position = "none")+
+  facet_wrap(vars(score))
+prop_plot
+ggsave( here::here("outputs", "figures", "Proportion of MPA in NN and NS quartiles.png"), 
+        plot = prop_plot, width=6, height = 6 )
 
 
 #### NN or NS only ####

@@ -99,7 +99,8 @@ plot_PCA_NCP <- function(NCP_site){
       Iron_C, Vitamin_A_C, phylo_entropy, ED_Mean, aesthe_survey, iucn_species,
       elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
       monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
-      biom_highTL, fishery_biomass, mean_TL, robustness))
+      biom_highTL, fishery_biomass, mean_TL, robustness, scientific_interest,
+      public_interest))
   
   # non_correlated_NCP_site_for_pca <- subset(NCP_site_clean, 
   #                             select = c(
@@ -196,7 +197,7 @@ plot_PCA_NCP <- function(NCP_site){
            elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
            monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
            biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", 
-           robustness = "NN") # /!\ the order matter
+           robustness = "NN",  scientific_interest = "NS", public_interest = "NS") # /!\ the order matter
   
   
   grp <- as.factor(grp)
@@ -266,7 +267,8 @@ plot_PCA_NCP <- function(NCP_site){
                 high_mg_calcite="regulating", aragonite="regulating", monohydrocalcite="regulating",
                 amorphous_carbonate="regulating", biom_lowTL="regulating", biom_mediumTL="regulating",
                 biom_highTL="regulating", fishery_biomass="material",
-                mean_TL = "nature", robustness = "nature") 
+                mean_TL = "nature", robustness = "nature",  scientific_interest = "non material",
+                public_interest= "non material") 
   
   grp_3cat <- as.factor(grp_3cat)
   
@@ -598,15 +600,15 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   ##------- Study NN and NS separately ------
-  grp <- as.factor( c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
-           funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
-           Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
-           elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
-           monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-           biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN",
-           robustness = "NN")) # /!\ the order matter
-  
-  library(ggplot2)
+  # grp <- as.factor( c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
+  #          funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
+  #          Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
+  #          elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
+  #          monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
+  #          biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN",
+  #          robustness = "NN")) # /!\ the order matter
+  # 
+  # library(ggplot2)
   
   ###------- NN: Nature contributions to Nature -------   
   NN <- names(grp)[ grp=="NN" ]

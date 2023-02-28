@@ -27,7 +27,8 @@ load(here::here("nutrients", "outputs", "fishery_tot_biomass.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_biodiversity.Rdata"))
 load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_iucn_and_chondrichtyans_scores.Rdata"))
-load(here::here("aesthetic", "outputs", "survey_aesth_without_outliers.Rdata"))
+load(here::here("cultural_contributions", "outputs", "survey_aesth_without_outliers.Rdata"))
+load(here::here("cultural_contributions", "outputs", "cultural_contributions_surveys.Rdata"))
 load(here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata"))
 load(here::here("trophic_web", "outputs", "trophic_indicators_survey.Rdata"))
 
@@ -54,8 +55,8 @@ carbonates <- dplyr::select(caco3_per_day_without_outliers, SurveyID, low_mg_cal
                             aragonite, monohydrocalcite, amorphous_carbonate) #2156 surveys
 
 troph_ind <- dplyr::select(as.data.frame(trophic_indicators_survey), SurveyID, 
-                           Ntop, b_power_law, weighted_mTL) |> #3627 surveys
-             dplyr::rename(top_predator_proportion = Ntop, robustness = b_power_law, mean_TL = weighted_mTL) |>
+                           b_power_law, weighted_mTL) |> #3627 surveys
+             dplyr::rename(robustness = b_power_law, mean_TL = weighted_mTL) |>
              dplyr::mutate(across(.cols = c("SurveyID"),.fns = as.character, .names = "{.col}" ))
  
 
@@ -75,12 +76,15 @@ NCP <- metadata_surveys |>
   dplyr::left_join(aesthetic) |>
   dplyr::left_join(iucn_and_elasmo_by_surveys)|>
   dplyr::left_join(carbonates) |>
-  dplyr::left_join(troph_ind) 
+  dplyr::left_join(troph_ind) |>
+  dplyr::left_join(
+    dplyr::select(cultural_contribution_surveys, 
+                  SurveyID, scientific_interest, public_interest))
   
 
 
 #### No filter
-NCP_surveys <- questionr::na.rm(NCP) #remains 1824 surveys --> no filter on metadata
+NCP_surveys <- questionr::na.rm(NCP) #remains 1809 surveys --> no filter on metadata
 
 NCP_surveys <- NCP_surveys |>
   dplyr::left_join( dplyr::select( metadata_surveys,
@@ -161,7 +165,7 @@ mean_per_site <- function(var_survey = NCP_surveys){
                                "phylo_entropy","ED_Mean","aesthe_survey", "iucn_species", "elasmobranch_diversity",
                                "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
                                "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL", "fishery_biomass",
-                               "robustness", "mean_TL"),
+                               "robustness", "mean_TL", "scientific_interest","public_interest" ),
                      .fns = mean, .names = "{.col}"))
 }
 

@@ -22,13 +22,12 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
-# load(here::here("outputs","all_NCP_site.Rdata"))
+load(here::here("outputs","all_NCP_site.Rdata"))
 # load(here::here("outputs","NCP_site_coral_reef.Rdata"))
 # load(here::here("outputs","NCP_site_SST20.Rdata"))
 # load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-
-NCP_site <- NCP_site_condition
+# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+# NCP_site <- NCP_site_condition
 
 load(here::here("outputs","NN_NS_score_wheighted_mean.Rdata"))
 load(here::here("outputs","NN_NS_score_PC1.Rdata"))
@@ -39,7 +38,8 @@ grp <- as.factor(c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_ric
                    Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
                    elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
                    monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-                   biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN")) # /!\ the order matter
+                   biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN",
+                   scientific_interest = "NS", public_interest = "NS")) # /!\ the order matter
 
 
 NCP_to_transform <- c("Btot","recycling_N","recycling_P","Productivity",
@@ -65,6 +65,7 @@ NCP_site_selected <- subset(NCP_site, select =
                                 elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
                                 monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
                                 biom_highTL, fishery_biomass, mean_TL , robustness,
+                                scientific_interest , public_interest,
                                 NN_kark, NS_kark, NN_PC1, NS_PC1)) 
 
 NCP_site_for_pca <- scale(NCP_site_selected)

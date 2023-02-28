@@ -78,7 +78,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] +
+  plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -93,7 +93,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] +
+  plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -128,7 +128,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
     plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
     plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
     plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    plots[[28]] + plots[[29]] +
+    plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
     
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
@@ -151,7 +151,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
     plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
     plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
     plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    plots[[28]] + plots[[29]] +
+    plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
@@ -268,7 +268,20 @@ parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
 ##-------------plot MPAs on map-------------
 NCP_site$mpa_iucn_cat[which(NCP_site$mpa_iucn_cat == "Not Applicable" |
                               NCP_site$mpa_iucn_cat == "Not Reported")] <- NA
-mpa <- ggplot(NCP_site) +
+NCP_site <- NCP_site |>
+  dplyr::bind_cols(
+    protection_not_low = ifelse(is.na(NCP_site$mpa_name)==F &
+                            NCP_site$mpa_enforcement != "Low" &
+                            stringr::str_detect(NCP_site$protection_status, "No take"),
+                          "protected","not protected"),
+      protection_only_high = ifelse(is.na(NCP_site$mpa_name)==F &
+                                NCP_site$mpa_enforcement == "High" &
+                                stringr::str_detect(NCP_site$protection_status, "No take"),
+                              "protected","not protected"))
+
+
+plot_mpa <-function(NCP_site){
+  ggplot(NCP_site) +
       geom_sf(data = coast, color = "grey30", fill = "lightgrey",
               aes(size=0.1)) +
       
@@ -289,8 +302,16 @@ mpa <- ggplot(NCP_site) +
             axis.ticks.x = element_blank(),
             plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
       )
-    
-ggsave(filename = here::here("outputs", "figures", "MPAs_on_world_map.jpg"),
+}
+
+mpa <- plot_mpa(NCP_site = dplyr::filter(NCP_site, is.na(mpa_iucn_cat) == F))
+ggsave(filename = here::here("outputs", "figures", "MPAs_iucn_cat_on_world_map.jpg"),
        plot = mpa, width=15, height = 7 )
 
-  
+mpa_not_low <- plot_mpa(NCP_site = dplyr::filter(NCP_site, protection_not_low == "protected"))
+ggsave(filename = here::here("outputs", "figures", "MPAs_high_and_medium_enforcement_iucn_cat_on_world_map.jpg"),
+       plot = mpa, width=15, height = 7 )
+
+mpa_high <- plot_mpa(NCP_site = dplyr::filter(NCP_site, protection_only_high == "protected"))
+ggsave(filename = here::here("outputs", "figures", "MPAs_high_enforcement_iucn_cat_on_world_map.jpg"),
+       plot = mpa, width=15, height = 7 )

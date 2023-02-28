@@ -54,12 +54,12 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
-# load(here::here("outputs","all_NCP_site.Rdata"))
+load(here::here("outputs","all_NCP_site.Rdata"))
 # load(here::here("outputs","NCP_site_coral_reef.Rdata"))
 # load(here::here("outputs","NCP_site_SST20.Rdata"))
 # load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-NCP_site <- NCP_site_condition
+# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+# NCP_site <- NCP_site_condition
 
 
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
@@ -115,28 +115,35 @@ site_family_occ <- surveys_family_occ %>%
 
 ##-------------computing pca-------------
 rownames(NCP_site) <- NCP_site$SiteCode
-NCP_site_for_pca <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
-                                                 SiteMeanSST, SiteLatitude, SiteLongitude, Btot,
-                                                 HDI, MarineEcosystemDependency,
-                                                 coral_imputation))
+NCP_site_for_pca <-  subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                               SiteMeanSST, SiteLatitude, SiteLongitude,
+                                               HDI, MarineEcosystemDependency,
+                                               coral_imputation, gravtot2, mpa_name,
+                                               mpa_enforcement, protection_status, 
+                                               mpa_iucn_cat))
                                                  #fishery_biomass, biom_lowTL, biom_mediumTL, biom_highTL))
 pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = T, graph=F, ncp=10)
 ```
 
 -   **See data:**
 
-    -   *Structure of the data:*
+    -   *Studied contributions:*
 
 ```{r}
 #| label: see data
 
-glimpse(NCP_site_for_pca)
+colnames(NCP_site_for_pca)
 summary(NCP_site$SiteCountry)
 ```
 
 ------------------------------------------------------------------------
 
 # Vizualize services assessement  
+## Position of MPAs  
+![IUCN categories](`r here::here("outputs", "figures", "MPAs_iucn_cat_on_world_map.jpg") `)  
+![Medium and Highly enforced No take MPAs](`r here::here("outputs", "figures", "MPAs_high_and_medium_enforcement_iucn_cat_on_world_map.jpg") `)  
+
+
 ## Biomass on maps  
 ::: {layout="[[1], [1], [1]]"}
 ![](`r here::here("outputs", "figures", "NCP_on_world_map", "world_map_with_Btot.jpg") `)
@@ -160,9 +167,6 @@ summary(NCP_site$SiteCountry)
 
 ### With biodiversity  
 ![Correlation between NCP and Biodiversity](`r here::here("outputs", "figures", "NCP_correlation_with_biodiversity.png") `){width=100%}  
-
-### Corr-matrix for all NCPs  
-![Correlation between NCPs](`r here::here("outputs", "figures", "corr_matrix.png") `){width=100%}  
 
 ### Corr-matrix for log transformed NCPs  
 ![Correlation between NCPs](`r here::here("outputs", "figures", "corr_matrix_log_transformed_NCP.png") `){width=100%}  
@@ -201,9 +205,6 @@ NCPs contribution
 #### PCA in the 2 first dimensions  
 ![PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables](`r here::here("outputs", "figures", "PCA_all_NCP.png") `){width=100%}  
 
-> *Display only well represented variables (cos2 \> 0.4):*  
-
-![PCA in the 2 first dimensions, with well represented variables: ($cos^{2}$) > 0.4](`r here::here("outputs", "figures", "PCA_all_NCP_cos2_0.4.png") `){width=70%} 
 
 > *Classify variables in Nature for Nature (NN) and Nature for Society (NS)*
 
@@ -273,6 +274,9 @@ All variables classified as IPBES categories
 ### By countries
 
 ![Sites distributions, with ($cos^{2}$) > 0.4 variables](`r here::here("outputs", "figures", "PCA_countries_cos2_0.4.png") `)
+
+### By IUCN MPA categories  
+![](`r here::here("outputs", "figures", "PCA_mpa_categories.png") `)
 
 
 ### Temperature pattern
@@ -431,6 +435,9 @@ NN and NS scores estimated by weighted mean
 NN and NS scores estimated by weighted mean
 :::
 
+### Proportion of reserve in quartiles  
+![](`r here::here("outputs", "figures", "Proportion of MPA in NN and NS quartiles.png") `)  
+
 ### NN on map  
 ![](`r here::here("outputs", "figures", "world map with NN score.png") `)
 
@@ -443,8 +450,8 @@ NN and NS scores estimated by weighted mean
 
 
 ## Study NN according to NS  
-### Color scales
-![](`r here::here("outputs", "figures", "Sites in NN and NS scores.png") `)  
+### Color scales and proportion of protected sites in each quarter
+![](`r here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png") `)  
 *Red color indicates conflict between NN and NS management strategies as both have high score*  
 
 ### on map
