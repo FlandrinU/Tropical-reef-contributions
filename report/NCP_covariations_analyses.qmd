@@ -182,11 +182,11 @@ summary(NCP_site$SiteCountry)
 #### Variance explained by the 15 first dimensions  
 
 
-:::{#fig-explained_variance layout-ncol=2}
+:::{#fig-explained_variance layout-ncol=1}
 
 ![Dimension Eigenvalues](`r here::here("outputs", "figures", "barplot_variance_explained_all_NCP.png") `)
 
-![](`r here::here("outputs", "figures", "barplot_cumulative_variance_explained_all_NCP.png") `)
+![Elbow rule on dimensions](`r here::here("outputs", "figures", "Variance explained by ACP_elbow rule.png") `)
 
 Variance explained by ACP dimensions
 :::

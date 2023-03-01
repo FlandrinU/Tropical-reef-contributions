@@ -14,7 +14,7 @@
 pkgs <- c("here", "tidyverse","FactoMineR", "tibble", "questionr", "corrplot",
           "factoextra", "ggpubr", "scico", "RColorBrewer", "plotly", "fishualize", 
           "ggplot2", "patchwork", "colormap", "grDevices", "ggnewscale", "sf",
-          "rdacca.hp")
+          "rdacca.hp", "harrypotter")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -33,6 +33,7 @@ load(here::here("outputs","all_NCP_site.Rdata"))
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
+source(here::here("R", "elbow.R"))
 ##-------------Correlations between NCPs-------------
 ## Clean data
 NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
@@ -136,22 +137,65 @@ plot_PCA_NCP <- function(NCP_site){
   
   eig <- factoextra::get_eig(pca)
   variance_explained <- data.frame(
-    Dimensions = c(1:nrow(eig)), 
+    Axe = c(1:nrow(eig)), 
     cumulative_variance_explained = eig[,3],
     contribution_coefficient = eig[,2]/100)
 
-  cumulative_variance <- ggplot(variance_explained) +
-    aes(x = Dimensions, y = cumulative_variance_explained) +
-    geom_step(colour = "darkred") +
-    geom_hline(yintercept=70, linetype="dashed", color = "black")+
-    ylim(0,100) +
-    labs(
-      x = "Dimensions",
-      y = "Variance explained",
-      title = "Cumulative variance explained by dimensions (threshold at 70%)"
-    ) +
-    theme_minimal()
-  ggsave(filename = here::here("outputs", "figures","barplot_cumulative_variance_explained_all_NCP.png"), cumulative_variance, width = 15, height =10 )
+  # cumulative_variance <- ggplot(variance_explained) +
+  #   aes(x = Axe, y = cumulative_variance_explained) +
+  #   geom_step(colour = "darkred") +
+  #   geom_hline(yintercept=70, linetype="dashed", color = "black")+
+  #   ylim(0,100) +
+  #   labs(
+  #     x = "Dimensions",
+  #     y = "Variance explained",
+  #     title = "Cumulative variance explained by dimensions (threshold at 70%)"
+  #   ) +
+  #   theme_minimal()
+  # ggsave(filename = here::here("outputs", "figures","barplot_cumulative_variance_explained_all_NCP.png"), cumulative_variance, width = 15, height =10 )
+  
+  elbow_values <- elbow(variance_explained[,c("Axe", "cumulative_variance_explained")])
+  
+  elbow_point <- c( elbow_values$"Axe"[tail(which(elbow_values$"SelectedorNot" =="Selected"), n = 1)],
+                    elbow_values$"cumulative_variance_explained"[tail(
+                      which(elbow_values$"SelectedorNot" =="Selected"), n = 1)])
+  
+  
+  elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_explained,
+                                               color = "black")) + 
+    stat_summary(fun = "mean", geom = "line", size = 1, alpha = 0.4) +
+    stat_summary(fun = "mean", size = 0.5) +
+    
+    labs(x = "Number of dimensions") + 
+    labs(y = "Variance explained") +
+    theme_bw() +
+    theme(strip.background = element_blank(),
+          strip.text.x = element_blank(),
+          axis.title.x = element_text(size = 12, face = "bold"),
+          axis.title.y = element_text(size = 12, face = "bold"),
+          panel.background = element_blank(),
+          legend.position = "none") +
+    coord_cartesian(expand = FALSE, xlim = c(0, 31), ylim = c(0, 105))+
+    harrypotter::scale_colour_hp_d(option = "LunaLovegood") +
+    
+    geom_segment(aes(x = elbow_point[1], xend = elbow_point[1],
+                     y = 0 , yend = elbow_point[2]),
+                     color = "black", linetype = "dotted", size = 1) +
+    
+    geom_segment(aes(y = elbow_point[2], yend = elbow_point[2],
+                     x = 0, xend = elbow_point[1]),
+                     color = "black", linetype = "dotted", size = 1) +
+    
+      geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
+                 color = "black", size = 4, shape = 19)+
+    geom_label(aes(label = paste0("Number of dimensions = ", elbow_point[1], "\n", 
+                                  "Variance explained = ", round(elbow_point[2],1) , " %"),
+               y = elbow_point[2]-5, x = elbow_point[1]+1), size = 5,
+               color = "black", hjust = 0)
+  elbow_plot
+  ggsave(filename = here::here("outputs", "figures",
+         "Variance explained by ACP_elbow rule.png"), elbow_plot, 
+         width = 15, height =10 )
   
   #### Contribution of NCP in dimensions
   var <- factoextra::get_pca_var(pca)
