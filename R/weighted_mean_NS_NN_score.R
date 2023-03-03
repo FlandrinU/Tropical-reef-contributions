@@ -247,14 +247,21 @@ ggsave(filename = here::here("outputs", "figures","hist_NS_weighted_mean.png"), 
 ## --------------- NN against NS -------------
 #### Define colors by quarter ####
 NN_NS_with_product <- NN_NS_scores |>
-  dplyr::bind_cols(
-    protection = ifelse(is.na(NN_NS_scores$mpa_name)==F &
-                       NN_NS_scores$mpa_enforcement != "Low" &
-                       stringr::str_detect(NN_NS_scores$protection_status, "No take"),
-    # protection = ifelse(is.na(NN_NS_scores$mpa_iucn_cat)==F &
-    #                     ( NN_NS_scores$mpa_iucn_cat == "Ia" |
-    #                         NN_NS_scores$mpa_iucn_cat == "II") ,
-                       "protected","not protected")) |>
+  dplyr::mutate(
+    if(NN_NS_scores$mpa_enforcement == "High" &
+       stringr::str_detect(NN_NS_scores$protection_status, "No take")){ protection = "No take" 
+       } else if(is.na(NN_NS_scores$mpa_name)==F &
+                 stringr::str_detect(NN_NS_scores$protection_status, "No take")==F){
+         protection = "Restricted" 
+          }else{ protection = "Fished"} ) |>
+  # dplyr::bind_cols(
+  #   protection = ifelse(is.na(NN_NS_scores$mpa_name)==F &
+  #                      NN_NS_scores$mpa_enforcement != "Low" &
+  #                      stringr::str_detect(NN_NS_scores$protection_status, "No take"),
+  #   # protection = ifelse(is.na(NN_NS_scores$mpa_iucn_cat)==F &
+  #   #                     ( NN_NS_scores$mpa_iucn_cat == "Ia" |
+  #   #                         NN_NS_scores$mpa_iucn_cat == "II") ,
+  #                      "protected","not protected")) |>
   dplyr::mutate(NNxNS = abs(NN_score * NS_score)) |>
   dplyr::bind_cols(rank = rank(abs(NN_NS_scores$NN_score * NN_NS_scores$NS_score))) |>
   dplyr::bind_cols(up_right = ifelse(NN_NS_scores$NN_score > 0 & NN_NS_scores$NS_score > 0,1,NA)) |>
@@ -269,6 +276,7 @@ NN_NS_with_product <- NN_NS_with_product |>
   dplyr::bind_cols(rank_d_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_left, na.last="keep"))
    
 summary(NN_NS_with_product)
+save(NN_NS_with_product, file = here::here("outputs","NN_NS_score_wheighted_mean_quarter_ranked.Rdata"))
 # median_curve_u_r <- data.frame(x_curve=
 #                                  c(0,0.05,sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
 #                                    na.rm=T)), 3* sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right,
@@ -284,6 +292,7 @@ summary(NN_NS_with_product)
 
 
 #### plot NN against NN ####
+library(ggplot2)
 NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
   #up right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_right == 1),
@@ -351,7 +360,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
                                                quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
   ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
                              data=NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
-                                                             quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
+                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
   
   # see MPAs
   scale_shape_manual(values=c(20,17))+

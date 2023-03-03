@@ -30,6 +30,8 @@ load(here::here("outputs","all_NCP_site.Rdata"))
 # NCP_site <- NCP_site_condition
 
 load(here::here("outputs","NN_NS_score_wheighted_mean.Rdata"))
+load(here::here("outputs","NN_NS_score_wheighted_mean_quarter_ranked.Rdata"))
+
 load(here::here("outputs","NN_NS_score_PC1.Rdata"))
 
 ##--------------- preping data ---------------
@@ -54,19 +56,21 @@ NCP_site <- NCP_site |>
                        .fns = ~ .x +1 , .names = "{.col}")) |>     
   dplyr::mutate(across(.cols = all_of(NCP_to_transform),
                        .fns = log10 , .names = "{.col}")) |>
-  dplyr::left_join(NN_NS_scores) |>  #Add NN and NS scores calculated from Kark formula
+  dplyr::left_join(NN_NS_with_product) |>  #Add NN and NS scores calculated from Kark formula, and the ranks in each quarter
   dplyr::left_join(NN_NS_PC1_surveys) |> 
-  dplyr::rename(NN_kark = "NN_score", NS_kark = "NS_score")
+  dplyr::rename(NN_kark = "NN_score", NS_kark = "NS_score") 
 
 NCP_site_selected <- subset(NCP_site, select = 
-                              c(recycling_N, recycling_P,Productivity,taxo_richness, funct_entropy,
+                              c(SiteCode,
+                                recycling_N, recycling_P,Productivity,taxo_richness, funct_entropy,
                                 funct_distinctiveness, Selenium_C, Zinc_C, Omega_3_C, Calcium_C,
                                 Iron_C, Vitamin_A_C, phylo_entropy, ED_Mean, aesthe_survey, iucn_species,
                                 elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
                                 monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
                                 biom_highTL, fishery_biomass, mean_TL , robustness,
                                 scientific_interest , public_interest,
-                                NN_kark, NS_kark, NN_PC1, NS_PC1)) 
+                                NN_kark, NS_kark, NN_PC1, NS_PC1)) |>
+                    tibble::column_to_rownames(var = "SiteCode")
 
 NCP_site_for_pca <- scale(NCP_site_selected)
 
@@ -304,4 +308,43 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
                                   col.quanti.sup = "darkred"))
   dev.off()
   
+  
+  
+  ##-------------Highlighting outliers in PCA-------------
+  #NN only
+  ind_NN <- which(NCP_site$rank_d_r >= quantile(NCP_site$rank_d_r, probs=c(0.95), na.rm=T))
+  #NS only
+  ind_NS <- which(NCP_site$rank_u_l >= quantile(NCP_site$rank_u_l, probs=c(0.95), na.rm=T))
+  #NN and NS
+  ind_NNxNS <- which(NCP_site$rank_u_r >= quantile(NCP_site$rank_u_r, probs=c(0.95), na.rm=T))
+  #neither NN nor NS
+  ind_worse <- which(NCP_site$rank_d_l >= quantile(NCP_site$rank_d_l, probs=c(0.95), na.rm=T))
+
+  ## plot on PCA with score outliers
+  library(ggplot2)
+  ind_coord <- as.data.frame(factoextra::get_pca_ind(pca_score)[["coord"]]) |>
+    tibble::rownames_to_column(var = "label")
+  
+  factoextra::fviz_pca_biplot(pca_score, col.var = grp, 
+                              palette = c("forestgreen", "dodgerblue3"),
+                              legend.title = "Nature Based Contributions",
+                              alpha.var = 0.3, alpha.ind = 0.5,
+                              repel = TRUE,
+                              geom=c("point", "text"), pointshape=21,
+                              col.quanti.sup = "grey20",
+                              label = c("var", "quanti.sup")) + 
+    
+    geom_point(data = ind_coord[ind_NN,], aes(x = Dim.1, y = Dim.2),
+               size = 2.5,col = "darkgreen") +
+    geom_point(data = ind_coord[ind_NS,], aes(x = Dim.1, y = Dim.2),
+               size = 2.5,col = "dodgerblue4") +
+    geom_point(data = ind_coord[ind_NNxNS,], aes(x = Dim.1, y = Dim.2),
+               size = 2.5,col = "darkred") +
+    geom_point(data = ind_coord[ind_worse,], aes(x = Dim.1, y = Dim.2),
+               size = 2.5,col = "grey20")+
+    geom_text(data = ind_coord[c(ind_NN, ind_NS, ind_NNxNS, ind_worse),],
+              aes(x= Dim.1, y = Dim.2,label=label),
+              hjust=-0.1, vjust=-0.1, size = 3)
+  
+  ggsave(filename = here::here("outputs", "figures", "PCA_with_quantiles0.95.jpg"))    
   

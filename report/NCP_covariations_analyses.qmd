@@ -454,6 +454,9 @@ NN and NS scores estimated by weighted mean
 ![](`r here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png") `)  
 *Red color indicates conflict between NN and NS management strategies as both have high score*  
 
+### Score outliers in original PCA  
+![](`r here::here("outputs", "figures", "PCA_with_quantiles0.95.jpg") `)  
+
 ### on map
 ::: {layout-nrow=3}
 ![](`r here::here("outputs", "figures", "world map with NN and NS score.png") `)  
