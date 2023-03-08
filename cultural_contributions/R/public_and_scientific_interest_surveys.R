@@ -6,7 +6,7 @@
 ##
 ## 28/02/2023
 ##
-## Ulysse Flandrin
+## Ulysse Flandrin, data from Nicolas Mouquet
 ##
 ################################################################################
 
@@ -44,7 +44,7 @@ cultural_survey <- lapply( rownames(surveys_sp_occ), function(id){
 })
 
 cultural_contribution_surveys <- data.frame(do.call(rbind, cultural_survey)) |>
-  dplyr::rename(SurveyID=X1, scientific_interest=X2, public_interest=X3,
+  dplyr::rename(SurveyID = X1, scientific_interest = X2, public_interest = X3,
                 wiki_verna = X4) |>
   dplyr::mutate(scientific_interest = as.numeric(scientific_interest),
                 public_interest = as.numeric(public_interest),

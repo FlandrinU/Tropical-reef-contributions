@@ -229,7 +229,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
       
       coord_sf(xlim, ylim, expand = FALSE) +
       guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-      scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
+      scale_size_continuous(range = c(0.5, 4), guide = "none") +
       theme_minimal()+
       labs(title = paste0(NCP, " geographic distribution"),
            x="", y= "") +
@@ -261,9 +261,9 @@ parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
   plot_NCP_on_world_map(NCP= "mean_TL", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
   plot_NCP_on_world_map(NCP= "mean_TL", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
-  # #focus on Ntop
-  # plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  # plot_NCP_on_world_map(NCP= "top_predator_proportion", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  # #focus on public interest
+  plot_NCP_on_world_map(NCP= "public_interest", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
+  plot_NCP_on_world_map(NCP= "public_interest", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
 ##-------------plot MPAs on map-------------
 NCP_site$mpa_iucn_cat[which(NCP_site$mpa_iucn_cat == "Not Applicable" |

@@ -12,7 +12,7 @@
 
 #-----------------Loading packages-------------------
 pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats", "ggrepel",
-          "ggfun", "scatterpie", "scales")
+          "ggfun", "scatterpie", "scales", "ggpattern")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -176,6 +176,8 @@ for( site in 1:nrow(NCP_NS)){
 
 
 NN_NS_scores <- cbind(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude", 
+                                  "SiteMeanSST", "Btot", "HDI", "gravtot2",
+                                  "MarineEcosystemDependency", "coral_imputation",
                                   "mpa_name", "mpa_enforcement", "protection_status",
                                   "mpa_iucn_cat")],
                       data.frame(NN_score = EDS_NN, NS_score = EDS_NS) )
@@ -183,6 +185,8 @@ save(NN_NS_scores, file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdat
 
 ##-------------plot NN and NS scores-------------
 library(ggplot2)
+library(patchwork)
+
 
 plot_histogram <- function(data = NN_NS_scores, 
                            x=NN_NS_scores$NN_score, col= "forestgreen",
@@ -244,17 +248,57 @@ histo_NS <- plot_histogram(data = NN_NS_scores, x=NN_NS_scores$NS_score, col= "d
 ggsave(filename = here::here("outputs", "figures","hist_NS_weighted_mean.png"), histo_NS, width = 8, height =6 )
 
 
+### plot scores according to socio-envir variables
+plot_score_according_variables <- function(data = NN_NS_scores,
+                                           score = "NN_score",
+                                           var = "SiteLatitude"){
+  ggplot(data, aes(x = data[,var][[var]],y= data[,score][[score]], alpha = 0.5)) +
+    geom_point()+
+    geom_smooth() +
+    labs(x = var, y = score , title = "") +
+    theme_minimal()+
+    theme(legend.position = 'none')
+}
+variables <- c("SiteLatitude", "SiteLongitude", "SiteMeanSST", "Btot",
+               "HDI", "MarineEcosystemDependency", "coral_imputation",
+               "gravtot2")
+
+## NN
+plots <- lapply( variables, function(var){
+  plot_score_according_variables(data = NN_NS_scores, score = "NN_score", var = var)
+  })
+
+plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]]+
+  plots[[6]] + plots[[7]] + plots[[8]] +
+  theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
+  plot_annotation(tag_levels = "a") &
+  theme(plot.tag = element_text(face = 'bold'))
+
+ggsave(filename = here::here("outputs", "figures","Socio_envir_variables_with_NN_scores.png"), plot, width = 22, height =14 )
+
+## NS
+plots <- lapply( variables, function(var){
+  plot_score_according_variables(data = NN_NS_scores, score = "NS_score", var = var)
+})
+
+plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]]+
+  plots[[6]] + plots[[7]] + plots[[8]] +
+  theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
+  plot_annotation(tag_levels = "a") &
+  theme(plot.tag = element_text(face = 'bold'))
+
+ggsave(filename = here::here("outputs", "figures","Socio_envir_variables_with_NS_scores.png"), plot, width = 22, height =14 )
+
+
 ## --------------- NN against NS -------------
 #### Define colors by quarter ####
 NN_NS_with_product <- NN_NS_scores |>
-  dplyr::mutate(
-    if(NN_NS_scores$mpa_enforcement == "High" &
-       stringr::str_detect(NN_NS_scores$protection_status, "No take")){ protection = "No take" 
-       } else if(is.na(NN_NS_scores$mpa_name)==F &
-                 stringr::str_detect(NN_NS_scores$protection_status, "No take")==F){
-         protection = "Restricted" 
-          }else{ protection = "Fished"} ) |>
-  # dplyr::bind_cols(
+  dplyr::bind_cols( protection = ifelse(NN_NS_scores$mpa_enforcement == "High" &
+                      stringr::str_detect(NN_NS_scores$protection_status, "No take"),
+                          "No take",
+                          ifelse(is.na(NN_NS_scores$mpa_name)==F, 
+                            "Restricted", "Fished"))) |>
+  # # dplyr::bind_cols(
   #   protection = ifelse(is.na(NN_NS_scores$mpa_name)==F &
   #                      NN_NS_scores$mpa_enforcement != "Low" &
   #                      stringr::str_detect(NN_NS_scores$protection_status, "No take"),
@@ -363,7 +407,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
                                                quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
   
   # see MPAs
-  scale_shape_manual(values=c(20,17))+
+  scale_shape_manual(values=c(20,17,18))+
   #add lines
   geom_vline(xintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
   geom_hline(yintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
@@ -387,16 +431,16 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
   
   geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                 y=3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-                curvature=0.4, linetype=3, size=0.1)+  #up_right
+                curvature=0.4, linetype=3, linewidth=0.1)+  #up_right
   geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                  y=-3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-             curvature=-0.4, linetype=3, size=0.1)+   #down_right
+             curvature=-0.4, linetype=3, linewidth=0.1)+   #down_right
   geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                  y=3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-             curvature=-0.4, linetype=3, size=0.1)+ #up_left
+             curvature=-0.4, linetype=3, linewidth=0.1)+ #up_left
   geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                  y=-3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-             curvature=0.3, linetype=3, size=0.1)+ #down_right
+             curvature=0.3, linetype=3, linewidth=0.1)+ #down_right
   
 
   labs( x=  "Nature to Nature", y = "Nature to People")+
@@ -419,15 +463,19 @@ plot_piechart <- function(quarter= "up_right", col="firebrick"){
                   pos = Freq/2 + dplyr::lead(csum, 1),
                   pos = dplyr::if_else(is.na(pos), Freq/2, pos))
   
-  ggplot(df, aes(x = "", y = Freq, 
+  ggplot(df, aes(x = "", y = Freq,
                  fill = forcats::fct_inorder(Var1))) +
-    geom_col(width = 1, color = 1, position = "stack") +
+    # geom_col(width = 1, color = 1, position = "stack") +
+    ggpattern::geom_col_pattern(pattern = c("none", "stripe","none"),
+                                pattern_density = 0.001,
+                                pattern_spacing = 0.05,
+                                color = "grey20", position = "stack") +
     geom_text(aes(label = paste(round(pct,1), "%")),
               position = position_stack(vjust = 0.5)) +
     coord_polar(theta = "y") +
     guides(fill = guide_legend(title = "status")) +
     scale_y_continuous(breaks = df$pos, labels = df$Var1) +
-    scale_fill_manual(values = c("grey", col))+
+    scale_fill_manual(values = c("grey", col, col))+
     theme_void()+
     theme(axis.ticks = element_blank(),
           axis.title = element_blank(),
@@ -442,7 +490,7 @@ NN_NS_plot_piechart <- NN_NS_plot +
   annotation_custom(grob = ggplotGrob(plot_piechart("down_right","forestgreen")),
                     xmin = 0.5, xmax = 1.1, 
                     ymin = -2, ymax =-1.4 )+ 
-  annotation_custom(grob = ggplotGrob(plot_piechart("down_left","grey20")),
+  annotation_custom(grob = ggplotGrob(plot_piechart("down_left","grey40")),
                     xmin = -2, xmax = -1.4, 
                     ymin = -2, ymax =-1.4 )+ 
   annotation_custom(grob = ggplotGrob(plot_piechart("up_left","dodgerblue3")),
@@ -576,26 +624,38 @@ df_plot_mpa <- NN_NS_with_product |>
                     NS_score < quantile(NN_NS_with_product$NS_score, 0.25)),
       score = "Nature to Society", quantile = "worst 25%")) |>
   dplyr::group_by(score, quantile) |>
-  dplyr::summarize(prop_protect = sum(protection == "protected") / dplyr::n())
+  dplyr::summarize(No_take = sum(protection == "No take") / dplyr::n(),
+                   Restricted = sum(protection == "Restricted") / dplyr::n()) |>
+  tidyr::gather(`No_take`, `Restricted`, key = "protection", value = "prop")
+
+df_plot_mpa <- dplyr::bind_cols(df_plot_mpa,
+                                hatches = ifelse(df_plot_mpa$protection != "No_take",
+                                                 "none", "stripe"))
 
   
 prop_plot <- ggplot(df_plot_mpa) +
-  aes(x = quantile, y = prop_protect, fill = score) +
-  geom_col() +
-  geom_hline(yintercept =  sum(NN_NS_with_product$protection == "protected")/nrow(NN_NS_with_product),
+  aes(x = quantile, y = prop, pattern = hatches, fill = score) +
+  ggpattern::geom_col_pattern( 
+           pattern_density = 0.001,
+           pattern_spacing = 0.05,
+           color = "black", linewidth = 0.2)+
+  geom_hline(yintercept =  sum(NN_NS_with_product$protection == "No take" |
+                                 NN_NS_with_product$protection == "Restricted")/nrow(NN_NS_with_product),
              color = "black", linetype = "dashed")+
   scale_fill_manual(values = c("forestgreen", "dodgerblue3"))+
+  ggpattern::scale_pattern_manual(values = c("none", "stripe"))+
   labs( x = "Externe quartiles in NN and NS scores",
         y = "Percentage of protected sites") +
   theme_light() +
-  theme(legend.position = "none")+
+  theme(legend.position = "none") +
   facet_wrap(vars(score))
+
 prop_plot
 ggsave( here::here("outputs", "figures", "Proportion of MPA in NN and NS quartiles.png"), 
         plot = prop_plot, width=6, height = 6 )
 
 
-#### NN or NS only ####
+#### map of NN or NS only ####
 map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
                          NCP = NN_NS_with_product$NN_score ,
                          col_NCP= "forestgreen",
@@ -642,20 +702,3 @@ NS_worldwide <- map_NN_or_NS(coord_NN_NS = NN_NS_with_product,
                              xlim= c(-180,180), title="Nature to People contributions worldwide")
 ggsave( here::here("outputs", "figures", "world map with NS score.png"), plot = NS_worldwide, width=10, height = 6 )
 
-## According to latitude
-latitude_NN <- ggplot(NN_NS_scores, aes(SiteLatitude, NN_score , alpha = 0.5)) +
-  geom_point()+
-  geom_smooth() +
-  labs(x = "Latitude", y = "NN score", title = "Importance of lattitude in NN score") +
-  theme_minimal()+
-  theme(legend.position = 'none')
-ggsave(filename = here::here("outputs", "figures", "NN score according to latitude.png"), latitude_NN, width = 15, height = 12)
-
-latitude_NS <- ggplot(NN_NS_scores, aes(SiteLatitude, NS_score , alpha = 0.5)) +
-  geom_point()+
-  geom_smooth() +
-  labs(x = "Latitude", y = "NN score", title = "Importance of lattitude in NS score") +
-  theme_minimal()+
-  theme(legend.position = 'none')
-
-ggsave(filename = here::here("outputs", "figures", "NS score according to latitude.png"), latitude_NS, width = 15, height = 12)

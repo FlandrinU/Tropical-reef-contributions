@@ -325,7 +325,8 @@ Temperature pattern in PCA
 
 ![lattitude pattern in PCA](`r here::here("outputs", "figures", "PCA_lattitude_pattern.png") `)
 
-
+### Biomass pattern  
+![](`r here::here("outputs", "figures", "PCA_biomass_pattern.png") `)
 
 
 ## Study NN and NS separately
@@ -396,7 +397,8 @@ We struggle with dimension reduction in the PCA. It seems that NN and NS service
 Separated studies of NN and NS help us to say that NN services are quite positively correlated, with notably a strong correlation with the total biomass in PC1 (but also totally separated axes like richness in iucn species). On the other hand, NS are less correlated, which means that trade offs in NS are inevitable...?
 
 
-# Estimating NN and NS scores with weighted means
+# NN and NS scores with weighted means  
+## Weighted means  
 
 We used the Estimator in Dependant Sample method (Kark 2002), to make a weighted mean of NN and NS: 
 
@@ -444,9 +446,11 @@ NN and NS scores estimated by weighted mean
 ### NS on map  
 ![](`r here::here("outputs", "figures", "world map with NS score.png") `)
 
-### NN and NS according to latitude  
-![](`r here::here("outputs", "figures", "NN score according to latitude.png") `)  
-![](`r here::here("outputs", "figures", "NS score according to latitude.png") `)  
+### NN and NS according to socio-envir variables  
+#### NN  
+![](`r here::here("outputs", "figures", "Socio_envir_variables_with_NN_scores.png") `)    
+#### NS  
+![](`r here::here("outputs", "figures", "Socio_envir_variables_with_NS_scores.png") `)  
 
 
 ## Study NN according to NS  
@@ -473,19 +477,21 @@ NN and NS scores estimated by weighted mean
 
 ![Correlation between family richness and total Biomass](`r here::here("outputs", "figures", "families_richness_according_to_Btot.png") `)  
 
-### family richness
+### family richness  
 ![According to NN score](`r here::here("outputs", "figures", "families_richness_according_to_NN_score.png") `)  
 
 ![According to NS score](`r here::here("outputs", "figures", "families_richness_according_to_NS_score.png") `)  
 
-### family relative biomass
+### family relative biomass  
 ![According to NN score](`r here::here("outputs", "figures", "families_pbiom_according_to_NN_score.png") `)  
 
 ![According to NS score](`r here::here("outputs", "figures", "families_pbiom_according_to_NS_score.png") `)  
 
-### Multiple regressions  
+### Multiple regressions   
 #### Occurrences  
 ```{r}
+#| eval: false
+
 #Families occurrences
 site_family <- site_family_occ
 multiple_regression_occ_NN <- lm(NN_NS_scores$NN_score ~ 
@@ -524,6 +530,8 @@ summary(multiple_regression_occ_NS)
 
 #### Richness  
 ```{r}
+#| eval: false
+
 #Families richness
 site_family <- site_family_richness
 
@@ -565,6 +573,8 @@ summary(multiple_regression_richness_NS)
 
 #### Relative biomass
 ```{r}
+#| eval: false
+
 #Families relative biomass
 site_family <- site_family_pbiom
 
@@ -667,66 +677,8 @@ __No rules?__ max 6-7 figures in the 10 last published papers in conservation re
 
 
 ## Introduction  
--> En dégradant et vidant les océans, notre mode de vie capitaliste et extractiviste met en danger la sécurité alimentaire de plus de 3 milliards de personnes, détruit une histoire évolutive et culturelle irremplaçable par essence.  
-
--> Depuis ...., les MPAs apparaissent comme l'unique solution pour répondre à ces problèmes environnementaux et sociaux. Mais, en plus d'être difficilement applicable dans des sociétés fortement dépendantes des ecosystemes marins, les MPAs ont aujourd'hui du mal à remplir leurs promesses... (McShane 2011, Gatiso 2022, ... ?). les MPAs vont résoudre tous les problemes d’un coup, il n’y a pas de win-win (McShane 2011)  
-Il semble qu'il soit nécessaire d'expliciter les besoins/objectifs de chaque politique de conservation afin d'optimiser le réseau de réserve (Palacios-Abrantes 2022, Felipe-lucia 2022)
-
--> volonté d'estimer ~objectivement la valeur de la nature et ce que l'on perd: NCP et indigenous and local knowledge (ILK) systems (christie 2019, Diaz 2018). Ce qui permettrait de mieux comprendre le contexte et les conséquences des MPAs. trade-offs dans les axes de conservations (NFF) (Palacios-Abrantes 2022).
-
--> l'IPBES (/Diaz 2018) classe ces "natural assets" en Nature Based Contributions: material, regulating, non material assets et en valeur intrinseque de la Nature (Mother Earth). Mais la diffiulté de quantifier les aspects "non material" (et "regulating"), nous ont poussé à regrouper tous les NCPs en une catégorie bénéficiant aux sociétés humaines: Nature to Society, et l'ensemble des "assets" permettant le maintien de la Nature comme une catégorie: Nature to Nature.  
-C'est très dichotomique entre Homme et Nature mais cela répond bien aux enjeux posés par les conflits d'usage dans les parties prenantes...
-
--> A partir de l'estimation récente de nombreux "natural assets" dans des récifs étudiés par visual census (RLS), nous avons catégoriser ces "assets" en NN et NS afin d'estimer le potentiel de conservation ou de soutien aux sociétés des récifs tropicaux.  
-
--> Question: Comment les contributions des récifs covarient? Quels sites sont interressant pour les NN et NS? Comment adapter nos stratégies de management en fonction des récifs?
-
--> Hyp: beaucoup de trade-offs entre les "natural assets", il n'y a pas de sites bons pour tout? Les récifs tropicaux peuvent parfois être intéressant pour la conservation ou pour une exploitation durable ? ce trade offs entre les natural assets peut se faire à une échelle fine ?
-
 
 ## Materials and methods
-
--> RLS, filtres associés, data gardées, nombres de transects, sites, espèces, ...
--> Calcul des natural assets à partir de cees données:
-
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Services      | Estimation                   | Unit  |Importance            | References         |
-+===============+==============================+=======+======================+====================+
-| Recycling     |                              |       |                      | Schiettekatte 2022 |
-|               |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Productivty   |                              |       |                      | - Morais           |
-|               |                              |       |                      | - Seguin 2022      |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Taxonomic     |                              |       |                      |                    |
-|   richness    |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Functional &  |                              |       |                      |                    |
-| phylo entropy |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Funct & phylo |                              |       |                      |                    |
-| distinctivness|                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Nutrients     |                              |       |                      | Maire 2021         |
-|               |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Aesthetic     |                              |       |                      | Langlois 2022      |
-|               |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| IUCN species  |                              |       |                      |                    |
-|               |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Carbonates    |                              |       |                      | Ghilardi 2023      |
-| flux          |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| Trophic group |                              |       |                      |                    |
-| biomass       |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-| fishery       |                              |       |                      | Reef future ...    |
-|  biomass      |                              |       |                      |                    |
-+---------------+------------------------------+-------+----------------------+--------------------+
-
-: Nature Based Contributions.
 
 
 ## Results  
@@ -741,8 +693,6 @@ C'est très dichotomique entre Homme et Nature mais cela répond bien aux enjeux
 Covariations des services dans les récifs tropicaux
 
 :::
-
-_A changer: rassembler les flèches très proches dans ACP: recycling, calcium et fer, elasmo et iucn_
 
 => Beaucoup de services sont représentés en axes 1 car directement influencés par la biomasse, ou corrélés. Mais certains services se retrouvent uniquement dans les dimensions suivantes: l'entropy fonctionnelle, la productivité, distinctivness, vitamine A, iucn...  
 __= Multidimensionalité des contributions (surtout pour NS)__
@@ -791,8 +741,3 @@ _NB: peu d'explication par les biomasses relatives. i.e. pas terrible quand on a
 
 
 ## Discussion  
-=> notion de compromis, gestion multi objectifs (on peut pas tout faire avec une même AMP)
-
-=> imp du contexte ?
-
-=> un peu de tout partout, vert à protéger, bleu pour gestion de pêche durable, rouge à adapter en fonction des besoins des pops locales (floride -> protection)

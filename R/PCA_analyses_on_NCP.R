@@ -394,6 +394,19 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   ##----- Sites distribution-----
+  ### Biomass
+  png(filename = here::here("outputs", "figures","PCA_biomass_pattern.png"), 
+      width= 30, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot(pca,
+                                     select.var = list(cos2 = 0.4),
+                                     geom="point", pointshape=21,
+                                     fill.ind = NCP_site$Btot,
+                                     col.ind = NCP_site$Btot,
+                                     gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                     col.var = "black", repel = TRUE,
+                                     legend.title = "total biomass"))
+  dev.off()
+  
   ### mpa categories
   png(filename = here::here("outputs", "figures","PCA_mpa_categories.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
