@@ -21,25 +21,61 @@ rm(list=ls())
 
 ##-------------loading data------------
 load(here::here("outputs","all_NCP_site.Rdata"))
-# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
-# load(here::here("outputs","NCP_site_SST20.Rdata"))
-# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-# NCP_site <- NCP_site_condition
+load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_log_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
+# load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
+# NCP_site_log_transformed <- NCP_site_condition
 
 
 load(here::here("data","metadata_surveys.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
+##-------------NCP in categories-------------
+## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
+grp_NN_NS <- as.factor(c(N_recycling = "NN",
+                         P_recycling = "NN",
+                         Taxonomic_Richness = "NN",
+                         Functional_Entropy = "NN", 
+                         Phylogenetic_Entropy = "NN",
+                         Functional_Distinctiveness = "NN",
+                         Evolutionary_distinctiveness = "NN",
+                         Low_TL_Biomass = "NN",
+                         Medium_TL_Biomass = "NN",
+                         High_TL_Biomass = "NN",
+                         IUCN_Species = "NN",
+                         Elasmobranch_Diversity = "NN",
+                         Low_Mg_Calcite = "NN",
+                         High_Mg_Calcite = "NN",
+                         Aragonite = "NN",
+                         Monohydrocalcite = "NN",
+                         Amorphous_Carbonate = "NN",
+                         Trophic_web_robustness = "NN",
+                         mean_Trophic_Level = "NN",
+                         
+                         Productivity = "NS",
+                         Selenium = "NS",
+                         Zinc = "NS",
+                         Omega_3 = "NS",
+                         Calcium = "NS",
+                         Iron = "NS",
+                         Vitamin_A = "NS",
+                         Fishery_Biomass = "NS",
+                         Aesthetic = "NS",
+                         Public_Interest = "NS",
+                         Academic_Knowledge = "NS")) # /!\ the order matter
 
 ##-------------compute correlation coefficients-------------
 
 ## Clean data
-NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
-                                               SiteMeanSST, SiteLatitude, SiteLongitude,
-                                               HDI, MarineEcosystemDependency,
-                                               coral_imputation, gravtot2, mpa_name,
-                                               mpa_enforcement, protection_status, 
-                                               mpa_iucn_cat))
+NCP_log_transformed <- subset(NCP_site_log_transformed, 
+                              select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                          SiteMeanSST, SiteLatitude, SiteLongitude,
+                                          Biomass,
+                                          HDI, MarineEcosystemDependency,
+                                          coral_imputation, gravtot2, mpa_name,
+                                          mpa_enforcement, protection_status, 
+                                          mpa_iucn_cat))
 
 #### NCPs distribution
 plot_distribution <- function(ncp, data){
@@ -56,45 +92,29 @@ plot_distribution <- function(ncp, data){
     theme_minimal() +
     theme( legend.position = "none")
 }
-
-plots <- lapply(colnames(NCP_site_clean), FUN = plot_distribution, data = NCP_site_clean )
-
-library(patchwork)
-all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
-  plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
-  plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] +  plots[[30]] + plots[[31]] + 
-  theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-  plot_annotation(tag_levels = "a") &
-  theme(plot.tag = element_text(face = 'bold'))
-
-# ggsave(filename = here("outputs", "figures","NCP_distribution.png"), all_plot, width = 22, height =14 )
+# 
+# plots <- lapply(colnames(NCP_site_clean), FUN = plot_distribution, data = NCP_site_clean )
+# 
+# library(patchwork)
+# all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
+#   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
+#   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
+#   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
+#   plots[[28]] + plots[[29]] +  plots[[30]] + plots[[31]] + 
+#   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
+#   plot_annotation(tag_levels = "a") &
+#   theme(plot.tag = element_text(face = 'bold'))
+# 
+# # ggsave(filename = here("outputs", "figures","NCP_distribution.png"), all_plot, width = 22, height =14 )
 
 #### NCPs distribution with log correction
-NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
-                             "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
-                             "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
-                             "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                             "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                             "fishery_biomass")
-
-NCP_log_clean <- NCP_site_clean |>
-  dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed
-  dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
-                       .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid negative values
-  
-NCP_log_transformed <-NCP_log_clean |> dplyr::rename_with(.cols = all_of(NCP_skewed_distribution),
-                                                          .fn = ~ paste0("log(", .x, ")"))
-
 plots <- lapply(colnames(NCP_log_transformed), FUN = plot_distribution, data = NCP_log_transformed )
 library(patchwork)
 all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] + 
+  plots[[28]] + plots[[29]] + plots[[30]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -113,21 +133,11 @@ corrplot::corrplot(correlations_between_NCPs, add = TRUE, type = 'upper', method
 
 
 ##-------------compute weighted mean of NCP (Kark 2002): NN and NS scores-------------
-
-grp <- as.factor( c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
-                    funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
-                    Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
-                    elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
-                    monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-                    biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN",
-                    scientific_interest = "NS", public_interest = "NS")) # /!\ the order matter
-
-
-corr_pearson_NCPs <- stats::cor(NCP_log_clean, method="pearson")
-NCP_log_scale_clean <- scale(NCP_log_clean)
+corr_pearson_NCPs <- stats::cor(NCP_log_transformed, method="pearson")
+NCP_log_scale_clean <- scale(NCP_log_transformed)
 
 #### Nature to Nature (NN) score ####
-NN_names <- names(grp)[ grp=="NN" ]
+NN_names <- names(grp_NN_NS)[ grp_NN_NS=="NN" ]
 corr_pearson_NN <- corr_pearson_NCPs[NN_names,NN_names]
 NCP_NN <- NCP_log_scale_clean[,NN_names]
 
@@ -151,7 +161,7 @@ for( site in 1:nrow(NCP_NN)){
 
 
 #### Nature to Society (NS) score ####
-NS_names <- names(grp)[ grp=="NS" ]
+NS_names <- names(grp_NN_NS)[ grp_NN_NS=="NS" ]
 corr_pearson_NS <- corr_pearson_NCPs[NS_names,NS_names]
 NCP_NS <- NCP_log_scale_clean[,NS_names]
 
@@ -175,12 +185,12 @@ for( site in 1:nrow(NCP_NS)){
 
 
 
-NN_NS_scores <- cbind(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude", 
-                                  "SiteMeanSST", "Btot", "HDI", "gravtot2",
-                                  "MarineEcosystemDependency", "coral_imputation",
-                                  "mpa_name", "mpa_enforcement", "protection_status",
-                                  "mpa_iucn_cat")],
-                      data.frame(NN_score = EDS_NN, NS_score = EDS_NS) )
+NN_NS_scores <- cbind(NCP_site_log_transformed[ , c("SiteCode", "SiteLongitude", "SiteLatitude", 
+                                                    "SiteMeanSST", "Biomass", "HDI", "gravtot2",
+                                                    "MarineEcosystemDependency", "coral_imputation",
+                                                    "mpa_name", "mpa_enforcement", "protection_status",
+                                                    "mpa_iucn_cat")],
+  data.frame(NN_score = EDS_NN, NS_score = EDS_NS) )
 save(NN_NS_scores, file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
 
 ##-------------plot NN and NS scores-------------
@@ -259,7 +269,7 @@ plot_score_according_variables <- function(data = NN_NS_scores,
     theme_minimal()+
     theme(legend.position = 'none')
 }
-variables <- c("SiteLatitude", "SiteLongitude", "SiteMeanSST", "Btot",
+variables <- c("SiteLatitude", "SiteLongitude", "SiteMeanSST", "Biomass",
                "HDI", "MarineEcosystemDependency", "coral_imputation",
                "gravtot2")
 
@@ -612,17 +622,17 @@ df_plot_mpa <- NN_NS_with_product |>
   dplyr::filter(NN_score > quantile(NN_NS_with_product$NN_score, 0.75)) |>
   dplyr::mutate(score = "Nature to Nature", quantile = "best 25%") |>
   dplyr::bind_rows( dplyr::mutate(
-      dplyr::filter(NN_NS_with_product,
-                    NN_score < quantile(NN_NS_with_product$NN_score, 0.25)),
-      score = "Nature to Nature", quantile = "worst 25%")) |>
+    dplyr::filter(NN_NS_with_product,
+                  NN_score < quantile(NN_NS_with_product$NN_score, 0.25)),
+    score = "Nature to Nature", quantile = "worst 25%")) |>
   dplyr::bind_rows( dplyr::mutate(
-      dplyr::filter(NN_NS_with_product,
-                    NS_score > quantile(NN_NS_with_product$NS_score, 0.75)),
-      score = "Nature to Society", quantile = "best 25%")) |>
+    dplyr::filter(NN_NS_with_product,
+                  NS_score > quantile(NN_NS_with_product$NS_score, 0.75)),
+    score = "Nature to Society", quantile = "best 25%")) |>
   dplyr::bind_rows( dplyr::mutate(
-      dplyr::filter(NN_NS_with_product,
-                    NS_score < quantile(NN_NS_with_product$NS_score, 0.25)),
-      score = "Nature to Society", quantile = "worst 25%")) |>
+    dplyr::filter(NN_NS_with_product,
+                  NS_score < quantile(NN_NS_with_product$NS_score, 0.25)),
+    score = "Nature to Society", quantile = "worst 25%")) |>
   dplyr::group_by(score, quantile) |>
   dplyr::summarize(No_take = sum(protection == "No take") / dplyr::n(),
                    Restricted = sum(protection == "Restricted") / dplyr::n()) |>

@@ -23,36 +23,30 @@ load(here::here("data","metadata_surveys.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 load(here::here("outputs","all_NCP_site.Rdata"))
-# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
-# load(here::here("outputs","NCP_site_SST20.Rdata"))
-# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
+load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_log_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
+# load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
 # NCP_site <- NCP_site_condition
 
 # Preping data  
 ## Clean data  
-NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
-                                               SiteMeanSST, SiteLatitude, SiteLongitude,
-                                               HDI, MarineEcosystemDependency,
-                                               coral_imputation, gravtot2, mpa_name,
-                                               mpa_enforcement, protection_status, 
-                                               mpa_iucn_cat))
+NCP_site_clean_before_log <- subset(NCP_site, 
+                         select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                     SiteMeanSST, SiteLatitude, SiteLongitude,
+                                     HDI, MarineEcosystemDependency,
+                                     coral_imputation, gravtot2, mpa_name,
+                                     mpa_enforcement, protection_status, 
+                                     mpa_iucn_cat))
+NCP_site_clean <- subset(NCP_site_log_transformed, 
+                         select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                     SiteMeanSST, SiteLatitude, SiteLongitude,
+                                     HDI, MarineEcosystemDependency,
+                                     coral_imputation, gravtot2, mpa_name,
+                                     mpa_enforcement, protection_status, 
+                                     mpa_iucn_cat))
 
-## NCPs distribution with right skewed distribution
-NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
-                             "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
-                             "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
-                             "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                             "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                             "fishery_biomass")
-
-NCP_log_transformed <- NCP_site_clean |>
-  dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed
-  dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
-                       .fns = log10 , .names = "{.col}")) |>       # log(x+1) to avoid negative values
-  dplyr::rename_with(.cols = all_of(NCP_skewed_distribution),
-                     .fn = ~ paste0("log(", .x, ")"))
 
 ##-------------Histograms of NCPs-------------
 #### NCPs distribution
@@ -73,7 +67,7 @@ plot_distribution <- function(ncp, data){
 
 library(ggplot2)
 library(patchwork)
-plots <- lapply(colnames(NCP_site_clean), FUN = plot_distribution, data = NCP_site_clean )
+plots <- lapply(colnames(NCP_site_clean_before_log), FUN = plot_distribution, data = NCP_site_clean_before_log )
 all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
@@ -87,7 +81,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_distribution.png"), all_p
 
 
 #### NCPs distribution with log correction
-plots <- lapply(colnames(NCP_log_transformed), FUN = plot_distribution, data = NCP_log_transformed )
+plots <- lapply(colnames(NCP_site_clean), FUN = plot_distribution, data = NCP_site_clean )
 
 all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
@@ -116,7 +110,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
   
   ## With Biomass
-  x<- NCP_site$Btot
+  x<- NCP_site$Biomass
   x_title = "total Biomass"
   col <- fishualize::fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   
@@ -139,7 +133,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
   
   ## With biodiversity
-  x<- NCP_site$taxo_richness
+  x<- NCP_site$Taxonomic_Richness
   x_title = "taxonomic richness"
   col <- fishualize::fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   
@@ -164,7 +158,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   png(filename = here::here("outputs", "figures","corr_matrix.png"), 
       width= 40, height = 30, units = "cm", res = 1000)
   print({
-    M <- cor(NCP_site_clean)
+    M <- cor(NCP_site_clean_before_log)
     # ## circle + black number
     corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
     corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
@@ -181,7 +175,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   png(filename = here::here("outputs", "figures","corr_matrix_log_transformed_NCP.png"), 
       width= 40, height = 30, units = "cm", res = 1000)
   print({
-    M <- cor(NCP_log_transformed)
+    M <- cor(NCP_site_clean)
     corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
     corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
              diag = FALSE, tl.pos = 'n', cl.pos = 'n')
@@ -192,7 +186,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   socio_envir <- c("HDI", "MarineEcosystemDependency", "coral_imputation",
                    "SiteLatitude", "mpa_iucn_cat")
   
-  x <- as.list(NCP_log_transformed[,"log(Btot)"])[["log(Btot)"]]
+  x <- as.list(NCP_site_clean[,"Biomass"])[["Biomass"]]
   x_title = "log(total Biomass)"
   col <- fishualize::fish(n = length(socio_envir), option = "Centropyge_loricula", begin = 0, end = 0.8)
   
@@ -212,17 +206,17 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
 ##-------------plot NCPs on map-------------
   #plot function
-  plot_NCP_on_world_map <- function(NCP = "taxo_richness", xlim=c(-180,180), ylim = c(-36, 31),
+  plot_NCP_on_world_map <- function(NCP = "Taxonomic_Richness", xlim=c(-180,180), ylim = c(-36, 31),
                                     title="world map with "){
-    map <- ggplot(NCP_site) +
+    map <- ggplot(NCP_site_log_transformed) +
       geom_sf(data = coast, color = "grey30", fill = "lightgrey",
               aes(size=0.1)) +
       
-      geom_point(data=NCP_site,
+      geom_point(data=NCP_site_log_transformed,
                  size = 4, shape = 20,
                  aes(x = SiteLongitude, y = SiteLatitude,
-                     colour= NCP_site[,NCP][[1]],
-                     alpha = scale(NCP_site[,NCP][[1]]))) +
+                     colour= NCP_site_log_transformed[,NCP][[1]],
+                     alpha = scale(NCP_site_log_transformed[,NCP][[1]]))) +
       scale_colour_gradient(NCP,
                             low = "dodgerblue", high="darkred",
                             na.value=NA) +
@@ -250,20 +244,20 @@ parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
 })
   
   #focus on Biomass
-  plot_NCP_on_world_map(NCP= "Btot", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "Btot", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
+  plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
   #focus on robustness
-  plot_NCP_on_world_map(NCP= "robustness", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "robustness", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "Trophic_web_robustness", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
+  plot_NCP_on_world_map(NCP= "Trophic_web_robustness", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
   #focus on mean TL
-  plot_NCP_on_world_map(NCP= "mean_TL", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "mean_TL", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "mean_Trophic_Level", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
+  plot_NCP_on_world_map(NCP= "mean_Trophic_Level", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
   # #focus on public interest
-  plot_NCP_on_world_map(NCP= "public_interest", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "public_interest", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "Public_Interest", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
+  plot_NCP_on_world_map(NCP= "Public_Interest", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
   
 ##-------------plot MPAs on map-------------
 NCP_site$mpa_iucn_cat[which(NCP_site$mpa_iucn_cat == "Not Applicable" |
@@ -310,8 +304,8 @@ ggsave(filename = here::here("outputs", "figures", "MPAs_iucn_cat_on_world_map.j
 
 mpa_not_low <- plot_mpa(NCP_site = dplyr::filter(NCP_site, protection_not_low == "protected"))
 ggsave(filename = here::here("outputs", "figures", "MPAs_high_and_medium_enforcement_iucn_cat_on_world_map.jpg"),
-       plot = mpa, width=15, height = 7 )
+       plot = mpa_not_low, width=15, height = 7 )
 
 mpa_high <- plot_mpa(NCP_site = dplyr::filter(NCP_site, protection_only_high == "protected"))
 ggsave(filename = here::here("outputs", "figures", "MPAs_high_enforcement_iucn_cat_on_world_map.jpg"),
-       plot = mpa, width=15, height = 7 )
+       plot = mpa_high, width=15, height = 7 )

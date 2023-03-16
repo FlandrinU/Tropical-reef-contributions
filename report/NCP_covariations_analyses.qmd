@@ -54,12 +54,12 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##-------------loading data-------------
-load(here::here("outputs","all_NCP_site.Rdata"))
-# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
-# load(here::here("outputs","NCP_site_SST20.Rdata"))
-# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-# NCP_site <- NCP_site_condition
+load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_log_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
+# load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
+# NCP_site_log_transformed <- NCP_site_condition
 
 
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
@@ -114,8 +114,8 @@ site_family_occ <- surveys_family_occ %>%
   dplyr::select( - SiteCode)
 
 ##-------------computing pca-------------
-rownames(NCP_site) <- NCP_site$SiteCode
-NCP_site_for_pca <-  subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+rownames(NCP_site_log_transformed) <- NCP_site_log_transformed$SiteCode
+NCP_site_for_pca <-  subset(NCP_site_log_transformed, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
                                                SiteMeanSST, SiteLatitude, SiteLongitude,
                                                HDI, MarineEcosystemDependency,
                                                coral_imputation, gravtot2, mpa_name,
@@ -133,7 +133,7 @@ pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = T, graph=F, ncp=10)
 #| label: see data
 
 colnames(NCP_site_for_pca)
-summary(NCP_site$SiteCountry)
+summary(NCP_site_log_transformed$SiteCountry)
 ```
 
 ------------------------------------------------------------------------
@@ -146,11 +146,11 @@ summary(NCP_site$SiteCountry)
 
 ## Biomass on maps  
 ::: {layout="[[1], [1], [1]]"}
-![](`r here::here("outputs", "figures", "NCP_on_world_map", "world_map_with_Btot.jpg") `)
+![](`r here::here("outputs", "figures", "NCP_on_world_map", "world_map_with_Biomass.jpg") `)
 
-![](`r here::here("outputs", "figures", "NCP_on_world_map", "Australian_map_with_Btot.jpg") `)
+![](`r here::here("outputs", "figures", "NCP_on_world_map", "Australian_map_with_Biomass.jpg") `)
 
-![](`r here::here("outputs", "figures", "NCP_on_world_map", "Caraib_map_with_Btot.jpg") `)
+![](`r here::here("outputs", "figures", "NCP_on_world_map", "Caraib_map_with_Biomass.jpg") `)
 :::
 
 ## NCPs distributions  
@@ -208,16 +208,10 @@ NCPs contribution
 
 > *Classify variables in Nature for Nature (NN) and Nature for Society (NS)*
 
-```{r}
-var <- get_pca_var(pca)
-grp <- c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",         
-         funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
-         Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
-         elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN", 
-         monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-         biom_highTL="NN", fishery_biomass="NS") # /!\ the order matter
-```
 ![PCA classified in NN and NS variables](`r here::here("outputs", "figures", "PCA_NS_NN_axes1-2.png") `){width=100%} 
+
+> Correlation interpretation: 
+  
 
 #### PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.2, and according the NCPs groups)*
 
@@ -237,12 +231,6 @@ PCA in next dimensions
 -> See table with categories in Christie 2019 : Material, Regulating, Non-material. + IPBES focus on the intrinsic value of Nature.
 
 ### Dimensions 1 and 2  
-```{r}
-var_3cat <- get_pca_var(pca)
-grp_3cat <- c(recycling_N="regulating", recycling_P="regulating",Productivity="material",taxo_richness="nature", funct_entropy="regulating", funct_distinctiveness="nature", Selenium_C="material", Zinc_C="material", Omega_3_C="material", Calcium_C="material",Iron_C="material", Vitamin_A_C="material", phylo_entropy="regulating", ED_Mean="nature", aesthe_survey="non material", iucn_species="nature", elasmobranch_diversity="nature", low_mg_calcite="regulating", high_mg_calcite="regulating", aragonite="regulating", monohydrocalcite="regulating", amorphous_carbonate="regulating", biom_lowTL="regulating", biom_mediumTL="regulating", biom_highTL="regulating", fishery_biomass="material") 
-
-```
-
 :::{#fig-Diaz_categories layout-nrow=2}
 ![Dimensions 1 & 2](`r here::here("outputs", "figures", "PCA_Diaz_categories.png") `){width=100%}
 
@@ -449,6 +437,7 @@ NN and NS scores estimated by weighted mean
 ### NN and NS according to socio-envir variables  
 #### NN  
 ![](`r here::here("outputs", "figures", "Socio_envir_variables_with_NN_scores.png") `)    
+
 #### NS  
 ![](`r here::here("outputs", "figures", "Socio_envir_variables_with_NS_scores.png") `)  
 
@@ -615,12 +604,12 @@ summary(multiple_regression_pbiom_NS)
 ```
 
 
-#### NB: Correlation between families and Btot
+#### NB: Correlation between families and Biomass
 ```{r}
 #Families richness
 site_family <- site_family_richness
 
-multiple_regression_richness_Btot <- lm(log(NCP_site$Btot) ~ 
+multiple_regression_richness_Biomass <- lm(log(NCP_site_log_transformed$Biomass) ~ 
                                   site_family$Pomacentridae + site_family$Labridae +
                                   site_family$Lethrinidae + site_family$Mullidae + 
                                   site_family$Scaridae + site_family$Haemulidae +   
@@ -634,7 +623,7 @@ multiple_regression_richness_Btot <- lm(log(NCP_site$Btot) ~
                                   site_family$Pempheridae + site_family$Cirrhitidae + 
                                   site_family$Siganidae + site_family$Zanclidae +    
                                   site_family$Mugilidae + site_family$Bothidae )
-summary <- summary(multiple_regression_richness_Btot)
+summary <- summary(multiple_regression_richness_Biomass)
 cat( "Adjusted Rsquared = ", summary[["adj.r.squared"]])
 ```
 

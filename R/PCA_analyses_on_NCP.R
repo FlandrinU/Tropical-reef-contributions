@@ -23,85 +23,110 @@ rm(list=ls())
 
 ##-------------loading data-------------
 load(here::here("outputs","all_NCP_site.Rdata"))
-# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
-# load(here::here("outputs","NCP_site_SST20.Rdata"))
-# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-# NCP_site <- NCP_site_condition
+load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_log_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
+# load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
+# NCP_site_log_transformed <- NCP_site_condition
 
 #benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_imputed.txt"), sep= " ")
 load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 source(here::here("R", "elbow.R"))
-##-------------Correlations between NCPs-------------
-## Clean data
-NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
-                                               SiteMeanSST, SiteLatitude, SiteLongitude,
-                                               HDI, MarineEcosystemDependency,
-                                               coral_imputation, gravtot2, mpa_name,
-                                               mpa_enforcement, protection_status, 
-                                               mpa_iucn_cat))
+
+##-------------NCP in categories-------------
+## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
+grp_NN_NS <- as.factor(c(N_recycling = "NN",
+                         P_recycling = "NN",
+                         Taxonomic_Richness = "NN",
+                         Functional_Entropy = "NN", 
+                         Phylogenetic_Entropy = "NN",
+                         Functional_Distinctiveness = "NN",
+                         Evolutionary_distinctiveness = "NN",
+                         Low_TL_Biomass = "NN",
+                         Medium_TL_Biomass = "NN",
+                         High_TL_Biomass = "NN",
+                         IUCN_Species = "NN",
+                         Elasmobranch_Diversity = "NN",
+                         Low_Mg_Calcite = "NN",
+                         High_Mg_Calcite = "NN",
+                         Aragonite = "NN",
+                         Monohydrocalcite = "NN",
+                         Amorphous_Carbonate = "NN",
+                         Trophic_web_robustness = "NN",
+                         mean_Trophic_Level = "NN",
+                         
+                         Productivity = "NS",
+                         Selenium = "NS",
+                         Zinc = "NS",
+                         Omega_3 = "NS",
+                         Calcium = "NS",
+                         Iron = "NS",
+                         Vitamin_A = "NS",
+                         Fishery_Biomass = "NS",
+                         Aesthetic = "NS",
+                         Public_Interest = "NS",
+                         Academic_Knowledge = "NS")) # /!\ the order matter
 
 
-#### NCPs distribution with log correction
-NCP_skewed_distribution <- c("Btot","recycling_N","recycling_P","Productivity",
-                             "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
-                             "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
-                             "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                             "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                             "fishery_biomass")
+grp_ipbes <- as.factor(c(N_recycling = "regulating",
+                         P_recycling = "regulating",
+                         Taxonomic_Richness = "nature",
+                         Functional_Entropy = "regulating", 
+                         Phylogenetic_Entropy = "regulating",
+                         Functional_Distinctiveness = "nature",
+                         Evolutionary_distinctiveness = "nature",
+                         Low_TL_Biomass = "regulating",
+                         Medium_TL_Biomass = "regulating",
+                         High_TL_Biomass = "regulating",
+                         IUCN_Species = "nature",
+                         Elasmobranch_Diversity = "nature",
+                         Low_Mg_Calcite = "regulating",
+                         High_Mg_Calcite = "regulating",
+                         Aragonite = "regulating",
+                         Monohydrocalcite = "regulating",
+                         Amorphous_Carbonate = "regulating",
+                         Trophic_web_robustness = "nature",
+                         mean_Trophic_Level = "nature",
+                         
+                         Productivity = "material",
+                         Selenium = "material",
+                         Zinc = "material",
+                         Omega_3 = "material",
+                         Calcium = "material",
+                         Iron = "material",
+                         Vitamin_A = "material",
+                         Fishery_Biomass = "material",
+                         Aesthetic = "non material",
+                         Public_Interest = "non material",
+                         Academic_Knowledge = "non material")) # /!\ the order matter
 
-NCP_log_transformed <- NCP_site_clean |>
-    dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
-                     .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed
-    dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
-                         .fns = log10 , .names = "{.col}")) |>       # log(x+1) to avoid negative values
-    dplyr::rename_with(.cols = all_of(NCP_skewed_distribution),
-                       .fn = ~ paste0("log(", .x, ")"))
-  
-  
-### Correlation test
-names <- cor <- p_val <- c()
-for( i in colnames(NCP_site_clean)){
-   for(j in colnames(NCP_site_clean)){
-     correlation <- stats::cor.test(get("NCP_site_clean")[[i]], get("NCP_site_clean")[[j]] )
-     names <- c(names, paste0(i,"-",j))
-     cor <- c(cor, correlation[["estimate"]][["cor"]])
-     p_val <- c(p_val, correlation[["p.value"]])}
-  }
-  
-correlations_between_NCPs <- data.frame(name=names, cor = cor, p_val=p_val)
-signif_correlations__NCPs <- dplyr::filter(correlations_between_NCPs, abs(cor) > 0.5)
-  
- 
-
+# ##-------------Correlations between NCPs-------------
+# ### Correlation test
+# names <- cor <- p_val <- c()
+# for( i in colnames(NCP_site_log_transformed)){
+#    for(j in colnames(NCP_site_log_transformed)){
+#      correlation <- stats::cor.test(get("NCP_site_clean")[[i]], get("NCP_site_clean")[[j]] )
+#      names <- c(names, paste0(i,"-",j))
+#      cor <- c(cor, correlation[["estimate"]][["cor"]])
+#      p_val <- c(p_val, correlation[["p.value"]])}
+#   }
+#   
+# correlations_between_NCPs <- data.frame(name=names, cor = cor, p_val=p_val)
+# signif_correlations__NCPs <- dplyr::filter(correlations_between_NCPs, abs(cor) > 0.5)
 
 ##-------------computing PCA-------------
-NCP_to_transform <- c("Btot","recycling_N","recycling_P","Productivity",
-                        "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
-                        "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
-                        "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                        "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                        "fishery_biomass")
-
-NCP_site <- NCP_site |>
-  dplyr::mutate(across(.cols = all_of(NCP_to_transform),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>     
-  dplyr::mutate(across(.cols = all_of(NCP_to_transform),
-                       .fns = log10 , .names = "{.col}")) 
-
-
-plot_PCA_NCP <- function(NCP_site){
+plot_PCA_NCP <- function(NCP_site_log_transformed){
   library(ggplot2)
-  NCP_site_selected <- subset(NCP_site, select = 
-    c(recycling_N, recycling_P,Productivity,taxo_richness, funct_entropy,
-      funct_distinctiveness, Selenium_C, Zinc_C, Omega_3_C, Calcium_C,
-      Iron_C, Vitamin_A_C, phylo_entropy, ED_Mean, aesthe_survey, iucn_species,
-      elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
-      monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
-      biom_highTL, fishery_biomass, mean_TL, robustness, scientific_interest,
-      public_interest))
+  NCP_site_selected <- subset(NCP_site_log_transformed, 
+                              select = -c(Biomass, SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                          SiteMeanSST, SiteLatitude, SiteLongitude,
+                                          HDI, MarineEcosystemDependency,
+                                          coral_imputation, gravtot2, mpa_name,
+                                          mpa_enforcement, protection_status, 
+                                          mpa_iucn_cat))
   
   # non_correlated_NCP_site_for_pca <- subset(NCP_site_clean, 
   #                             select = c(
@@ -117,7 +142,7 @@ plot_PCA_NCP <- function(NCP_site){
   #                            ))
   
   NCP_site_for_pca <- scale(NCP_site_selected)
-  pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=10) 
+  pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=9) 
   
   summary(NCP_site$SiteCountry)
   
@@ -180,11 +205,11 @@ plot_PCA_NCP <- function(NCP_site){
     
     geom_segment(aes(x = elbow_point[1], xend = elbow_point[1],
                      y = 0 , yend = elbow_point[2]),
-                     color = "black", linetype = "dotted", size = 1) +
+                     color = "black", linetype = "dotted", linewidth = 1) +
     
     geom_segment(aes(y = elbow_point[2], yend = elbow_point[2],
                      x = 0, xend = elbow_point[1]),
-                     color = "black", linetype = "dotted", size = 1) +
+                     color = "black", linetype = "dotted", linewidth = 1) +
     
       geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
                  color = "black", size = 4, shape = 19)+
@@ -235,20 +260,10 @@ plot_PCA_NCP <- function(NCP_site){
   
   ## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
   #var <- factoextra::get_pca_var(pca)
-  grp <- c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
-           funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
-           Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
-           elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
-           monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-           biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", 
-           robustness = "NN",  scientific_interest = "NS", public_interest = "NS") # /!\ the order matter
-  
-  
-  grp <- as.factor(grp)
-  
+
   png(filename = here::here("outputs", "figures","PCA_NS_NN_axes1-2.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp, 
+  print( factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, 
                palette = c("forestgreen", "dodgerblue3"),
                legend.title = "Nature Based Contributions",
                repel = TRUE))
@@ -265,7 +280,7 @@ plot_PCA_NCP <- function(NCP_site){
   
   png(filename = here::here("outputs", "figures","PCA_NS_NN_axes3-4.png"), 
       width= 30, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp, axe= c(3,4), repel = TRUE,
+  print( factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, axe= c(3,4), repel = TRUE,
                palette = c("forestgreen", "dodgerblue3"),
                legend.title = "Nature Based Contributions",
                select.var = list(cos2 = 0)))
@@ -283,7 +298,7 @@ plot_PCA_NCP <- function(NCP_site){
   ))
   dev.off()
   
-  factoextra::fviz_pca_var(pca, col.var = grp, axe= c(5,6), repel = TRUE,
+  factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, axe= c(5,6), repel = TRUE,
                palette = c("forestgreen", "dodgerblue3"),
                legend.title = "Nature Based Contributions",
                select.var = list(cos2 = 0))
@@ -300,25 +315,11 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   #------Categories as Diaz 2022-------
-  ### Dimensions 1 and 2
   var_3cat <- factoextra::get_pca_var(pca)
-  grp_3cat <- c(recycling_N="regulating", recycling_P="regulating",Productivity="material",
-                taxo_richness="nature", funct_entropy="regulating", funct_distinctiveness="nature",
-                Selenium_C="material", Zinc_C="material", Omega_3_C="material",
-                Calcium_C="material",Iron_C="material", Vitamin_A_C="material", 
-                phylo_entropy="regulating", ED_Mean="nature", aesthe_survey="non material",
-                iucn_species="nature", elasmobranch_diversity="nature", low_mg_calcite="regulating",
-                high_mg_calcite="regulating", aragonite="regulating", monohydrocalcite="regulating",
-                amorphous_carbonate="regulating", biom_lowTL="regulating", biom_mediumTL="regulating",
-                biom_highTL="regulating", fishery_biomass="material",
-                mean_TL = "nature", robustness = "nature",  scientific_interest = "non material",
-                public_interest= "non material") 
-  
-  grp_3cat <- as.factor(grp_3cat)
-  
+  ### Dimensions 1 and 2
   png(filename = here::here("outputs", "figures","PCA_Diaz_categories.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp_3cat,
+  print( factoextra::fviz_pca_var(pca, col.var = grp_ipbes,
                palette = c( "dodgerblue3","forestgreen", "darkred", "grey20"),
                legend.title = "Nature Assets",
                repel = TRUE))
@@ -327,7 +328,7 @@ plot_PCA_NCP <- function(NCP_site){
   
   ### study categories separately  
   #### Regulating NCP
-  regulating <- names(grp_3cat)[ grp_3cat == "regulating" ]
+  regulating <- names(grp_ipbes)[ grp_ipbes == "regulating" ]
   NCP_regulating <- NCP_site[,regulating]
   rownames(NCP_regulating) <- rownames(NCP_site)
   
@@ -347,7 +348,7 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   #### material NCP
-  material <- names(grp_3cat)[ grp_3cat == "material" ]
+  material <- names(grp_ipbes)[ grp_ipbes == "material" ]
   NCP_material <- NCP_site[,material]
   rownames(NCP_material) <- rownames(NCP_site)
   
@@ -365,7 +366,7 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   #### Nature intrinsic value
-  nature <- names(grp_3cat)[ grp_3cat == "nature" ]
+  nature <- names(grp_ipbes)[ grp_ipbes == "nature" ]
   NCP_nature <- NCP_site[,nature]
   rownames(NCP_nature) <- rownames(NCP_site)
   pca_nature <- FactoMineR::PCA(NCP_nature, scale.unit = T, graph=F, ncp=10)
@@ -384,7 +385,7 @@ plot_PCA_NCP <- function(NCP_site){
   #### Dimensions 3 and 4
   png(filename = here::here("outputs", "figures","PCA_Diaz_categories_dim3-4.png"), 
       width= 23, height = 20, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp_3cat,
+  print( factoextra::fviz_pca_var(pca, col.var = grp_ipbes,
                axes=c(3,4),
                palette = c( "dodgerblue3","forestgreen", "darkred", "grey20"),
                legend.title = "Nature Based Contributions"))
@@ -400,11 +401,11 @@ plot_PCA_NCP <- function(NCP_site){
   print( factoextra::fviz_pca_biplot(pca,
                                      select.var = list(cos2 = 0.4),
                                      geom="point", pointshape=21,
-                                     fill.ind = NCP_site$Btot,
-                                     col.ind = NCP_site$Btot,
+                                     fill.ind = NCP_site_log_transformed$Biomass,
+                                     col.ind = NCP_site_log_transformed$Biomass,
                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
                                      col.var = "black", repel = TRUE,
-                                     legend.title = "total biomass"))
+                                     legend.title = "log(Biomass)"))
   dev.off()
   
   ### mpa categories
@@ -414,8 +415,8 @@ plot_PCA_NCP <- function(NCP_site){
                                      select.var = list(cos2 = 0.4),
                                      geom="point", pointshape=21,
                                      addEllipses = T,
-                                     fill.ind = NCP_site$mpa_iucn_cat,
-                                     col.ind = NCP_site$mpa_iucn_cat,
+                                     fill.ind = NCP_site_log_transformed$mpa_iucn_cat,
+                                     col.ind = NCP_site_log_transformed$mpa_iucn_cat,
                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
                                      col.var = "black", repel = TRUE,
                                      legend.title = "IUCN categories of MPAs"))
@@ -427,8 +428,8 @@ plot_PCA_NCP <- function(NCP_site){
                                      select.var = list(cos2 = 0.4),
                                      geom="point", pointshape=21,
                                      addEllipses = T,
-                                     fill.ind = NCP_site$protection_status,
-                                     col.ind = NCP_site$protection_status,
+                                     fill.ind = NCP_site_log_transformed$protection_status,
+                                     col.ind = NCP_site_log_transformed$protection_status,
                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
                                      col.var = "black", repel = TRUE,
                                      legend.title = "Protection status of MPAs"))
@@ -437,7 +438,7 @@ plot_PCA_NCP <- function(NCP_site){
   ### By countries
   ind.p <- factoextra::fviz_pca_ind(pca, geom = "point",
                         pointshape=21,
-                        fill.ind = NCP_site$SiteCountry)
+                        fill.ind = NCP_site_log_transformed$SiteCountry)
   
   png(filename = here::here("outputs", "figures","PCA_countries.png"), 
       width= 30, height = 20, units = "cm", res = 1000)
@@ -458,8 +459,8 @@ plot_PCA_NCP <- function(NCP_site){
   print( factoextra::fviz_pca_biplot (pca,
                    select.var = list(cos2 = 0.4),
                    geom="point", pointshape=21,
-                   col.ind = NCP_site$SiteCountry,
-                   fill.ind = NCP_site$SiteCountry,
+                   col.ind = NCP_site_log_transformed$SiteCountry,
+                   fill.ind = NCP_site_log_transformed$SiteCountry,
                    palette = scico::scico(38, palette = "roma"),
                    addEllipses = F, label = "var",
                    col.var = "black", repel = TRUE,
@@ -471,8 +472,8 @@ plot_PCA_NCP <- function(NCP_site){
   factoextra::fviz_pca_biplot (pca,
                    select.var = list(cos2 = 0.4),
                    geom="point", pointshape=21,
-                   col.ind = NCP_site$SiteCountry,
-                   fill.ind = NCP_site$SiteCountry,
+                   col.ind = NCP_site_log_transformed$SiteCountry,
+                   fill.ind = NCP_site_log_transformed$SiteCountry,
                    palette = scico::scico(38, palette = "roma"),
                    addEllipses = T, label = "var",
                    col.var = "black", repel = TRUE,
@@ -488,18 +489,18 @@ plot_PCA_NCP <- function(NCP_site){
   print( factoextra::fviz_pca_biplot(pca,
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
-                  fill.ind = NCP_site$SiteMeanSST,
-                  col.ind = NCP_site$SiteMeanSST,
+                  fill.ind = NCP_site_log_transformed$SiteMeanSST,
+                  col.ind = NCP_site_log_transformed$SiteMeanSST,
                   gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
                   col.var = "black", repel = TRUE,
                   legend.title = "Mean temperature"))
   dev.off()
   
-  df <- data.frame(x = NCP_site$SiteMeanSST, y = pca$ind$coord[,"Dim.2"])
+  df <- data.frame(x = NCP_site_log_transformed$SiteMeanSST, y = pca$ind$coord[,"Dim.2"])
   temp <- ggplot(df, aes(x , y , alpha = 0.5)) +
     geom_point()+
     geom_smooth() +
-    labs(x = "Mean SST", y = "Dimension  in global PCA", title = "Importance of SST in PCA's axe 2") +
+    labs(x = "Mean SST", y = "Dimension 2 in global PCA", title = "Importance of SST in PCA's axe 2") +
     theme_minimal()+
     theme(legend.position = 'none')
   ggsave(filename = here::here("outputs", "figures", "PCA_temp_according_Dim2.png"), temp, width = 15, height = 12)
@@ -544,8 +545,8 @@ plot_PCA_NCP <- function(NCP_site){
                   axes= c(1,2),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
-                  fill.ind = NCP_site$HDI,
-                  col.ind = NCP_site$HDI,
+                  fill.ind = NCP_site_log_transformed$HDI,
+                  col.ind = NCP_site_log_transformed$HDI,
                   gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
                   col.var = "black", repel = TRUE,
                   invisible= "var",
@@ -559,8 +560,8 @@ plot_PCA_NCP <- function(NCP_site){
                   axes= c(1,2),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
-                  fill.ind = NCP_site$MarineEcosystemDependency,
-                  col.ind = NCP_site$MarineEcosystemDependency,
+                  fill.ind = NCP_site_log_transformed$MarineEcosystemDependency,
+                  col.ind = NCP_site_log_transformed$MarineEcosystemDependency,
                   gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
                   col.var = "black", repel = TRUE,
                   invisible= "var",
@@ -575,8 +576,8 @@ plot_PCA_NCP <- function(NCP_site){
                   axes= c(1,2),
                   select.var = list(cos2 = 0.4),
                   geom="point", pointshape=21,
-                  fill.ind = NCP_site$coral_imputation,
-                  col.ind = NCP_site$coral_imputation,
+                  fill.ind = NCP_site_log_transformed$coral_imputation,
+                  col.ind = NCP_site_log_transformed$coral_imputation,
                   gradient.cols = rev(grDevices::colorRampPalette(c("darkred", "white", "forestgreen"))(10)),
                   col.var = "black", repel = TRUE,
                   invisible= "var",
@@ -589,8 +590,8 @@ plot_PCA_NCP <- function(NCP_site){
       width= 30, height = 20, units = "cm", res = 1000)
   print( factoextra::fviz_pca_biplot(pca,
                   geom="point", pointshape=21,
-                  fill.ind = NCP_site$SurveyDepth,
-                  col.ind = NCP_site$SurveyDepth,
+                  fill.ind = NCP_site_log_transformed$SurveyDepth,
+                  col.ind = NCP_site_log_transformed$SurveyDepth,
                   gradient.cols = RColorBrewer::brewer.pal(10,name="RdYlBu"),
                   col.var = "black", repel = TRUE,
                   legend.title = "Mean depth"))
@@ -602,8 +603,8 @@ plot_PCA_NCP <- function(NCP_site){
       width= 30, height = 20, units = "cm", res = 1000)
   print( factoextra::fviz_pca_biplot(pca,
                   geom="point", pointshape=21,
-                  fill.ind = abs(NCP_site$SiteLatitude),
-                  col.ind = abs(NCP_site$SiteLatitude),
+                  fill.ind = abs(NCP_site_log_transformed$SiteLatitude),
+                  col.ind = abs(NCP_site_log_transformed$SiteLatitude),
                   gradient.cols = RColorBrewer::brewer.pal(10,name="RdYlBu"),
                   col.var = "black", repel = TRUE,
                   legend.title = "abs(latitude)") )
@@ -613,7 +614,7 @@ plot_PCA_NCP <- function(NCP_site){
   ### Ecoregions
   ind.p <- factoextra::fviz_pca_ind(pca, geom = "point",
                         pointshape=21,
-                        fill.ind = NCP_site$SiteEcoregion)
+                        fill.ind = NCP_site_log_transformed$SiteEcoregion)
   ggpubr::ggpar(ind.p,
                 title = "Principal Component Analysis of NCPs",
                 subtitle = "RLS data set",
@@ -626,8 +627,8 @@ plot_PCA_NCP <- function(NCP_site){
   #####biplot sites_NCP with Elipse by ecoregion
   factoextra::fviz_pca_biplot (pca,
                    geom="point", pointshape=21,
-                   col.ind = NCP_site$SiteEcoregion,
-                   fill.ind = NCP_site$SiteEcoregion,
+                   col.ind = NCP_site_log_transformed$SiteEcoregion,
+                   fill.ind = NCP_site_log_transformed$SiteEcoregion,
                    palette = scico::scico(58, palette = "roma"),
                    addEllipses = T, label = "var",
                    col.var = "black", repel = TRUE,
@@ -668,9 +669,9 @@ plot_PCA_NCP <- function(NCP_site){
   # library(ggplot2)
   
   ###------- NN: Nature contributions to Nature -------   
-  NN <- names(grp)[ grp=="NN" ]
-  NCP_NN <- NCP_site[,NN]
-  rownames(NCP_NN) <- rownames(NCP_site)
+  NN <- names(grp_NN_NS)[ grp_NN_NS=="NN" ]
+  NCP_NN <- NCP_site_log_transformed[,NN]
+  rownames(NCP_NN) <- rownames(NCP_site_log_transformed)
   
   pca <- FactoMineR::PCA(NCP_NN, scale.unit = T, graph=F, ncp=10)
   
@@ -701,7 +702,7 @@ plot_PCA_NCP <- function(NCP_site){
                    select.var = list(cos2 = 0.1),
                    geom="point", pointshape=21,
                    col.ind = "black",
-                   fill.ind = NCP_site$SiteCountry,
+                   fill.ind = NCP_site_log_transformed$SiteCountry,
                    palette = scico::scico(38, palette = "roma"),
                    addEllipses = F, label = "var",
                    col.var = "black", repel = TRUE,
@@ -725,7 +726,7 @@ plot_PCA_NCP <- function(NCP_site){
   summary(NN_PC1_surveys)
   
   NN_PC1_surveys <- data.frame(NN_PC1=NN_PC1_surveys)
-  rownames(NN_PC1_surveys) <- rownames(NCP_site)
+  rownames(NN_PC1_surveys) <- rownames(NCP_site_log_transformed)
   
   ## NN
   histo_NN <- ggplot(NN_PC1_surveys, aes(x = NN_PC1)) +
@@ -741,9 +742,9 @@ plot_PCA_NCP <- function(NCP_site){
   
   
   ###------- NS: Nature contributions to Society -------
-  NS <- names(grp)[ grp=="NS" ]
-  NCP_NS <- NCP_site[,NS]
-  rownames(NCP_NS) <- rownames(NCP_site)
+  NS <- names(grp_NN_NS)[ grp_NN_NS=="NS" ]
+  NCP_NS <- NCP_site_log_transformed[,NS]
+  rownames(NCP_NS) <- rownames(NCP_site_log_transformed)
   
   pca <- FactoMineR::PCA(NCP_NS, scale.unit = T, graph=F, ncp=10)
   
@@ -783,10 +784,10 @@ plot_PCA_NCP <- function(NCP_site){
   NS_PC1_surveys <- pca$ind$coord[,1]
   summary(NS_PC1_surveys)
 
-  NN_NS_PC1_surveys <- data.frame(SiteCode = NCP_site$SiteCode ,
+  NN_NS_PC1_surveys <- data.frame(SiteCode = NCP_site_log_transformed$SiteCode ,
                                   NN_PC1=NN_PC1_surveys,
                                   NS_PC1=NS_PC1_surveys)
-  rownames(NN_NS_PC1_surveys) <- rownames(NCP_site)
+  rownames(NN_NS_PC1_surveys) <- rownames(NCP_site_log_transformed)
   
   save(NN_NS_PC1_surveys, file = here::here("outputs", "NN_NS_score_PC1.Rdata"))
   
@@ -924,7 +925,8 @@ plot_PCA_NCP <- function(NCP_site){
   ### NS according to NN
   
   #data
-  NN_NS_with_col <- NN_NS_with_col |>  dplyr::left_join(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude")])
+  NN_NS_with_col <- NN_NS_with_col |>  dplyr::left_join(NCP_site_log_transformed[
+    ,c("SiteCode", "SiteLongitude", "SiteLatitude")])
   #plot
   function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_col, ylim = c(-36, 31),
                                     xlim= c(-180,180)){
@@ -1073,4 +1075,4 @@ plot_PCA_NCP <- function(NCP_site){
 } # End of function plot_ACP_NCP
 
 #run plot_ACP_NCP function
-plot_PCA_NCP(NCP_site)
+plot_PCA_NCP(NCP_site_log_transformed)

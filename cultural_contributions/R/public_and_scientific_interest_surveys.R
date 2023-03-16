@@ -2,7 +2,7 @@
 ##
 ## Aggregate cultural contributions estimated on species at the surveys scale
 ##
-## public_and_scientific_interest_surveys.R
+## public_and_academic_knowledge_surveys.R
 ##
 ## 28/02/2023
 ##
@@ -21,7 +21,7 @@ load( here::here("data", "data_species.Rdata"))
 ##-------------resume data at species scale------------
 cultural <- cultural_contrib |>
   dplyr::mutate(public_interest = (Wiki_views + Flickr)/2,
-                scientific_interest = (NCBI + Sci_litt)/2 ,
+                academic_knowledge = (NCBI + Sci_litt)/2 ,
                 species_corrected = gsub(" ", "_", Scientific)) 
 
 data_species <- tibble::column_to_rownames(data_species, var = "species")
@@ -36,17 +36,17 @@ cultural <- tibble::column_to_rownames(cultural, var ="species_corrected")
 cultural_survey <- lapply( rownames(surveys_sp_occ), function(id){
   sp <- names(surveys_sp_occ[id, which(surveys_sp_occ[id,] >0)])
   if( length(sp) > 0){
-    scientific_interest <- mean(cultural[sp, "scientific_interest"])
+    academic_knowledge <- mean(cultural[sp, "academic_knowledge"])
     public_interest <- mean(cultural[sp, "public_interest"])
     wiki_verna <- mean(cultural[sp, "Wiki_verna"])
-    c(id, scientific_interest, public_interest, wiki_verna)
+    c(id, academic_knowledge, public_interest, wiki_verna)
   }else{c(id, NA, NA, NA)}
 })
 
 cultural_contribution_surveys <- data.frame(do.call(rbind, cultural_survey)) |>
-  dplyr::rename(SurveyID = X1, scientific_interest = X2, public_interest = X3,
+  dplyr::rename(SurveyID = X1, academic_knowledge = X2, public_interest = X3,
                 wiki_verna = X4) |>
-  dplyr::mutate(scientific_interest = as.numeric(scientific_interest),
+  dplyr::mutate(academic_knowledge = as.numeric(academic_knowledge),
                 public_interest = as.numeric(public_interest),
                 wiki_verna = as.numeric(wiki_verna))
 
@@ -54,7 +54,7 @@ save(cultural_contribution_surveys, file = here::here("cultural_contributions",
                     "outputs", "cultural_contributions_surveys.Rdata"))
 
 ##-------------plot data------------
-plot(cultural_contribution_surveys$scientific_interest ~ cultural_contribution_surveys$public_interest)
+plot(cultural_contribution_surveys$academic_knowledge ~ cultural_contribution_surveys$public_interest)
 ##study correlations
 rownames(cultural_contribution_surveys) <- cultural_contribution_surveys$SurveyID
 pca <- FactoMineR::PCA(questionr::na.rm(cultural_contribution_surveys[,-1]), 

@@ -21,58 +21,74 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 rm(list=ls())
 
-##-------------loading data-------------
-load(here::here("outputs","all_NCP_site.Rdata"))
-# load(here::here("outputs","NCP_site_coral_reef.Rdata"))
-# load(here::here("outputs","NCP_site_SST20.Rdata"))
-# load(here::here("outputs","NCP_site_coral_5_imputed.Rdata"))
-# load(here::here("outputs","NCP_site_wo_australia.Rdata"))
-# NCP_site <- NCP_site_condition
+##-------------loading data------------
+load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_reef.Rdata"))
+# load(here::here("outputs","NCP_site_log_SST20.Rdata"))
+# load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
+# load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
+# NCP_site_log_transformed <- NCP_site_condition
+
 
 load(here::here("outputs","NN_NS_score_wheighted_mean.Rdata"))
 load(here::here("outputs","NN_NS_score_wheighted_mean_quarter_ranked.Rdata"))
 
 load(here::here("outputs","NN_NS_score_PC1.Rdata"))
-
 ##--------------- preping data ---------------
-grp <- as.factor(c(recycling_N="NN", recycling_P="NN",Productivity="NS",taxo_richness="NN", funct_entropy="NN",
-                   funct_distinctiveness="NN", Selenium_C="NS", Zinc_C="NS", Omega_3_C="NS", Calcium_C="NS",
-                   Iron_C="NS", Vitamin_A_C="NS", phylo_entropy="NN", ED_Mean="NN", aesthe_survey="NS", iucn_species="NN",
-                   elasmobranch_diversity="NN", low_mg_calcite="NN", high_mg_calcite="NN", aragonite="NN",
-                   monohydrocalcite="NN", amorphous_carbonate="NN", biom_lowTL="NN", biom_mediumTL="NN",
-                   biom_highTL="NN", fishery_biomass="NS", mean_TL = "NN", robustness = "NN",
-                   scientific_interest = "NS", public_interest = "NS")) # /!\ the order matter
-
-
-NCP_to_transform <- c("Btot","recycling_N","recycling_P","Productivity",
-                      "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
-                      "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
-                      "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                      "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                      "fishery_biomass")
-
-NCP_site <- NCP_site |>
-  dplyr::mutate(across(.cols = all_of(NCP_to_transform),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>     
-  dplyr::mutate(across(.cols = all_of(NCP_to_transform),
-                       .fns = log10 , .names = "{.col}")) |>
+NCP_site_log <- NCP_site_log_transformed |>
   dplyr::left_join(NN_NS_with_product) |>  #Add NN and NS scores calculated from Kark formula, and the ranks in each quarter
   dplyr::left_join(NN_NS_PC1_surveys) |> 
   dplyr::rename(NN_kark = "NN_score", NS_kark = "NS_score") 
 
-NCP_site_selected <- subset(NCP_site, select = 
+NCP_site_selected <- subset(NCP_site_log, select = 
                               c(SiteCode,
-                                recycling_N, recycling_P,Productivity,taxo_richness, funct_entropy,
-                                funct_distinctiveness, Selenium_C, Zinc_C, Omega_3_C, Calcium_C,
-                                Iron_C, Vitamin_A_C, phylo_entropy, ED_Mean, aesthe_survey, iucn_species,
-                                elasmobranch_diversity, low_mg_calcite, high_mg_calcite, aragonite,
-                                monohydrocalcite, amorphous_carbonate, biom_lowTL, biom_mediumTL,
-                                biom_highTL, fishery_biomass, mean_TL , robustness,
-                                scientific_interest , public_interest,
+                                N_recycling,P_recycling,Taxonomic_Richness, Functional_Entropy,
+                                Phylogenetic_Entropy, Functional_Distinctiveness,Evolutionary_distinctiveness,
+                                Low_TL_Biomass, Medium_TL_Biomass, High_TL_Biomass,IUCN_Species,
+                                Elasmobranch_Diversity, Low_Mg_Calcite, High_Mg_Calcite, Aragonite, 
+                                Monohydrocalcite, Amorphous_Carbonate, Trophic_web_robustness,
+                                mean_Trophic_Level, 
+                                Productivity,Selenium,Zinc,Omega_3,Calcium,Iron,Vitamin_A,
+                                Fishery_Biomass, Aesthetic,Public_Interest,Academic_Knowledge,
                                 NN_kark, NS_kark, NN_PC1, NS_PC1)) |>
-                    tibble::column_to_rownames(var = "SiteCode")
+  tibble::column_to_rownames(var = "SiteCode")
 
 NCP_site_for_pca <- scale(NCP_site_selected)
+
+
+##-------------NCP in categories-------------
+## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
+grp_NN_NS <- as.factor(c(N_recycling = "NN",
+                         P_recycling = "NN",
+                         Taxonomic_Richness = "NN",
+                         Functional_Entropy = "NN", 
+                         Phylogenetic_Entropy = "NN",
+                         Functional_Distinctiveness = "NN",
+                         Evolutionary_distinctiveness = "NN",
+                         Low_TL_Biomass = "NN",
+                         Medium_TL_Biomass = "NN",
+                         High_TL_Biomass = "NN",
+                         IUCN_Species = "NN",
+                         Elasmobranch_Diversity = "NN",
+                         Low_Mg_Calcite = "NN",
+                         High_Mg_Calcite = "NN",
+                         Aragonite = "NN",
+                         Monohydrocalcite = "NN",
+                         Amorphous_Carbonate = "NN",
+                         Trophic_web_robustness = "NN",
+                         mean_Trophic_Level = "NN",
+                         
+                         Productivity = "NS",
+                         Selenium = "NS",
+                         Zinc = "NS",
+                         Omega_3 = "NS",
+                         Calcium = "NS",
+                         Iron = "NS",
+                         Vitamin_A = "NS",
+                         Fishery_Biomass = "NS",
+                         Aesthetic = "NS",
+                         Public_Interest = "NS",
+                         Academic_Knowledge = "NS")) # /!\ the order matter
 
 ##-------------Check the Kark 2002 formula-------------
 set.seed(6)
@@ -176,7 +192,7 @@ dev.off()
 corr_pearson_NCPs <- stats::cor(NCP_site_selected, method="pearson")
 
 ## Nature to Nature (NN) score ##
-NN_names <- names(grp)[ grp=="NN" ]
+NN_names <- names(grp_NN_NS)[ grp_NN_NS=="NN" ]
 corr_pearson_NN <- corr_pearson_NCPs[NN_names,NN_names]
 NCP_NN <- NCP_site_for_pca[,NN_names]
 
@@ -200,7 +216,7 @@ for( site in 1:nrow(NCP_NN)){
 
 
 ## Nature to Society (NS) score ##
-NS_names <- names(grp)[ grp=="NS" ]
+NS_names <- names(grp_NN_NS)[ grp_NN_NS=="NS" ]
 corr_pearson_NS <- corr_pearson_NCPs[NS_names,NS_names]
 NCP_NS <- NCP_site_for_pca[,NS_names]
 
@@ -223,7 +239,7 @@ for( site in 1:nrow(NCP_NS)){
 
 
 
-NN_NS_scores_adapted_from_kark <- cbind(NCP_site[,c("SiteCode", "SiteLongitude", "SiteLatitude")],
+NN_NS_scores_adapted_from_kark <- cbind(NCP_site_log_transformed[,c("SiteCode", "SiteLongitude", "SiteLatitude")],
                       data.frame(NN_score = EDS_NN, NS_score = EDS_NS) )
 save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_adapted_from_kark.Rdata"))
 
@@ -231,8 +247,8 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
 
 ##-------------computing PCA of nature contributions with NN and NS scores-------------
   NCP_site_for_pca <- cbind(NCP_site_for_pca,
-                            NN_mean = rowMeans(NCP_site_for_pca[,names(grp)[ grp=="NN" ]]),
-                            NS_mean = rowMeans(NCP_site_for_pca[,names(grp)[ grp=="NS" ]]),
+                            NN_mean = rowMeans(NCP_site_for_pca[,names(grp_NN_NS)[ grp_NN_NS=="NN" ]]),
+                            NS_mean = rowMeans(NCP_site_for_pca[,names(grp_NN_NS)[ grp_NN_NS=="NS" ]]),
                             NN_adapted_from_kark = NN_NS_scores_adapted_from_kark$NN_score ,
                             NS_adapted_from_kark = NN_NS_scores_adapted_from_kark$NS_score) 
   
@@ -259,7 +275,7 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
   
   png(filename = here::here("outputs", "figures","PCA_NS_NN_axes1-2_with_NN_NS_kark.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca_score, col.var = grp, 
+  print( factoextra::fviz_pca_var(pca_score, col.var = grp_NN_NS, 
                                   palette = c("forestgreen", "dodgerblue3"),
                                   legend.title = "Nature Based Contributions",
                                   repel = TRUE,
@@ -269,7 +285,7 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
   
   png(filename = here::here("outputs", "figures","PCA_NS_NN_axes1-2_with_NN_NS_scores.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp, 
+  print( factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, 
                                   palette = c("forestgreen", "dodgerblue3"),
                                   legend.title = "Nature Based Contributions",
                                   repel = TRUE,
@@ -279,7 +295,7 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
   
   png(filename = here::here("outputs", "figures","PCA_NS_NN_axes3-4_with_NN_NS_kark.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp, 
+  print( factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, 
                                   axe = c(3,4),
                                   palette = c("forestgreen", "dodgerblue3"),
                                   legend.title = "Nature Based Contributions",
@@ -290,7 +306,7 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
   
   png(filename = here::here("outputs", "figures","PCA_NS_NN_axes3-4_with_NN_NS_scores.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp, 
+  print( factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, 
                                   axe = c(3,4),
                                   palette = c("forestgreen", "dodgerblue3"),
                                   legend.title = "Nature Based Contributions",
@@ -300,7 +316,7 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
   
   png(filename = here::here("outputs", "figures","PCA_NS_NN_axes5-6_with_NN_NS_scores.png"), 
       width= 35, height = 25, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_var(pca, col.var = grp, 
+  print( factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, 
                                   axe = c(5,6),
                                   palette = c("forestgreen", "dodgerblue3"),
                                   legend.title = "Nature Based Contributions",
@@ -312,20 +328,20 @@ save(NN_NS_scores_adapted_from_kark, file = here::here("outputs", "NN_NS_score_a
   
   ##-------------Highlighting outliers in PCA-------------
   #NN only
-  ind_NN <- which(NCP_site$rank_d_r >= quantile(NCP_site$rank_d_r, probs=c(0.95), na.rm=T))
+  ind_NN <- which(NCP_site_log$rank_d_r >= quantile(NCP_site_log$rank_d_r, probs=c(0.95), na.rm=T))
   #NS only
-  ind_NS <- which(NCP_site$rank_u_l >= quantile(NCP_site$rank_u_l, probs=c(0.95), na.rm=T))
+  ind_NS <- which(NCP_site_log$rank_u_l >= quantile(NCP_site_log$rank_u_l, probs=c(0.95), na.rm=T))
   #NN and NS
-  ind_NNxNS <- which(NCP_site$rank_u_r >= quantile(NCP_site$rank_u_r, probs=c(0.95), na.rm=T))
+  ind_NNxNS <- which(NCP_site_log$rank_u_r >= quantile(NCP_site_log$rank_u_r, probs=c(0.95), na.rm=T))
   #neither NN nor NS
-  ind_worse <- which(NCP_site$rank_d_l >= quantile(NCP_site$rank_d_l, probs=c(0.95), na.rm=T))
+  ind_worse <- which(NCP_site_log$rank_d_l >= quantile(NCP_site_log$rank_d_l, probs=c(0.95), na.rm=T))
 
   ## plot on PCA with score outliers
   library(ggplot2)
   ind_coord <- as.data.frame(factoextra::get_pca_ind(pca_score)[["coord"]]) |>
     tibble::rownames_to_column(var = "label")
   
-  factoextra::fviz_pca_biplot(pca_score, col.var = grp, 
+  factoextra::fviz_pca_biplot(pca_score, col.var = grp_NN_NS, 
                               palette = c("forestgreen", "dodgerblue3"),
                               legend.title = "Nature Based Contributions",
                               alpha.var = 0.3, alpha.ind = 0.5,

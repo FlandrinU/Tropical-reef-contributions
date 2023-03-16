@@ -4,7 +4,6 @@ rm(list=ls())
 ## preparing environment ######
 
 # loading data from RLS and from fishflux
-load(here::here( "data_raw", "source", "species_spec_code.Rdata"))
 load(here::here("data_raw","rls_trop_fish_sizeok_biomok.Rdata"))
 head(rls_trop_fish_sizeok_biomok)
 RLS_socio_data <- readRDS(here::here("data_raw", "source", "RLS_socio_withoutNA.rds"))
@@ -182,16 +181,108 @@ data_surveys<-data_rls_fishflux |>
 summary(data_surveys)
 
 
+##----------------- Deal with different species names ----------------
+#Mars 2023 - Extract spec_codes from FishBase
+# sp <- c("Chromis dimidiata","Abalistes stellatus","Rhinesomus triqueter") #list of species for testing
+sp <- data_species$species
 
-#change sp name : Abudefduf_luridus should be Similiparma lurida 
-#                 Rhinesomus_triqueter should be Lactophrys triqueter
-#                 Chromis_dimidiata shold be Pycnochromis dimidiatus
-#                 Kyphosus_analogus should be Kyphosus vaigiensis
-#                 Abalistes_stellatus has the wrong spec_code:3596 shoud be 9
-species_spec_code$species_corrected[which(species_spec_code$species == "Chromis_dimidiata")] <- "Pycnochromis_dimidiatus"
-species_spec_code$species_corrected[which(species_spec_code$species == "Kyphosus_analogus")] <- "Kyphosus_vaigiensis"
-species_spec_code$spec_code[which(species_spec_code$species == "Abalistes_stellatus")] <- 9
+Species <- gsub("_", " ", sp)
+Species_corrected <- rep("NA",length(sp))
+SpecCode <- rep("NA",length(sp))
 
+correctNames <- parallel::mclapply(1:length(Species), mc.cores = 20, function(k){
+  test <- rfishbase::validate_names(Species[k])
+  if(length(test)==1){
+    Species_corrected[k] <- test
+    SpecCode[k] <- as.numeric((unique(rfishbase::species(test,fields="SpecCode"))))
+  }else{
+    next
+  }
+  c(Species_corrected[k], SpecCode[k])
+})#end of k
+
+species_spec_code <- as.data.frame(gsub(" ", "_", cbind(Species, do.call(rbind, correctNames))))
+colnames(species_spec_code) <- c("species", "species_corrected", "spec_code")
+species_spec_code$spec_code <- as.numeric(species_spec_code$spec_code)
+head(species_spec_code)
+
+save(species_spec_code, file = here::here("data", "species_spec_code.Rdata"))
+
+
+# #change sp name : Abudefduf_luridus should be Similiparma lurida 
+# #                 Rhinesomus_triqueter should be Lactophrys triqueter
+# #                 Chromis_dimidiata shold be Pycnochromis dimidiatus
+# #                 Kyphosus_analogus should be Kyphosus vaigiensis
+# #                 Abalistes_stellatus has the wrong spec_code:3596 shoud be 9
+# species_spec_code$species_corrected[which(species_spec_code$species == "Chromis_dimidiata")] <- "Pycnochromis_dimidiatus"
+# species_spec_code$species_corrected[which(species_spec_code$species == "Kyphosus_analogus")] <- "Kyphosus_vaigiensis"
+# species_spec_code$species_corrected[which(species_spec_code$species == "Chaetodon_lunulatus")] <- "Chaetodon_lunula"
+# species_spec_code$species_corrected[which(species_spec_code$species == "Ostracion_solorensis")] <- "Ostracion_solorense"
+# 
+# species_spec_code$spec_code[which(species_spec_code$species == "Abalistes_stellatus")] <- 9
+
+## Deal with rls names
+sp <- rlsall$rls_sci_name
+Species <- gsub("_", " ", sp)
+Species_corrected <- rep("NA",length(sp))
+SpecCode <- rep("NA",length(sp))
+
+correctNames <- parallel::mclapply(1:length(Species), mc.cores = 20, function(k){
+  test <- rfishbase::validate_names(Species[k])
+  if(length(test)==1){
+    Species_corrected[k] <- test
+    SpecCode[k] <- as.numeric((unique(rfishbase::species(test,fields="SpecCode"))))
+  }else{
+    next
+  }
+  c(Species_corrected[k], SpecCode[k])
+})#end of k
+
+list_sp_rls <- as.data.frame(gsub(" ", "_", cbind(Species, do.call(rbind, correctNames))))
+colnames(list_sp_rls) <- c("rls_sci_name", "fb_sci_name", "spec_code")
+list_sp_rls$spec_code <- as.numeric(list_sp_rls$spec_code)
+head(list_sp_rls)
+save(list_sp_rls, file = here::here("data", "rls_species_with_spec_code.Rdata"))
+
+
+
+species_spec_code <- dplyr::mutate(species_spec_code, fb_sci_name = NA, rls_sci_name = NA)
+for( i in 1:nrow(species_spec_code)){
+  j <- NA
+  if( is.element(species_spec_code$species[i], gsub(" ", "_",list_sp_rls$fb_sci_name))){
+    j <- which(species_spec_code$species[i] == gsub(" ", "_",list_sp_rls$fb_sci_name))
+  }else if(is.element(species_spec_code$species[i], gsub(" ", "_",list_sp_rls$rls_sci_name))){
+    j <- which(species_spec_code$species[i] == gsub(" ", "_",list_sp_rls$rls_sci_name))
+  }else if(is.element(species_spec_code$species_corrected[i], gsub(" ", "_",list_sp_rls$fb_sci_name))){
+    j <- which(species_spec_code$species_corrected[i] == gsub(" ", "_",list_sp_rls$fb_sci_name))
+  }else if(is.element(species_spec_code$species_corrected[i], gsub(" ", "_",list_sp_rls$rls_sci_name))){
+    j <- which(species_spec_code$species_corrected[i] == gsub(" ", "_",list_sp_rls$rls_sci_name))
+  }
+  if( is.na(j)==F){
+    species_spec_code$fb_sci_name[i] <- list_sp_rls$fb_sci_name[j]
+    species_spec_code$rls_sci_name[i] <- list_sp_rls$rls_sci_name[j]
+  }
+}
+
+#15 species are lacking in rls list of species
+species_spec_code$fb_sci_name[which((species_spec_code$fb_sci_name == species_spec_code$rls_sci_name) ==F)]
+list_sp_rls$fb_sci_name[which((list_sp_rls$fb_sci_name == list_sp_rls$rls_sci_name) ==F)]
+
+# ## rls species used in this study
+# list_sp_rls <- species_spec_code |>
+#   dplyr::mutate(rls_sci_name = gsub("_", " ",rls_sci_name ))|>
+#   dplyr::mutate(fb_sci_name = gsub("_", " ",fb_sci_name ))|>
+#   dplyr::left_join(dplyr::select(rlsall,rls_sci_name, kingdom, phylum, class, order, family, genus) )
+
+list_sp <- dplyr::bind_cols(list_sp_rls, multicontribution_study = ifelse(
+  is.element(list_sp_rls$fb_sci_name, gsub("_", " ",species_spec_code$species_corrected)),"YES", "NO"
+))
+table(list_sp$multicontribution_study)
+
+
+
+
+##----------------- Merge dataset ----------------
 data_species <- data_species |>
    dplyr::left_join(species_spec_code) |>
    dplyr::select(species, species_corrected, spec_code, family, Size, a, b, Position, Activity, Diet)
