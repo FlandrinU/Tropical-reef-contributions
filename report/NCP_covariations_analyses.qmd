@@ -115,7 +115,7 @@ site_family_occ <- surveys_family_occ %>%
 
 ##-------------computing pca-------------
 rownames(NCP_site_log_transformed) <- NCP_site_log_transformed$SiteCode
-NCP_site_for_pca <-  subset(NCP_site_log_transformed, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+NCP_site_for_pca <-  subset(NCP_site_log_transformed, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, SurveyDate,
                                                SiteMeanSST, SiteLatitude, SiteLongitude,
                                                HDI, MarineEcosystemDependency,
                                                coral_imputation, gravtot2, mpa_name,
@@ -140,8 +140,7 @@ summary(NCP_site_log_transformed$SiteCountry)
 
 # Vizualize services assessement  
 ## Position of MPAs  
-![IUCN categories](`r here::here("outputs", "figures", "MPAs_iucn_cat_on_world_map.jpg") `)  
-![Medium and Highly enforced No take MPAs](`r here::here("outputs", "figures", "MPAs_high_and_medium_enforcement_iucn_cat_on_world_map.jpg") `)  
+![Protection status](`r here::here("outputs", "figures", "RLS sites with protection and zoom.png") `)  
 
 
 ## Biomass on maps  
@@ -434,6 +433,11 @@ NN and NS scores estimated by weighted mean
 ### NS on map  
 ![](`r here::here("outputs", "figures", "world map with NS score.png") `)
 
+### Spatial autocorrelation  
+![](`r here::here("outputs", "figures", "Spatial correlation per distance NN, increment 500.png") `)  
+![](`r here::here("outputs", "figures", "Spatial correlation per distance NS, increment 500.png") `)
+
+
 ### NN and NS according to socio-envir variables  
 #### NN  
 ![](`r here::here("outputs", "figures", "Socio_envir_variables_with_NN_scores.png") `)    
@@ -451,13 +455,7 @@ NN and NS scores estimated by weighted mean
 ![](`r here::here("outputs", "figures", "PCA_with_quantiles0.95.jpg") `)  
 
 ### on map
-::: {layout-nrow=3}
-![](`r here::here("outputs", "figures", "world map with NN and NS score.png") `)  
-
-![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.png") `)  
-
-![](`r here::here("outputs", "figures", "australia map with NN and NS score.png") `)  
-:::
+![](`r here::here("outputs", "figures", "world map with NN and NS score with zoom.png") `)  
 
 
 # Can we infer the scores?  
@@ -673,11 +671,12 @@ __No rules?__ max 6-7 figures in the 10 last published papers in conservation re
 ## Results  
   1. ACP des services  
 
-::: {#fig-fig1 layout-ncol=2}
+::: {#fig-fig1 layout="[[70,30], [70,30]]"}
 
-![PCA of all services](`r here::here("outputs", "figures", "PCA_NS_NN_axes1-2.png") `){width=65%}
+![](`r here::here("outputs", "figures", "PCA_NSgrey_NN_axes1-2_with_biomass.png") `)  
+![](`r here::here("outputs", "figures", "PCA_NS_NNgrey_axes1-2_with_biomass.png") `)  
 
-![Contribution of NCP in total variance](`r here::here("outputs", "figures", "contribution_NCP_in_total_variance.png") `){width=35%}
+![Contribution of NCP in total variance](`r here::here("outputs", "figures", "contribution_NCP_in_total_variance.png") `)
 
 Covariations des services dans les récifs tropicaux
 
@@ -690,40 +689,21 @@ __= Multidimensionalité des contributions (surtout pour NS)__
 
 -> Moyenne pondérée des services en NN et NS pour déterminer quels sites seraient plus propices à la protection ou à la pêche:
 
-::: {layout="[[1,1],[1],[1]]"}  
-![Nature to Nature scores](`r here::here("outputs", "figures", "hist_NN_weighted_mean.png") `)
-
-![Nature to Society scores](`r here::here("outputs", "figures", "hist_NS_weighted_mean.png") `)
+:::{layout-nrow=2}
 
 ![](`r here::here("outputs", "figures", "world map with NN score.png") `)
-
 ![](`r here::here("outputs", "figures", "world map with NS score.png") `)  
 
 :::
 
-  2. Comment peut-on expliquer ces scores?
-
-- relation avec les familles? ~49% de la variance de NN est expliquée par la richesse des familles (nombre d'espèce dans chaque famille), ~20% pour les NS. 
-= considération écologique: assez intuitivement, les sites avec beaucoup d'espèces ont des écosystèmes avec des meilleurs scores NN ... -> implication?
-
-_NB: peu d'explication par les biomasses relatives. i.e. pas terrible quand on a un déséquilibre_
-
-
-
-- DAG avec les variables socio-envir ? => qu'est ce qu'on peut avoir où ? (carte Australie: influence de la distance à la côte)
-
-
 
   3. Compromis de NN et NS: Comment concilier MPAs et pêche? 
   
-::: {layout="[[1],[1],[1,1]]"}  
-![NN vs NS](`r here::here("outputs", "figures", "Sites in NN and NS scores.png") `)
+:::{layout-nrow=2}
 
-![](`r here::here("outputs", "figures", "world map with NN and NS score.png") `)
+![NN vs NS](`r here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png") `)
 
-![](`r here::here("outputs", "figures", "caraïbe map with NN and NS score.png") `)
-
-![](`r here::here("outputs", "figures", "australia map with NN and NS score.png") `)  
+![](`r here::here("outputs", "figures", "world map with NN and NS score with zoom.png") `)
 
 :::
 

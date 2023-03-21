@@ -55,11 +55,11 @@ save(RLS_prod_indiv, file = "productivity/outputs/RLS_prod_indiv.Rdata")
 print("Aggregating at transect level")
 RLS_prod_transect = calc_prod_transect(RLS_prod_indiv,metadata_surveys)
 
-save(RLS_prod_transect,file = "productivity/outputs/RLS_prod_transect_with_outliers0.001.Rdata")
-
-#Removing outliers, Biomass and productivity values superior to 99.9% of values
-RLS_prod_transect = RLS_prod_transect %>% filter(Biom < quantile(RLS_prod_transect$Biom,0.999)) %>% 
-                                          filter(Productivity < quantile(RLS_prod_transect$Productivity,0.999))
+# save(RLS_prod_transect,file = "productivity/outputs/RLS_prod_transect_with_outliers0.001.Rdata")
+# 
+# #Removing outliers, Biomass and productivity values superior to 99.9% of values
+# RLS_prod_transect = RLS_prod_transect %>% filter(Biom < quantile(RLS_prod_transect$Biom,0.999)) %>% 
+#                                           filter(Productivity < quantile(RLS_prod_transect$Productivity,0.999))
 
 save(RLS_prod_transect, file = "productivity/outputs/RLS_prod_transect.Rdata")
 
@@ -67,11 +67,11 @@ save(RLS_prod_transect, file = "productivity/outputs/RLS_prod_transect.Rdata")
 print("Aggregating at site level")
 RLS_prod_site = calc_prod_site(RLS_prod_indiv,metadata_surveys)
 
-save(RLS_prod_site,file = "productivity/outputs/RLS_prod_site_with_outliers0.001.Rdata")
-
-#Removing outliers, Biomass and productivity values superior to 99.9% of values
-RLS_prod_site = RLS_prod_site %>% filter(Biom < quantile(RLS_prod_site$Biom,0.999)) %>% 
-  filter(Productivity < quantile(RLS_prod_site$Productivity,0.999))
+# save(RLS_prod_site,file = "productivity/outputs/RLS_prod_site_with_outliers0.001.Rdata")
+# 
+# #Removing outliers, Biomass and productivity values superior to 99.9% of values
+# RLS_prod_site = RLS_prod_site %>% filter(Biom < quantile(RLS_prod_site$Biom,0.999)) %>% 
+#   filter(Productivity < quantile(RLS_prod_site$Productivity,0.999))
 
 save(RLS_prod_site, file = "productivity/outputs/RLS_prod_site.Rdata")
 

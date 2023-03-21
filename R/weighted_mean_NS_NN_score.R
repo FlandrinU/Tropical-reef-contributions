@@ -12,7 +12,7 @@
 
 #-----------------Loading packages-------------------
 pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats", "ggrepel",
-          "ggfun", "scatterpie", "scales", "ggpattern")
+          "ggfun", "scatterpie", "scales", "ggpattern", "ggpubr")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -69,7 +69,8 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
 
 ## Clean data
 NCP_log_transformed <- subset(NCP_site_log_transformed, 
-                              select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                              select = -c(SiteCode, SiteCountry, SurveyDate,
+                                          SiteEcoregion, SurveyDepth, 
                                           SiteMeanSST, SiteLatitude, SiteLongitude,
                                           Biomass,
                                           HDI, MarineEcosystemDependency,
@@ -492,23 +493,37 @@ plot_piechart <- function(quarter= "up_right", col="firebrick"){
           # axis.text = element_text(size = 10),
           legend.position = "none") # Removes the legend
 }
+plot_stack <- function(quarter= "up_right", 
+                       col_restricted = "coral3",
+                       col_notake = "darkred"){
+  df <- as.data.frame(table(dplyr::filter(NN_NS_with_product, is.na(get(quarter))==F)$protection)) |>
+    dplyr::mutate(pct = Freq / sum(Freq) *100) 
+  
+  ggplot(df, aes(x = "", y = pct, fill = Var1[c(3,1,2)])) +
+    geom_col() +
+    geom_text(aes(label = paste0(round(pct, 1), "%")),
+              position = position_stack(vjust = 0.5)) +
+    scale_fill_manual(values = c(col_notake, col_restricted, "grey"))+
+    theme_void() +  
+    theme(legend.position = "none")
+}
 
 NN_NS_plot_piechart <- NN_NS_plot + 
-  annotation_custom(grob = ggplotGrob(plot_piechart("up_right","firebrick")),
-                    xmin = 1.1, xmax = 1.7, 
-                    ymin = 0.85, ymax =1.45 )+ 
-  annotation_custom(grob = ggplotGrob(plot_piechart("down_right","forestgreen")),
-                    xmin = 0.5, xmax = 1.1, 
+  annotation_custom(grob = ggplotGrob(plot_stack("up_right","coral3", "darkred")),
+                    xmin = 1.5, xmax = 1.7, 
+                    ymin = 0.75, ymax =1.35 )+ 
+  annotation_custom(grob = ggplotGrob(plot_stack("down_right","darkseagreen3", "forestgreen")),
+                    xmin = 0.9, xmax = 1.1, 
                     ymin = -2, ymax =-1.4 )+ 
-  annotation_custom(grob = ggplotGrob(plot_piechart("down_left","grey40")),
-                    xmin = -2, xmax = -1.4, 
+  annotation_custom(grob = ggplotGrob(plot_stack("down_left","grey40", "black")),
+                    xmin = -2, xmax = -1.8, 
                     ymin = -2, ymax =-1.4 )+ 
-  annotation_custom(grob = ggplotGrob(plot_piechart("up_left","dodgerblue3")),
-                    xmin = -2, xmax = -1.4, 
-                    ymin = 0.85, ymax =1.45 )
+  annotation_custom(grob = ggplotGrob(plot_stack("up_left","deepskyblue3", "darkblue")),
+                    xmin = -2, xmax = -1.8, 
+                    ymin = 0.75, ymax =1.35 )
 NN_NS_plot_piechart
 ggsave(here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png"),
-        plot = NN_NS_plot_piechart, width=10, height = 8 )
+        plot = NN_NS_plot_piechart, width=12, height = 8 )
 
 ## on map 
 function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36, 31),
@@ -522,7 +537,7 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="down_left",
                           low = "white", high="grey20",
-                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$down_left,
+                          limits =quantile(coord_NN_NS$rank * coord_NN_NS$down_left,
                                            probs=c( 0.5,1), na.rm=T), na.value=NA) +
     ggnewscale::new_scale("colour") +
     
@@ -532,12 +547,13 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="up_left",
                           low = "white", high="dodgerblue3",
-                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$up_left,
+                          limits =quantile(coord_NN_NS$rank * coord_NN_NS$up_left,
                                            probs=c( 0.5,1), na.rm=T), na.value=NA) +
-    # geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-    #            shape = 1, size = 2, stroke = 1,
-    #            color= "dodgerblue4",
-    #            data = head(coord_NN_NS[order(coord_NN_NS$product_u_l, decreasing = T),], 15)) +
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude),
+               size = 2, stroke = 1, shape = 1,
+               color= "darkblue",
+               data = coord_NN_NS[which(coord_NN_NS$rank_u_l >=
+                                          quantile(coord_NN_NS$rank_u_l, probs=c(0.99), na.rm=T)), ] )+
     
     ggnewscale::new_scale("colour") +
     
@@ -547,12 +563,13 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="down_right",
                           low = "white", high="forestgreen",
-                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$down_right,
+                          limits =quantile(coord_NN_NS$rank * coord_NN_NS$down_right,
                                            probs=c( 0.5,1), na.rm=T), na.value=NA) +
-    # geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-    #            shape = 1, size = 2, stroke = 1,
-    #            color= "darkgreen",
-    #            data = head(coord_NN_NS[order(coord_NN_NS$product_d_r, decreasing = T),], 15)) +
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude),
+               size = 2, stroke = 1, shape = 1,
+               color= "darkgreen",
+               data = coord_NN_NS[which(coord_NN_NS$rank_d_r >=
+                                          quantile(coord_NN_NS$rank_d_r, probs=c(0.99), na.rm=T)), ] )+
     
     ggnewscale::new_scale("colour") +
     
@@ -561,16 +578,16 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                size = 2, alpha = 0.5,
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="up_right",
-                          low = "white", high="darkred",
-                          limits =quantile(NN_NS_with_product$rank * NN_NS_with_product$up_right,
+                          low = "white", high="firebrick",
+                          limits =quantile(coord_NN_NS$rank * coord_NN_NS$up_right,
                                            probs=c( 0.5,1), na.rm=T), na.value=NA) +
-    
-    # geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-    #            shape = 1, size = 2, stroke = 1,
-    #            color= "black",
-    #            data = head(coord_NN_NS[order(coord_NN_NS$product_u_r, decreasing = T),], 15)) +
-    
-    #add transparency
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude),
+               size = 2, stroke = 1, shape = 1,
+               color= "darkred",
+               data = coord_NN_NS[which(coord_NN_NS$rank_u_r >=
+                         quantile(coord_NN_NS$rank_u_r, probs=c(0.99), na.rm=T)), ] )+
+
+        #add transparency
     scale_alpha_continuous(range = c(-0.5, 0.6)) +
     
     
@@ -611,11 +628,33 @@ ggsave( here::here("outputs", "figures", "polynesia map with NN and NS score.png
 
 
 caraib_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product, 
-                                              ylim = c(-5, 30),
-                                              xlim= c(-100,-55),
+                                              ylim = c(-5, 20),
+                                              xlim= c(-95,-70),
                                               title = "Trade-offs in Nature Based Contribution in caraïbe")
 ggsave( here::here("outputs", "figures", "caraïbe map with NN and NS score.png"), plot = caraib_map_NN_NS, width=10, height = 6 )
 
+
+#world map with zooms
+world_map_zoom <- world_map_NN_NS + 
+  geom_rect(aes(xmin = 140, xmax = 160, ymin = -25, ymax = -10), color = "black", fill= "transparent")+
+  geom_rect(aes(xmin = -95, xmax = -70, ymin = -5, ymax = 20), color = "black", fill= "transparent")
+
+
+gold_coast_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product, 
+                                              ylim = c(-25,-10),
+                                              xlim= c(140,160),
+                                              title = "")
+caraib_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product, 
+                                           ylim = c(-5, 20),
+                                           xlim= c(-95,-70),
+                                           title = "")
+
+ggpubr::ggarrange(world_map_zoom, # First row with world map
+                  ggpubr::ggarrange(caraib_map_NN_NS, gold_coast_map_NN_NS, 
+                                    ncol = 2, labels = c("B", "C")), # Second row with zooms
+                  nrow = 2, labels = "A") 
+ggsave(plot = last_plot(), filename = here::here("outputs", "figures",
+                                                 "world map with NN and NS score with zoom.png"))
 
 #### which proportion of mpa in quantiles: ####
 df_plot_mpa <- NN_NS_with_product |>

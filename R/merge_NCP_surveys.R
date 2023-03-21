@@ -12,24 +12,25 @@
 #----------------- cleaning memory -----------------
 rm(list=ls())
 
-#-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse","dplyr", "questionr")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# #-----------------Loading packages-------------------
+# pkgs <- c("here", "tidyverse","dplyr", "questionr", "purrr")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 ##-------------loading data-------------
 load(here::here("data","metadata_surveys.Rdata"))
+
 load(here::here("recycling", "outputs","flux_final_data_surveys.Rdata"))
 load(here::here("productivity", "outputs","RLS_prod_transect.Rdata"))
 load(here::here("nutrients", "outputs", "nutrient_concentration_surveys.Rdata"))
 load(here::here("nutrients", "outputs", "fishery_tot_biomass.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_biodiversity.Rdata"))
-load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
+load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_iucn_and_chondrichtyans_scores.Rdata"))
-load(here::here("cultural_contributions", "outputs", "survey_aesth_without_outliers.Rdata"))
+load(here::here("cultural_contributions", "outputs", "survey_aesth.Rdata"))
 load(here::here("cultural_contributions", "outputs", "cultural_contributions_surveys.Rdata"))
-load(here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata"))
+load(here::here("carbonates", "outputs", "caco3_per_day.Rdata"))
 load(here::here("trophic_web", "outputs", "trophic_indicators_survey.Rdata"))
 
 #list of coral reef sites
@@ -38,27 +39,29 @@ benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_impute
 
 ##-------------Filtering NCP-------------
 recycl <- dplyr::select(task3_data_surveys,
-                        SurveyID, Btot, recycling_N, recycling_P) #2399 surveys
+                        SurveyID, Btot, recycling_N, recycling_P) #2402 surveys
 
-prod <- dplyr::select(RLS_prod_transect, SurveyID, Productivity) #3619 surveys
+prod <- dplyr::select(RLS_prod_transect, SurveyID, Productivity) #3628 surveys
 
-nutrients <- RLS_nut_without_outliers[,-2] #3606 surveys
+nutrients <- dplyr::select(RLS_nut_surv,-c("biom_tot")) #3628 surveys
 
-biodiv <- dplyr::select(surveys_biodiversity_without_outliers, SurveyID, taxo_richness, funct_entropy,
-                        funct_distinctiveness, biom_lowTL, biom_mediumTL, biom_highTL)#3610 surveys
+biodiv <- dplyr::select(surveys_biodiversity, SurveyID, taxo_richness, funct_entropy,
+                        funct_distinctiveness, biom_lowTL, biom_mediumTL, biom_highTL)#3628 surveys
 
-phylo <- dplyr::select(phylo_indices_surveys, SurveyID, phylo_entropy, ED_Mean)#3613 surveys
+phylo <- dplyr::select(phylo_indices_surveys, SurveyID, phylo_entropy, ED_Mean)#3619 surveys
 
-aesthetic <- dplyr::select(survey_aesth, SurveyID, aesthe_survey) #7005 surveys
+aesthetic <- dplyr::select(survey_aesth_all, SurveyID, aesthe_survey) #7013 surveys
 
-carbonates <- dplyr::select(caco3_per_day_without_outliers, SurveyID, low_mg_calcite, high_mg_calcite,
-                            aragonite, monohydrocalcite, amorphous_carbonate) #2156 surveys
+carbonates <- dplyr::select(caco3_per_day, SurveyID, low_mg_calcite, high_mg_calcite,
+                            aragonite, monohydrocalcite, amorphous_carbonate) #2169 surveys
 
 troph_ind <- dplyr::select(as.data.frame(trophic_indicators_survey), SurveyID, 
-                           b_power_law, weighted_mTL) |> #3627 surveys
+                           b_power_law, weighted_mTL) |> 
              dplyr::rename(robustness = b_power_law, mean_TL = weighted_mTL) |>
-             dplyr::mutate(across(.cols = c("SurveyID"),.fns = as.character, .names = "{.col}" ))
- 
+             dplyr::mutate(across(.cols = c("SurveyID"),.fns = as.character, .names = "{.col}" )) #3627 surveys
+
+cultural <- dplyr::select(cultural_contribution_surveys, 
+              SurveyID, public_interest)
 
 coral_cover <- dplyr::select(benthic_imputed, SurveyID, coral_imputation) |>
   dplyr::mutate( SurveyID = as.character(SurveyID))
@@ -77,9 +80,7 @@ NCP <- metadata_surveys |>
   dplyr::left_join(iucn_and_elasmo_by_surveys)|>
   dplyr::left_join(carbonates) |>
   dplyr::left_join(troph_ind) |>
-  dplyr::left_join(
-    dplyr::select(cultural_contribution_surveys, 
-                  SurveyID, academic_knowledge, public_interest)) |>
+  dplyr::left_join(cultural) |>
   
   dplyr::select(SurveyID, SiteCode, SiteCountry, SiteLatitude, SiteLongitude, 
                 SiteMeanSST, SurveyDepth, coral_imputation,
@@ -112,32 +113,52 @@ NCP <- metadata_surveys |>
                 Vitamin_A = Vitamin_A_C,
                 Fishery_Biomass = fishery_biomass,
                 Aesthetic = aesthe_survey,
-                Public_Interest = public_interest,
-                Academic_Knowledge = academic_knowledge
+                Public_Interest = public_interest
+                # Academic_Knowledge = academic_knowledge
                 )
   
 
 
 #### No filter
-NCP_surveys <- questionr::na.rm(NCP) #remains 1809 surveys --> no filter on metadata
+NCP_surveys <- questionr::na.rm(NCP) #remains 1830 surveys --> no filter on metadata
 
 NCP_surveys <- NCP_surveys |>
   dplyr::left_join( dplyr::select( metadata_surveys,
-                             SurveyID, SiteEcoregion, 
+                             SurveyID, SurveyDate, SiteEcoregion, 
                              HDI, MarineEcosystemDependency, gravtot2,
                              mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat) )
   
 save(NCP_surveys, file = here::here("outputs", "all_NCP_surveys.Rdata"))
 
+### Sensitivity test: remove 5% outliers
+# NCP_surveys <- questionr::na.rm(NCP) 
+# NCP_surveys_without_5outliers <- NCP_surveys |>
+#   dplyr::filter(
+#     if_all(everything( vars = c("Biomass","N_recycling","P_recycling","Taxonomic_Richness", "Functional_Entropy",
+#                                 "Phylogenetic_Entropy", "Functional_Distinctiveness","Evolutionary_distinctiveness",
+#                                 "Low_TL_Biomass", "Medium_TL_Biomass", "High_TL_Biomass","IUCN_Species",
+#                                 "Elasmobranch_Diversity", "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", 
+#                                 "Monohydrocalcite", "Amorphous_Carbonate", "Trophic_web_robustness",
+#                                 "mean_Trophic_Level", 
+#                                 "Productivity","Selenium","Zinc","Omega_3","Calcium","Iron","Vitamin_A",
+#                                 "Fishery_Biomass", "Aesthetic","Public_Interest" )),
+#            ~.x <= quantile(.x,.99)))
+# 
+# NCP_surveys|>
+#   gather(key, value)|>
+#   group_by(key)|>
+#   filter(value <= quantile(value, 0.95))|>
+#   select(-q95)|>
+#   spread(key, value)
 
 ### keep only coral reef sites (according to Allen Atlas)
 allen_list <- dplyr::mutate(hab_filt, SurveyID = as.character(SurveyID))
 NCP_coral <- dplyr::filter(NCP, SurveyID %in% allen_list$SurveyID)
-NCP_surveys_coral_reef <- questionr::na.rm(NCP_coral) #remains 1606
+NCP_surveys_coral_reef <- questionr::na.rm(NCP_coral) #remains 1608
 
 #### test without Australia
 NCP_wo_aust <- dplyr::filter(NCP, SiteCountry != "Australia")
-NCP_surveys_wo_australia <- questionr::na.rm(NCP_wo_aust) #remains 732
+NCP_surveys_wo_australia <- questionr::na.rm(NCP_wo_aust) #remains 746
 
 # #### test without Spain
 # NCP_wo_spain <- dplyr::filter(NCP, SiteCountry != "Spain")
@@ -147,7 +168,7 @@ NCP_surveys_wo_australia <- questionr::na.rm(NCP_wo_aust) #remains 732
 ID_wo_no_coral <- dplyr::filter(benthic_imputed, coral_imputation >0) |>
   dplyr::mutate(SurveyID = as.character(SurveyID))
 NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_no_coral$SurveyID)
-NCP_surveys_coral_0_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1714
+NCP_surveys_coral_0_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1720
 
 
 # #### tropical reef with more than 1% coral cover
@@ -161,26 +182,26 @@ NCP_surveys_coral_0_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1714
 ID_wo_5_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.05) |>
  dplyr::mutate(SurveyID = as.character(SurveyID))
 NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_5_coral$SurveyID)
-NCP_surveys_coral_5_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1505
+NCP_surveys_coral_5_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1510
 
 
 #### tropical reef with more than 10% coral cover
 ID_wo_10_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.1) |>
  dplyr::mutate(SurveyID = as.character(SurveyID))
 NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_10_coral$SurveyID)
-NCP_surveys_coral_10_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1335
+NCP_surveys_coral_10_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1346
 
 
 
 #### Site with minSST > 20
 survey_sst20 <- dplyr::filter(metadata_surveys, SiteMinSST > 20)
 NCP_surveys_SST20 <- dplyr::filter(NCP, SurveyID %in% survey_sst20$SurveyID) |>
-  questionr::na.rm() #remains 1506
+  questionr::na.rm() #remains 1514
 
 
 #### test with only Australia
 NCP_only_aust <- dplyr::filter(NCP, SiteCountry == "Australia")
-NCP_surveys_only_australia <- questionr::na.rm(NCP_only_aust) #remains 1092
+NCP_surveys_only_australia <- questionr::na.rm(NCP_only_aust) #remains 1084
 
 # #### test with only in french polynesia and galapagos
 # NCP_only_aust <- dplyr::filter(NCP, SiteCountry == "French Polynesia" | SiteCountry == "Ecuador")
@@ -250,7 +271,7 @@ summary(NCP_site) # 1229 sites
 NCP_site <- NCP_site |>
   dplyr::left_join( 
       dplyr::distinct(metadata_surveys,
-                          SiteCode, SiteEcoregion,
+                          SiteCode, SurveyDate, SiteEcoregion,
                           HDI, MarineEcosystemDependency, gravtot2,
                           mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat))
 save(NCP_site, file = here::here("outputs", "all_NCP_site.Rdata"))

@@ -192,15 +192,15 @@ phylo_indices_surveys_all <- cbind(ED_surveys, PD_surveys, PE_surveys_summary, p
 phylo_indices_surveys_all <- as.data.frame(phylo_indices_surveys_all)
 phylo_indices_surveys_all <- tibble::rownames_to_column(phylo_indices_surveys_all,var="SurveyID")
 
-# filtering 0.1% outliers
-phylo_indices_surveys <- phylo_indices_surveys_all %>%
-  filter(ED_Mean < quantile(phylo_indices_surveys_all$ED_Mean,0.999)) %>% 
-  #filter(residuals_PD_richness < quantile(phylo_indices_surveys_all$residuals_PD_richness,0.999)) %>% 
-  #filter(SES_PD_Mean < quantile(phylo_indices_surveys_all$SES_PD_Mean,0.999)) %>% 
-  #filter(PE_Mean < quantile(phylo_indices_surveys_all$PE_Mean,0.999)) %>%
-  filter(phylo_entropy < quantile(phylo_indices_surveys_all$phylo_entropy, 0.999)) 
+# # filtering 0.1% outliers
+# phylo_indices_surveys <- phylo_indices_surveys_all %>%
+#   filter(ED_Mean < quantile(phylo_indices_surveys_all$ED_Mean,0.999)) %>% 
+#   #filter(residuals_PD_richness < quantile(phylo_indices_surveys_all$residuals_PD_richness,0.999)) %>% 
+#   #filter(SES_PD_Mean < quantile(phylo_indices_surveys_all$SES_PD_Mean,0.999)) %>% 
+#   #filter(PE_Mean < quantile(phylo_indices_surveys_all$PE_Mean,0.999)) %>%
+#   filter(phylo_entropy < quantile(phylo_indices_surveys_all$phylo_entropy, 0.999)) 
+# 
 
-
-save(phylo_indices_surveys_all, file = here::here("biodiversity", "outputs", "phylogenetic_indices_all_surveys.Rdata"))
-save(phylo_indices_surveys, file = here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
+save(phylo_indices_surveys_all, file = here::here("biodiversity", "outputs", "phylogenetic_indices_surveys.Rdata"))
+# save(phylo_indices_surveys, file = here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
 

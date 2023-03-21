@@ -49,9 +49,9 @@ surveys_fishery_biom <- as.data.frame(rowSums(surveys_fishery_sp_biom))
 surveys_fishery_biom <- tibble::rownames_to_column(surveys_fishery_biom)
 colnames(surveys_fishery_biom) <- c("SurveyID", "fishery_biomass")
 
-#remove 0.1% outliers
-surveys_fishery_biom <- surveys_fishery_biom %>%
-  filter(fishery_biomass < quantile(surveys_fishery_biom$fishery_biomass,0.999))
+# #remove 0.1% outliers
+# surveys_fishery_biom <- surveys_fishery_biom %>%
+#   filter(fishery_biomass < quantile(surveys_fishery_biom$fishery_biomass,0.999))
   
 # -------------------save data -------------------
 save(surveys_fishery_biom, file = here::here("nutrients", "outputs", "fishery_tot_biomass.Rdata"))

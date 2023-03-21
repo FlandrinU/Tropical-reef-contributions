@@ -121,7 +121,8 @@ grp_ipbes <- as.factor(c(N_recycling = "regulating",
 plot_PCA_NCP <- function(NCP_site_log_transformed){
   library(ggplot2)
   NCP_site_selected <- subset(NCP_site_log_transformed, 
-                              select = -c(Biomass, SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                              select = -c(Biomass, SiteCode, SurveyDate,
+                                          SiteCountry, SiteEcoregion, SurveyDepth, 
                                           SiteMeanSST, SiteLatitude, SiteLongitude,
                                           HDI, MarineEcosystemDependency,
                                           coral_imputation, gravtot2, mpa_name,
@@ -235,7 +236,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   
   png(filename = here::here("outputs", "figures","contribution_NCP_in_total_variance.png"), 
       width= 12, height = 15, units = "cm", res = 1000)
-  print( corrplot::corrplot(contributions, is.corr=FALSE) )
+  print( corrplot::corrplot(contributions, is.corr=FALSE))
   dev.off()
   
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
@@ -408,6 +409,52 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                                      legend.title = "log(Biomass)"))
   dev.off()
   
+  png(filename = here::here("outputs", "figures","PCA_NSgrey_NN_axes1-2_with_biomass.png"), 
+      width= 25, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot( pca, 
+                                      col.var = grp_NN_NS, 
+                                      palette = c("forestgreen", "grey60"),
+                                      geom="point", pointshape=21,
+                                      fill.ind = NCP_site_log_transformed$Biomass,
+                                      col.ind = "transparent",
+                                      alpha.ind = 1,
+                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                      repel = TRUE) +
+           xlim(c(-7,8)) +
+           ylim(c(-6,6)) +
+           labs(color ="Contributions", fill="log(Biomass)"))
+  dev.off()
+  
+  png(filename = here::here("outputs", "figures","PCA_NS_NNgrey_axes1-2_with_biomass.png"), 
+      width= 25, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot( pca, 
+                                      col.var = grp_NN_NS, 
+                                      palette = c("grey60", "dodgerblue3"),
+                                      geom="point", pointshape=21,
+                                      fill.ind = NCP_site_log_transformed$Biomass,
+                                      col.ind = "transparent",
+                                      alpha.ind = 1,
+                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                      repel = TRUE) +
+           xlim(c(-7,8)) +
+           ylim(c(-6,6)) +
+           labs(color ="Contributions", fill="log(Biomass)"))
+  dev.off()
+  
+  ### Survey date
+  png(filename = here::here("outputs", "figures","PCA_date_pattern.png"), 
+      width= 30, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot(pca,
+                                     select.var = list(cos2 = 0.4),
+                                     geom="point", pointshape=21,
+                                     fill.ind = as.numeric(stringr::str_sub(NCP_site_log_transformed$SurveyDate , start = -4)),
+                                     col.ind = as.numeric(stringr::str_sub(NCP_site_log_transformed$SurveyDate , start = -4)),
+                                     gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                     col.var = "black", repel = TRUE,
+                                     legend.title = "Year"))
+  dev.off()
+  
+
   ### mpa categories
   png(filename = here::here("outputs", "figures","PCA_mpa_categories.png"), 
       width= 30, height = 20, units = "cm", res = 1000)

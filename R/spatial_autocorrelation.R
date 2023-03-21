@@ -117,3 +117,15 @@ variogram <- ggplot(data= vario) +
   theme_bw()
 ggsave(plot = variogram, filename = here::here("outputs", "figures",
            "Spatial correlation variogram.png"))
+
+
+# ##-------------check  very distant points >18 000 km -------------
+# long_dist <- which(dist_matrix > 19000000)
+# names <- c()
+# for( i in long_dist){
+#   r <- i %% nrow(dist_matrix)
+#   c <- i %/% nrow(dist_matrix) + 1
+#   names <- c(names, paste0(coord$SiteCode[max(r,c)], "/", coord$SiteCode[min(r,c)]))
+# }
+# names_u <- unique(names)
+# names_u

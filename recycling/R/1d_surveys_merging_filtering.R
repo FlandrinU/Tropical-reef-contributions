@@ -71,14 +71,14 @@ task3_data <- surveys_merged %>%
 nrow(task3_data) # 2 402 surveys
 n_distinct(task3_data$SiteCode ) # 1 505 sites
 
-#Removing outliers, N and P recycling values superior to 99.9% of values
-task3_data_without_outliers <-  task3_data %>%
-  filter( recycling_N < quantile(task3_data$recycling_N, 0.999) ) %>%
-  filter( recycling_P < quantile(task3_data$recycling_P, 0.999) )
+# #Removing outliers, N and P recycling values superior to 99.9% of values
+# task3_data_without_outliers <-  task3_data %>%
+#   filter( recycling_N < quantile(task3_data$recycling_N, 0.999) ) %>%
+#   filter( recycling_P < quantile(task3_data$recycling_P, 0.999) )
 
 
 # log-transforming abundance and biomass
-task3_data_surveys <- task3_data_without_outliers %>%
+task3_data_surveys <- task3_data %>%
   mutate(log10_biomass=log10(Btot_fishflux) ) %>%
   mutate(log10_density=log10(Ntot_fishflux) )
 

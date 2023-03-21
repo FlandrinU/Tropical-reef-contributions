@@ -36,18 +36,18 @@ caco3_per_day <- caco3_production %>%
 
 caco3_per_day$SurveyID <- as.character(caco3_per_day$SurveyID)
 
-## filtering 0.1% outliers
-caco3_per_day_without_outliers <- caco3_per_day %>%
-  filter(carbonate_tot < quantile(caco3_per_day$carbonate_tot,0.999)) %>% 
-  filter(low_mg_calcite < quantile(caco3_per_day$low_mg_calcite,0.999)) %>% 
-  filter(high_mg_calcite < quantile(caco3_per_day$high_mg_calcite,0.999)) %>% 
-  filter(aragonite < quantile(caco3_per_day$aragonite,0.999)) %>% 
-  filter(monohydrocalcite < quantile(caco3_per_day$monohydrocalcite,0.999)) %>% 
-  filter(amorphous_carbonate < quantile(caco3_per_day$amorphous_carbonate,0.999)) 
+# ## filtering 0.1% outliers
+# caco3_per_day_without_outliers <- caco3_per_day %>%
+#   filter(carbonate_tot < quantile(caco3_per_day$carbonate_tot,0.999)) %>% 
+#   filter(low_mg_calcite < quantile(caco3_per_day$low_mg_calcite,0.999)) %>% 
+#   filter(high_mg_calcite < quantile(caco3_per_day$high_mg_calcite,0.999)) %>% 
+#   filter(aragonite < quantile(caco3_per_day$aragonite,0.999)) %>% 
+#   filter(monohydrocalcite < quantile(caco3_per_day$monohydrocalcite,0.999)) %>% 
+#   filter(amorphous_carbonate < quantile(caco3_per_day$amorphous_carbonate,0.999)) 
 
 ##study correlations
-rownames(caco3_per_day_without_outliers) <- caco3_per_day_without_outliers$SurveyID
-pca <- FactoMineR::PCA(caco3_per_day_without_outliers[,-c(1:3)], scale.unit = T, graph=T, ncp=10)
+rownames(caco3_per_day) <- caco3_per_day$SurveyID
+pca <- FactoMineR::PCA(caco3_per_day[,-c(1:3)], scale.unit = T, graph=T, ncp=10)
 factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 60))
 var <- get_pca_var(pca)
 corrplot(var$contrib, is.corr=FALSE)  
@@ -65,4 +65,4 @@ plot_ly(site_coord_in_pca,
 
 ##-------------saving data-------------
 save(caco3_per_day, file=  here::here("carbonates", "outputs", "caco3_per_day.Rdata") )
-save(caco3_per_day_without_outliers, file=  here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata") )
+# save(caco3_per_day_without_outliers, file=  here::here("carbonates", "outputs", "caco3_per_day_without_outliers.Rdata") )

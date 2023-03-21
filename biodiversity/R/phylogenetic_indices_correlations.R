@@ -15,13 +15,13 @@
 rm(list=ls())
 
 ##-------------loading data-------------
-load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
+load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_biodiversity.Rdata"))
 
 
 # Filter
 phylo_indices <-phylo_indices_surveys %>%
-  dplyr::left_join(surveys_biodiversity_without_outliers)%>%
+  dplyr::left_join(surveys_biodiversity)%>%
   dplyr::select(SurveyID, taxo_richness, ED_Mean, PD_Mean, SES_PD_Mean, residuals_PD_richness, PE_Mean, phylo_entropy )
 
 

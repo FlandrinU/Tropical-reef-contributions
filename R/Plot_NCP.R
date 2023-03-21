@@ -33,14 +33,16 @@ load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
 # Preping data  
 ## Clean data  
 NCP_site_clean_before_log <- subset(NCP_site, 
-                         select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                         select = -c(SiteCode, SiteCountry, SurveyDate,
+                                     SiteEcoregion, SurveyDepth, 
                                      SiteMeanSST, SiteLatitude, SiteLongitude,
                                      HDI, MarineEcosystemDependency,
                                      coral_imputation, gravtot2, mpa_name,
                                      mpa_enforcement, protection_status, 
                                      mpa_iucn_cat))
 NCP_site_clean <- subset(NCP_site_log_transformed, 
-                         select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                         select = -c(SiteCode, SiteCountry, SurveyDate,
+                                     SiteEcoregion, SurveyDepth, 
                                      SiteMeanSST, SiteLatitude, SiteLongitude,
                                      HDI, MarineEcosystemDependency,
                                      coral_imputation, gravtot2, mpa_name,
@@ -264,29 +266,33 @@ NCP_site$mpa_iucn_cat[which(NCP_site$mpa_iucn_cat == "Not Applicable" |
                               NCP_site$mpa_iucn_cat == "Not Reported")] <- NA
 NCP_site <- NCP_site |>
   dplyr::bind_cols(
-    protection_not_low = ifelse(is.na(NCP_site$mpa_name)==F &
-                            NCP_site$mpa_enforcement != "Low" &
-                            stringr::str_detect(NCP_site$protection_status, "No take"),
-                          "protected","not protected"),
-      protection_only_high = ifelse(is.na(NCP_site$mpa_name)==F &
-                                NCP_site$mpa_enforcement == "High" &
-                                stringr::str_detect(NCP_site$protection_status, "No take"),
-                              "protected","not protected"))
+    protection = ifelse(NCP_site$mpa_enforcement == "High" &
+                        stringr::str_detect(NCP_site$protection_status, "No take"),
+                        "No take",
+                        ifelse(is.na(NCP_site$mpa_name)==F, 
+                               "Restricted", "Fished")) )
+  # protection_med_high = ifelse(NCP_site$mpa_enforcement != "Low" &
+  #                                stringr::str_detect(NCP_site$protection_status, "No take"),
+  #                              "No take",
+  #                              ifelse(is.na(NCP_site$mpa_name)==F, 
+  #                                     "Restricted", "Fished")) )
 
 
-plot_mpa <-function(NCP_site){
+plot_mpa <-function(NCP_site, xlim=c(-180,180), ylim = c(-36, 31)){
   ggplot(NCP_site) +
       geom_sf(data = coast, color = "grey30", fill = "lightgrey",
               aes(size=0.1)) +
       
-      geom_point(data=NCP_site,
-                 size = 3, shape = 20,
+      geom_point(size = 2, na.rm = T,
+                 colour= "black",
+                 alpha = 1,
                  aes(x = SiteLongitude, y = SiteLatitude,
-                     colour= mpa_iucn_cat,
-                     alpha = 0.3), na.rm = T) +
+                    shape = protection)) +
       
-      coord_sf(xlim=c(-180,180), ylim = c(-36, 31), expand = FALSE) +
-      guides(alpha = "none", size = "none") +
+      coord_sf(xlim, ylim , expand = FALSE) +
+      guides(alpha = "none", size = "none", colour = "none") +
+      scale_shape_manual(values=c(19,17,18))+
+    
       theme_minimal()+
       labs(title = paste0("MPA geographic distribution"),
            x="", y= "") +
@@ -298,14 +304,20 @@ plot_mpa <-function(NCP_site){
       )
 }
 
-mpa <- plot_mpa(NCP_site = dplyr::filter(NCP_site, is.na(mpa_iucn_cat) == F))
-ggsave(filename = here::here("outputs", "figures", "MPAs_iucn_cat_on_world_map.jpg"),
+mpa <- plot_mpa(NCP_site , xlim=c(-180,180), ylim = c(-36, 31))
+ggsave(filename = here::here("outputs", "figures", "RLS_sites_with_protection.jpg"),
        plot = mpa, width=15, height = 7 )
 
-mpa_not_low <- plot_mpa(NCP_site = dplyr::filter(NCP_site, protection_not_low == "protected"))
-ggsave(filename = here::here("outputs", "figures", "MPAs_high_and_medium_enforcement_iucn_cat_on_world_map.jpg"),
-       plot = mpa_not_low, width=15, height = 7 )
+mpa <- mpa + 
+  geom_rect(aes(xmin = 140, xmax = 160, ymin = -25, ymax = -10), color = "black", fill= "transparent")+
+  geom_rect(aes(xmin = -95, xmax = -70, ymin = -5, ymax = 20), color = "black", fill= "transparent")
 
-mpa_high <- plot_mpa(NCP_site = dplyr::filter(NCP_site, protection_only_high == "protected"))
-ggsave(filename = here::here("outputs", "figures", "MPAs_high_enforcement_iucn_cat_on_world_map.jpg"),
-       plot = mpa_high, width=15, height = 7 )
+gold_coast_mpa<- plot_mpa( NCP_site,ylim = c(-25,-10), xlim= c(140,160))
+caraib_mpa <- plot_mpa( NCP_site, ylim = c(-5, 20), xlim= c(-95,-70))
+
+ggpubr::ggarrange(mpa, # First row with world map
+                  ggpubr::ggarrange(caraib_mpa, gold_coast_mpa,  
+                                    ncol = 2, labels = c("B", "C")), # Second row with zooms
+                  nrow = 2, labels = "A") 
+ggsave(plot = last_plot(), filename = here::here("outputs", "figures",
+                                                 "RLS sites with protection and zoom.png"))

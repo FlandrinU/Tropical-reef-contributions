@@ -28,10 +28,10 @@ survey_aesth_all <- read.csv(here::here("cultural_contributions", "data", "surve
 #-----------------run aesthetic analyses---------------------
 survey_aesth_all$SurveyID <- as.character(survey_aesth_all$SurveyID)
 
-#filter 0.01 outliers
-survey_aesth <- survey_aesth_all %>%
-  filter(aesthe_survey < quantile(survey_aesth_all$aesthe_survey,0.999))
+# #filter 0.01 outliers
+# survey_aesth <- survey_aesth_all %>%
+#   filter(aesthe_survey < quantile(survey_aesth_all$aesthe_survey,0.999))
 
 #save
-save(survey_aesth, file = here::here("cultural_contributions", "outputs", "survey_aesth_without_outliers.Rdata"))
+save(survey_aesth_all, file = here::here("cultural_contributions", "outputs", "survey_aesth.Rdata"))
 

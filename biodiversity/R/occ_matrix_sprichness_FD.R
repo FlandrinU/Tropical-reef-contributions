@@ -236,16 +236,16 @@ surveys_biodiversity <- surveys_biodiversity |>
   dplyr::left_join(surveys_biomTL)
 summary(surveys_biodiversity)
 
-# filtering 0.1% outliers
-surveys_biodiversity_without_outliers <- surveys_biodiversity |>
-  dplyr::filter(taxo_richness < quantile(surveys_biodiversity$taxo_richness,0.999)) |> 
-  dplyr::filter(funct_distinctiveness < quantile(surveys_biodiversity$funct_distinctiveness,0.999)) |> 
-  # dplyr::filter(taxo_entropy < quantile(surveys_biodiversity$taxo_entropy,0.999)) |> 
-  # dplyr::filter(funct_richness < quantile(surveys_biodiversity$funct_richness,0.999)) |> 
-  dplyr::filter(biom_lowTL < quantile(surveys_biodiversity$biom_lowTL ,0.999)) |>
-  dplyr::filter(biom_mediumTL < quantile(surveys_biodiversity$biom_mediumTL ,0.999)) |>
-  dplyr::filter(biom_highTL < quantile(surveys_biodiversity$biom_highTL ,0.999))
+# # filtering 0.1% outliers
+# surveys_biodiversity_without_outliers <- surveys_biodiversity |>
+#   dplyr::filter(taxo_richness < quantile(surveys_biodiversity$taxo_richness,0.999)) |> 
+#   dplyr::filter(funct_distinctiveness < quantile(surveys_biodiversity$funct_distinctiveness,0.999)) |> 
+#   # dplyr::filter(taxo_entropy < quantile(surveys_biodiversity$taxo_entropy,0.999)) |> 
+#   # dplyr::filter(funct_richness < quantile(surveys_biodiversity$funct_richness,0.999)) |> 
+#   dplyr::filter(biom_lowTL < quantile(surveys_biodiversity$biom_lowTL ,0.999)) |>
+#   dplyr::filter(biom_mediumTL < quantile(surveys_biodiversity$biom_mediumTL ,0.999)) |>
+#   dplyr::filter(biom_highTL < quantile(surveys_biodiversity$biom_highTL ,0.999))
 
 ## saving as Rdata ##
-save(surveys_biodiversity_without_outliers, file=here::here("biodiversity","outputs", "surveys_biodiversity.Rdata") )
+save(surveys_biodiversity, file=here::here("biodiversity","outputs", "surveys_biodiversity.Rdata") )
 
