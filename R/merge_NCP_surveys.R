@@ -28,6 +28,7 @@ load(here::here("nutrients", "outputs", "fishery_tot_biomass.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_biodiversity.Rdata"))
 load(here::here("biodiversity", "outputs", "phylogenetic_indices_surveys.Rdata"))
 load(here::here("biodiversity", "outputs", "surveys_iucn_and_chondrichtyans_scores.Rdata"))
+load(here::here("biodiversity", "outputs", "survey_endemism_score.Rdata"))
 load(here::here("cultural_contributions", "outputs", "survey_aesth.Rdata"))
 load(here::here("cultural_contributions", "outputs", "cultural_contributions_surveys.Rdata"))
 load(here::here("carbonates", "outputs", "caco3_per_day.Rdata"))
@@ -48,7 +49,7 @@ nutrients <- dplyr::select(RLS_nut_surv,-c("biom_tot")) #3628 surveys
 biodiv <- dplyr::select(surveys_biodiversity, SurveyID, taxo_richness, funct_entropy,
                         funct_distinctiveness, biom_lowTL, biom_mediumTL, biom_highTL)#3628 surveys
 
-phylo <- dplyr::select(phylo_indices_surveys, SurveyID, phylo_entropy, ED_Mean)#3619 surveys
+phylo <- dplyr::select(phylo_indices_surveys, SurveyID, phylo_entropy_Mean, ED_Mean)#3619 surveys
 
 aesthetic <- dplyr::select(survey_aesth_all, SurveyID, aesthe_survey) #7013 surveys
 
@@ -78,6 +79,7 @@ NCP <- metadata_surveys |>
   dplyr::left_join(phylo) |>
   dplyr::left_join(aesthetic) |>
   dplyr::left_join(iucn_and_elasmo_by_surveys)|>
+  dplyr::left_join(endemism_survey_rls) |>
   dplyr::left_join(carbonates) |>
   dplyr::left_join(troph_ind) |>
   dplyr::left_join(cultural) |>
@@ -88,13 +90,14 @@ NCP <- metadata_surveys |>
                 N_recycling = recycling_N, P_recycling = recycling_P,
                 Taxonomic_Richness = taxo_richness,
                 Functional_Entropy = funct_entropy, 
-                Phylogenetic_Entropy = phylo_entropy,
+                Phylogenetic_Entropy = phylo_entropy_Mean,
                 Functional_Distinctiveness = funct_distinctiveness,
                 Evolutionary_distinctiveness = ED_Mean,
                 Low_TL_Biomass = biom_lowTL,
                 Medium_TL_Biomass = biom_mediumTL,
                 High_TL_Biomass = biom_highTL,
-                IUCN_Species = iucn_species,
+                # IUCN_Species = iucn_species,
+                Endemism,
                 Elasmobranch_Diversity = elasmobranch_diversity,
                 Low_Mg_Calcite = low_mg_calcite,
                 High_Mg_Calcite = high_mg_calcite,
@@ -234,7 +237,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
+  plots[[28]] + plots[[29]] + plots[[30]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -244,7 +247,7 @@ all_plot
 NCP_skewed_distribution <- c("Biomass","N_recycling","P_recycling","Productivity",
                              "Functional_Distinctiveness","Omega_3","Calcium","Vitamin_A",
                              "Phylogenetic_Entropy","Evolutionary_distinctiveness",
-                             "IUCN_Species", "Elasmobranch_Diversity",
+                             "Elasmobranch_Diversity",#"IUCN_Species",
                              "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", "Monohydrocalcite",
                              "Amorphous_Carbonate", "Low_TL_Biomass", "Medium_TL_Biomass", "High_TL_Biomass",
                              "Fishery_Biomass", "mean_Trophic_Level")
@@ -256,12 +259,12 @@ mean_per_site_and_log <- function(var_survey = NCP_surveys){
     dplyr::summarise(across(.cols = c("SurveyDepth","SiteMeanSST", "SiteLatitude", "SiteLongitude", "coral_imputation",
                                "Biomass","N_recycling","P_recycling","Taxonomic_Richness", "Functional_Entropy",
                                "Phylogenetic_Entropy", "Functional_Distinctiveness","Evolutionary_distinctiveness",
-                               "Low_TL_Biomass", "Medium_TL_Biomass", "High_TL_Biomass","IUCN_Species",
+                               "Low_TL_Biomass", "Medium_TL_Biomass", "High_TL_Biomass","Endemism", #IUCN_Species",
                                "Elasmobranch_Diversity", "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", 
                                "Monohydrocalcite", "Amorphous_Carbonate", "Trophic_web_robustness",
                                "mean_Trophic_Level", 
                                "Productivity","Selenium","Zinc","Omega_3","Calcium","Iron","Vitamin_A",
-                               "Fishery_Biomass", "Aesthetic","Public_Interest","Academic_Knowledge" ), #/!\ the order matter
+                               "Fishery_Biomass", "Aesthetic","Public_Interest" ), #/!\ the order matter
                      .fns = mean, .names = "{.col}"))
 }
 

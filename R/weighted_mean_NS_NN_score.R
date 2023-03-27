@@ -43,7 +43,8 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Low_TL_Biomass = "NN",
                          Medium_TL_Biomass = "NN",
                          High_TL_Biomass = "NN",
-                         IUCN_Species = "NN",
+                         # IUCN_Species = "NN",
+                         Endemism = "NN", 
                          Elasmobranch_Diversity = "NN",
                          Low_Mg_Calcite = "NN",
                          High_Mg_Calcite = "NN",
@@ -62,8 +63,7 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Vitamin_A = "NS",
                          Fishery_Biomass = "NS",
                          Aesthetic = "NS",
-                         Public_Interest = "NS",
-                         Academic_Knowledge = "NS")) # /!\ the order matter
+                         Public_Interest = "NS")) # /!\ the order matter
 
 ##-------------compute correlation coefficients-------------
 
@@ -115,7 +115,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] +
+  plots[[28]] + plots[[29]] + 
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -187,6 +187,7 @@ for( site in 1:nrow(NCP_NS)){
 
 
 NN_NS_scores <- cbind(NCP_site_log_transformed[ , c("SiteCode", "SiteLongitude", "SiteLatitude", 
+                                                    "SiteCountry", "SiteEcoregion",
                                                     "SiteMeanSST", "Biomass", "HDI", "gravtot2",
                                                     "MarineEcosystemDependency", "coral_imputation",
                                                     "mpa_name", "mpa_enforcement", "protection_status",
@@ -360,10 +361,10 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "darkred",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
-                    quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+                    quantile(NN_NS_with_product$rank_u_r, probs=c(0.98), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
              data=NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
-                  quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
+                  quantile(NN_NS_with_product$rank_u_r, probs=c(0.98), na.rm=T)), ] )+
   
   guides(color = "none") + ggnewscale::new_scale("colour") +
   
@@ -378,10 +379,10 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "dodgerblue4",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
-                                               quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+                                               quantile(NN_NS_with_product$rank_u_l, probs=c(0.98), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
                              data=NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
-                                                             quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
+                                                             quantile(NN_NS_with_product$rank_u_l, probs=c(0.98), na.rm=T)), ] )+
   guides(color = "none") + ggnewscale::new_scale("colour") +
   
   #down right quarter
@@ -395,10 +396,10 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "darkgreen",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
-                                               quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+                                               quantile(NN_NS_with_product$rank_d_r, probs=c(0.98), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
                              data=NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
-                                                             quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
+                                                             quantile(NN_NS_with_product$rank_d_r, probs=c(0.98), na.rm=T)), ] )+
   guides(color = "none") + ggnewscale::new_scale("colour") +
   
   #down left quarter
@@ -412,10 +413,10 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "black",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
-                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteCode), size=2, 
+                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.98), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
                              data=NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
-                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
+                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.98), na.rm=T)), ] )+
   
   # see MPAs
   scale_shape_manual(values=c(20,17,18))+
@@ -442,13 +443,13 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
   
   geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                 y=3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-                curvature=0.4, linetype=3, linewidth=0.1)+  #up_right
+                curvature=0.3, linetype=3, linewidth=0.1)+  #up_right
   geom_curve(aes(x=0, xend=2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                  y=-3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-             curvature=-0.4, linetype=3, linewidth=0.1)+   #down_right
+             curvature=-0.3, linetype=3, linewidth=0.1)+   #down_right
   geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                  y=3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
-             curvature=-0.4, linetype=3, linewidth=0.1)+ #up_left
+             curvature=-0.3, linetype=3, linewidth=0.1)+ #up_left
   geom_curve(aes(x=0, xend=-2.5*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)),
                  y=-3*sqrt(median(NN_NS_with_product$NNxNS * NN_NS_with_product$up_right, na.rm=T)), yend=0),
              curvature=0.3, linetype=3, linewidth=0.1)+ #down_right
@@ -467,7 +468,8 @@ ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.png"), plot 
 
 
 ## with piechart
-plot_piechart <- function(quarter= "up_right", col="firebrick"){
+plot_piechart <- function(quarter= "up_right", 
+                          col="firebrick"){
   df <- as.data.frame(table(dplyr::filter(NN_NS_with_product, is.na(get(quarter))==F)$protection)) |>
     dplyr::mutate(csum = rev(cumsum(rev(Freq))),
                   pct = Freq / sum(Freq) *100,
@@ -493,6 +495,7 @@ plot_piechart <- function(quarter= "up_right", col="firebrick"){
           # axis.text = element_text(size = 10),
           legend.position = "none") # Removes the legend
 }
+
 plot_stack <- function(quarter= "up_right", 
                        col_restricted = "coral3",
                        col_notake = "darkred"){
@@ -508,22 +511,22 @@ plot_stack <- function(quarter= "up_right",
     theme(legend.position = "none")
 }
 
-NN_NS_plot_piechart <- NN_NS_plot + 
+NN_NS_plot_stackchart <- NN_NS_plot + 
   annotation_custom(grob = ggplotGrob(plot_stack("up_right","coral3", "darkred")),
-                    xmin = 1.5, xmax = 1.7, 
-                    ymin = 0.75, ymax =1.35 )+ 
+                    xmin = 1.3, xmax = 1.5, 
+                    ymin = 0.95, ymax =1.55 )+ 
   annotation_custom(grob = ggplotGrob(plot_stack("down_right","darkseagreen3", "forestgreen")),
-                    xmin = 0.9, xmax = 1.1, 
+                    xmin = 0.7, xmax = 0.9, 
                     ymin = -2, ymax =-1.4 )+ 
   annotation_custom(grob = ggplotGrob(plot_stack("down_left","grey40", "black")),
-                    xmin = -2, xmax = -1.8, 
+                    xmin = -1.9, xmax = -1.7, 
                     ymin = -2, ymax =-1.4 )+ 
   annotation_custom(grob = ggplotGrob(plot_stack("up_left","deepskyblue3", "darkblue")),
-                    xmin = -2, xmax = -1.8, 
-                    ymin = 0.75, ymax =1.35 )
-NN_NS_plot_piechart
-ggsave(here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png"),
-        plot = NN_NS_plot_piechart, width=12, height = 8 )
+                    xmin = -1.9, xmax = -1.7, 
+                    ymin = 0.95, ymax =1.55 )
+NN_NS_plot_stackchart
+ggsave(here::here("outputs", "figures", "Sites in NN and NS scores _ with stackchart.png"),
+        plot = NN_NS_plot_stackchart, width=12, height = 8 )
 
 ## on map 
 function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36, 31),

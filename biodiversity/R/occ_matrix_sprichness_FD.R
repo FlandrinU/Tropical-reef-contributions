@@ -19,10 +19,10 @@ rm(list=ls())
 load(here::here("data","data_species.Rdata"))
 load(here::here("data","data_surveys.Rdata"))
 
-#phylogeny of ray-finned fishes
-trees <- ape::read.tree(file = here::here("biodiversity", "data","Code&Data_Siquiera2020",
-                                          "TACT", "Reef_fish_all_combined.trees")) 
-tree <- trees[[1]]; rm(trees)
+# #phylogeny of ray-finned fishes
+# trees <- ape::read.tree(file = here::here("biodiversity", "data","Code&Data_Siquiera2020",
+#                                           "TACT", "Reef_fish_all_combined.trees")) 
+# tree <- trees[[1]]; rm(trees)
 
 # -------------------occurrence and biomass of species in each survey as a classical matrix -------------------
 surveys_sp_biom <- data_surveys |> 
@@ -87,34 +87,34 @@ save(surveys_nb_sp_per_family, file=here::here("biodiversity", "outputs", "occur
 save(surveys_family_pbiom, file=here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 
 
-#-------------------same process but only with species known in our phylogeny-------------------
-# #Change species names:  Abudefduf_luridus should be Similiparma_lurida and
-# #                       Rhinesomus_triqueter should be Lactophrys_triqueter
-colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Abudefduf_luridus")] <- "Similiparma_lurida"
-colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Rhinesomus_triqueter")] <- "Lactophrys_triqueter"
-
-colnames(surveys_sp_biom)[which( colnames(surveys_sp_biom) %in% tree[["tip.label"]] ==F)]
-# 10 species missing in the phylogeny:
-#[1] "Pareques_acuminatus"   "Odontoscion_dentex"    "Equetus_punctatus"     "Mugil_cephalus"        "Crenimugil_crenilabis"
-#[6] "Bothus_mancus"   "Odontoscion_xanthops"  "Pareques_viola"        "Mugil_galapagensis"    "Neomyxus_leuciscus" 
-
-surveys_sp_biom <- surveys_sp_biom[, colnames(surveys_sp_biom) %in% tree[["tip.label"]] ]
-dim(surveys_sp_biom)      
-
-surveys_sp_occ <- surveys_sp_biom
-surveys_sp_occ[surveys_sp_occ!=0] <- 1
-
-surveys_sp_pbiom<-surveys_sp_biom/apply(surveys_sp_biom,1,sum)
-
-save(surveys_sp_occ, file=here::here("biodiversity", "outputs", "occurrence_matrix_spinphylogeny_survey_01.Rdata"))
-save(surveys_sp_pbiom, file=here::here("biodiversity", "outputs", "occurrence_matrix_spinphylogeny_survey_relative_biomass.Rdata"))
+# #-------------------same process but only with species known in our phylogeny-------------------
+# # #Change species names:  Abudefduf_luridus should be Similiparma_lurida and
+# # #                       Rhinesomus_triqueter should be Lactophrys_triqueter
+# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Abudefduf_luridus")] <- "Similiparma_lurida"
+# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Rhinesomus_triqueter")] <- "Lactophrys_triqueter"
+# 
+# colnames(surveys_sp_biom)[which( colnames(surveys_sp_biom) %in% tree[["tip.label"]] ==F)]
+# # 10 species missing in the phylogeny:
+# #[1] "Pareques_acuminatus"   "Odontoscion_dentex"    "Equetus_punctatus"     "Mugil_cephalus"        "Crenimugil_crenilabis"
+# #[6] "Bothus_mancus"   "Odontoscion_xanthops"  "Pareques_viola"        "Mugil_galapagensis"    "Neomyxus_leuciscus" 
+# 
+# surveys_sp_biom <- surveys_sp_biom[, colnames(surveys_sp_biom) %in% tree[["tip.label"]] ]
+# dim(surveys_sp_biom)      
+# 
+# surveys_sp_occ <- surveys_sp_biom
+# surveys_sp_occ[surveys_sp_occ!=0] <- 1
+# 
+# surveys_sp_pbiom<-surveys_sp_biom/apply(surveys_sp_biom,1,sum)
+# 
+# save(surveys_sp_occ, file=here::here("biodiversity", "outputs", "occurrence_matrix_spinphylogeny_survey_01.Rdata"))
+# save(surveys_sp_pbiom, file=here::here("biodiversity", "outputs", "occurrence_matrix_spinphylogeny_survey_relative_biomass.Rdata"))
 
 
 ### -------------------taxonomic diversity in surveys -------------------####
-data_species$species_corrected[which(data_species$species_corrected =="Pycnochromis_dimidiatus")] <- "Chromis_dimidiata"  #old name in the phylogeny
-#Select species in the phylogeny
-data_species <- data_species |>  dplyr::filter(species_corrected %in% tree[["tip.label"]] )
-data_surveys <- data_surveys |>  dplyr::filter(species %in% data_species$species ) #loss of 115 rls observation
+# data_species$species_corrected[which(data_species$species_corrected =="Pycnochromis_dimidiatus")] <- "Chromis_dimidiata"  #old name in the phylogeny
+# #Select species in the phylogeny
+# data_species <- data_species |>  dplyr::filter(species_corrected %in% tree[["tip.label"]] )
+# data_surveys <- data_surveys |>  dplyr::filter(species %in% data_species$species ) #loss of 115 rls observation
 
 
 # taxo richness and Shannon-like entropy (eq number of species, exp(H))
@@ -129,8 +129,8 @@ surveys_biodiversity <- data.frame(
 
 # dataframe with species as row names and traits as variables
 sp_traits <- data_species
-sp_traits$species_corrected[which(sp_traits$species == "Kyphosus_analogus")] <- "Kyphosus_analogus"  # old name issue
-row.names(sp_traits) <- sp_traits$species_corrected
+# sp_traits$species_corrected[which(sp_traits$species == "Kyphosus_analogus")] <- "Kyphosus_analogus"  # old name issue
+row.names(sp_traits) <- sp_traits$species
 sp_traits <- sp_traits[,c("Size", "Diet", "Position", "Activity")]
 
 # type of traits
@@ -183,8 +183,8 @@ summary(data_species$Diet)
 # species with low TL = herbivores_microvores_detritivores diet
 species_lowTL<- data_species |>
   dplyr::filter(Diet=="herbivores_microvores_detritivores") |>
-  dplyr::pull(species_corrected) 
-length(species_lowTL) # 196 species
+  dplyr::pull(species) 
+length(species_lowTL) # 200 species
 
 biom_lowTL <- rowSums(surveys_sp_biom[,species_lowTL]) 
 summary(biom_lowTL) # from 0 to 1123316 , Q1=3643, median=21833, Q3=24280
@@ -194,8 +194,8 @@ species_mediumTL<- data_species |>
   dplyr::filter(Diet %in% c("corallivores", "sessile_invertivores", 
                      "microinvertivores", "macroinvertivores", "crustacivores", 
                      "planktivores")  ) |>
-  dplyr::pull(species_corrected) 
-length(species_mediumTL) # 743 species
+  dplyr::pull(species) 
+length(species_mediumTL) # 746 species
 
 biom_mediumTL <- rowSums(surveys_sp_biom[,species_mediumTL]) 
 summary(biom_mediumTL) # from 0 to 5629533, Q1=5653, median=13216, Q3=28245
@@ -204,8 +204,8 @@ summary(biom_mediumTL) # from 0 to 5629533, Q1=5653, median=13216, Q3=28245
 # species with high TL = piscivores diet
 species_highTL<- data_species |>
   dplyr::filter(Diet=="piscivores") |>
-  dplyr::pull(species_corrected) 
-length(species_highTL) # 75 species
+  dplyr::pull(species) 
+length(species_highTL) # 78 species
 
 biom_highTL <- rowSums(surveys_sp_biom[,species_highTL])
 summary(biom_highTL) # from 0 to 474937.1, Q1=7.7, median=685.6, Q3=2511.0

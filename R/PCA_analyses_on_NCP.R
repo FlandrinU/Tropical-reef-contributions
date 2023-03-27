@@ -48,7 +48,8 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Low_TL_Biomass = "NN",
                          Medium_TL_Biomass = "NN",
                          High_TL_Biomass = "NN",
-                         IUCN_Species = "NN",
+                         # IUCN_Species = "NN",
+                         Endemism = "NN",
                          Elasmobranch_Diversity = "NN",
                          Low_Mg_Calcite = "NN",
                          High_Mg_Calcite = "NN",
@@ -67,8 +68,7 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Vitamin_A = "NS",
                          Fishery_Biomass = "NS",
                          Aesthetic = "NS",
-                         Public_Interest = "NS",
-                         Academic_Knowledge = "NS")) # /!\ the order matter
+                         Public_Interest = "NS")) # /!\ the order matter
 
 
 grp_ipbes <- as.factor(c(N_recycling = "regulating",
@@ -81,7 +81,8 @@ grp_ipbes <- as.factor(c(N_recycling = "regulating",
                          Low_TL_Biomass = "regulating",
                          Medium_TL_Biomass = "regulating",
                          High_TL_Biomass = "regulating",
-                         IUCN_Species = "nature",
+                         # IUCN_Species = "nature",
+                         Endemism = "nature",
                          Elasmobranch_Diversity = "nature",
                          Low_Mg_Calcite = "regulating",
                          High_Mg_Calcite = "regulating",
@@ -100,8 +101,7 @@ grp_ipbes <- as.factor(c(N_recycling = "regulating",
                          Vitamin_A = "material",
                          Fishery_Biomass = "material",
                          Aesthetic = "non material",
-                         Public_Interest = "non material",
-                         Academic_Knowledge = "non material")) # /!\ the order matter
+                         Public_Interest = "non material")) # /!\ the order matter
 
 # ##-------------Correlations between NCPs-------------
 # ### Correlation test

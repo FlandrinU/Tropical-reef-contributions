@@ -105,3 +105,5 @@ ggplot(endemism_survey_map) +
         axis.ticks.x = element_blank(),
         plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
   )
+ggsave(plot = last_plot(), filename = here::here("biodiversity", "figures", "endemism_on_world_map.jpg"),
+       width = 15, height = 10)

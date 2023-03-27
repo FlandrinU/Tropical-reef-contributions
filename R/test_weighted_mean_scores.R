@@ -44,12 +44,12 @@ NCP_site_selected <- subset(NCP_site_log, select =
                               c(SiteCode,
                                 N_recycling,P_recycling,Taxonomic_Richness, Functional_Entropy,
                                 Phylogenetic_Entropy, Functional_Distinctiveness,Evolutionary_distinctiveness,
-                                Low_TL_Biomass, Medium_TL_Biomass, High_TL_Biomass,IUCN_Species,
+                                Low_TL_Biomass, Medium_TL_Biomass, High_TL_Biomass, Endemism, #IUCN_Species,
                                 Elasmobranch_Diversity, Low_Mg_Calcite, High_Mg_Calcite, Aragonite, 
                                 Monohydrocalcite, Amorphous_Carbonate, Trophic_web_robustness,
                                 mean_Trophic_Level, 
                                 Productivity,Selenium,Zinc,Omega_3,Calcium,Iron,Vitamin_A,
-                                Fishery_Biomass, Aesthetic,Public_Interest,Academic_Knowledge,
+                                Fishery_Biomass, Aesthetic,Public_Interest,#Academic_Knowledge,
                                 NN_kark, NS_kark, NN_PC1, NS_PC1)) |>
   tibble::column_to_rownames(var = "SiteCode")
 
@@ -68,7 +68,8 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Low_TL_Biomass = "NN",
                          Medium_TL_Biomass = "NN",
                          High_TL_Biomass = "NN",
-                         IUCN_Species = "NN",
+                         #IUCN_Species = "NN",
+                         Endemism = "NN", 
                          Elasmobranch_Diversity = "NN",
                          Low_Mg_Calcite = "NN",
                          High_Mg_Calcite = "NN",
@@ -87,8 +88,7 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Vitamin_A = "NS",
                          Fishery_Biomass = "NS",
                          Aesthetic = "NS",
-                         Public_Interest = "NS",
-                         Academic_Knowledge = "NS")) # /!\ the order matter
+                         Public_Interest = "NS")) # /!\ the order matter
 
 ##-------------Check the Kark 2002 formula-------------
 set.seed(6)

@@ -24,37 +24,55 @@ cultural <- cultural_contrib |>
                 academic_knowledge = (NCBI + Sci_litt)/2 ,
                 species_corrected = gsub(" ", "_", Scientific)) 
 
+##-------------deal with names ------------
+for( i in 1:nrow(cultural)){
+  if(cultural$species_corrected[i] %in% data_species$species){
+    cultural$species_corrected[i] <- data_species$species_corrected[
+      which(data_species$species == cultural$species_corrected[i])]
+  }
+}
+
 data_species <- tibble::column_to_rownames(data_species, var = "species")
-colnames(surveys_sp_occ) <- data_species[colnames(surveys_sp_occ), "species_corrected"]
+colnames(surveys_sp_occ) <- data_species[colnames(surveys_sp_occ), "species_corrected"] # corrected names in surveys_sp_occ
+
+#check uncommon species
+colnames(surveys_sp_occ)[which(is.element(colnames(surveys_sp_occ),cultural$species_corrected) == F)] # Cirrhilabrus_laboutei is lacking
 
 
 ##-------------aggregates cultural scores at survey scale------------
-colnames(surveys_sp_occ)[which(is.element(colnames(surveys_sp_occ),cultural$species_corrected) == F)]
-# "Cirrhilabrus_laboutei" is lacking
 
 cultural <- tibble::column_to_rownames(cultural, var ="species_corrected")
 cultural_survey <- lapply( rownames(surveys_sp_occ), function(id){
+  cat(id, "\n")
   sp <- names(surveys_sp_occ[id, which(surveys_sp_occ[id,] >0)])
   if( length(sp) > 0){
-    academic_knowledge <- mean(cultural[sp, "academic_knowledge"])
-    public_interest <- mean(cultural[sp, "public_interest"])
-    wiki_verna <- mean(cultural[sp, "Wiki_verna"])
-    c(id, academic_knowledge, public_interest, wiki_verna)
-  }else{c(id, NA, NA, NA)}
+    mean_academic_knowledge <- mean(cultural[sp, "academic_knowledge"], na.rm = T)
+    mean_public_interest <- mean(cultural[sp, "public_interest"], na.rm = T)
+    mean_wiki_verna <- mean(cultural[sp, "Wiki_verna"], na.rm = T)
+    
+    academic_knowledge <- quantile(cultural[sp, "academic_knowledge"], 0.75, na.rm = T)
+    public_interest <- quantile(cultural[sp, "public_interest"], 0.75, na.rm = T)
+    wiki_verna <- quantile(cultural[sp, "Wiki_verna"], 0.75, na.rm = T)
+    
+    cult <- as.numeric(c(id, academic_knowledge, public_interest, wiki_verna, 
+      mean_academic_knowledge, mean_public_interest, mean_wiki_verna))
+  }else{cult <- c(id, NA, NA, NA,  NA, NA, NA)}
+  names(cult) <- c("SurveyID", "academic_knowledge", "public_interest", "wiki_verna", 
+                   "mean_academic_knowledge", "mean_public_interest", "mean_wiki_verna")
+  cult
 })
 
 cultural_contribution_surveys <- data.frame(do.call(rbind, cultural_survey)) |>
-  dplyr::rename(SurveyID = X1, academic_knowledge = X2, public_interest = X3,
-                wiki_verna = X4) |>
-  dplyr::mutate(academic_knowledge = as.numeric(academic_knowledge),
-                public_interest = as.numeric(public_interest),
-                wiki_verna = as.numeric(wiki_verna))
+  dplyr::mutate( across(everything(), ~as.numeric(.))) |>
+  dplyr::mutate(SurveyID = as.character(SurveyID))
 
 save(cultural_contribution_surveys, file = here::here("cultural_contributions",
                     "outputs", "cultural_contributions_surveys.Rdata"))
 
 ##-------------plot data------------
 plot(cultural_contribution_surveys$academic_knowledge ~ cultural_contribution_surveys$public_interest)
+plot(cultural_contribution_surveys$mean_public_interest ~ cultural_contribution_surveys$public_interest)
+
 ##study correlations
 rownames(cultural_contribution_surveys) <- cultural_contribution_surveys$SurveyID
 pca <- FactoMineR::PCA(questionr::na.rm(cultural_contribution_surveys[,-1]), 

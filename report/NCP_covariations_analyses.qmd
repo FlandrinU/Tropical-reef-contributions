@@ -434,8 +434,8 @@ NN and NS scores estimated by weighted mean
 ![](`r here::here("outputs", "figures", "world map with NS score.png") `)
 
 ### Spatial autocorrelation  
-![](`r here::here("outputs", "figures", "Spatial correlation per distance NN, increment 500.png") `)  
-![](`r here::here("outputs", "figures", "Spatial correlation per distance NS, increment 500.png") `)
+![](`r here::here("outputs", "figures", "Spatial correlation per distance NN, increment 100.png") `)  
+![](`r here::here("outputs", "figures", "Spatial correlation per distance NS, increment 100.png") `)
 
 
 ### NN and NS according to socio-envir variables  
@@ -448,7 +448,7 @@ NN and NS scores estimated by weighted mean
 
 ## Study NN according to NS  
 ### Color scales and proportion of protected sites in each quarter
-![](`r here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png") `)  
+![](`r here::here("outputs", "figures", "Sites in NN and NS scores _ with stackchart.png") `)  
 *Red color indicates conflict between NN and NS management strategies as both have high score*  
 
 ### Score outliers in original PCA  
@@ -701,7 +701,7 @@ __= Multidimensionalité des contributions (surtout pour NS)__
   
 :::{layout-nrow=2}
 
-![NN vs NS](`r here::here("outputs", "figures", "Sites in NN and NS scores _ with piecharts.png") `)
+![NN vs NS](`r here::here("outputs", "figures", "Sites in NN and NS scores _ with stackchart.png") `)
 
 ![](`r here::here("outputs", "figures", "world map with NN and NS score with zoom.png") `)
 

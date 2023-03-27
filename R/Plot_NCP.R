@@ -74,7 +74,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
+  plots[[28]] + plots[[29]] + plots[[30]] +
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -89,7 +89,7 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
+  plots[[28]] + plots[[29]] + plots[[30]]+
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
@@ -124,7 +124,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
     plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
     plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
     plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
+    plots[[28]] + plots[[29]] + plots[[30]] +
     
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
@@ -147,7 +147,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
     plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
     plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
     plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-    plots[[28]] + plots[[29]] + plots[[30]] + plots[[31]] +
+    plots[[28]] + plots[[29]] + plots[[30]] +
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
@@ -210,6 +210,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   #plot function
   plot_NCP_on_world_map <- function(NCP = "Taxonomic_Richness", xlim=c(-180,180), ylim = c(-36, 31),
                                     title="world map with "){
+    library(ggplot2)
     map <- ggplot(NCP_site_log_transformed) +
       geom_sf(data = coast, color = "grey30", fill = "lightgrey",
               aes(size=0.1)) +
