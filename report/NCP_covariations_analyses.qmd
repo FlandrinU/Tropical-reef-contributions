@@ -209,7 +209,7 @@ NCPs contribution
 
 ![PCA classified in NN and NS variables](`r here::here("outputs", "figures", "PCA_NS_NN_axes1-2.png") `){width=100%} 
 
-> Correlation interpretation: 
+> Correlation interpretation: ~all NN positively correlated to Biomass (except endemism because high in Caraïb). NP not really correlated each others -> trade offs. Axe 1 and 2 quite strong (mostly du to NN) but some contributions are merly indepedent form others and are only represented in further PC axes (elasmobranch diversity, Prioductivity, Calcium, Distinctiveness...)
   
 
 #### PCA in dimensions 3 and 4 *(for variables with cos2 \> 0.2, and according the NCPs groups)*
@@ -260,7 +260,9 @@ All variables classified as IPBES categories
 
 ### By countries
 
-![Sites distributions, with ($cos^{2}$) > 0.4 variables](`r here::here("outputs", "figures", "PCA_countries_cos2_0.4.png") `)
+![Sites distributions, with ($cos^{2}$) > 0.4 variables](`r here::here("outputs", "figures", "PCA_countries_cos2_0.4.png") `)  
+
+  > Surprinsingly: no spatial pattern (except for endemism in caraibs and Omega 3 in temperate water), countries are not highlighted by contributions co-variations.
 
 ### By IUCN MPA categories  
 ![](`r here::here("outputs", "figures", "PCA_mpa_categories.png") `)

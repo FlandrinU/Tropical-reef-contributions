@@ -26,6 +26,7 @@ load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
 # load(here::here("outputs","NCP_site_log_SST20.Rdata"))
 # load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
 # load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
+# load(here::here("outputs","NCP_site_log_random.Rdata"))
 # NCP_site_log_transformed <- NCP_site_condition
 
 
@@ -651,6 +652,7 @@ caraib_map_NN_NS <- function_NN_NS_on_map( NN_NS_with_product,
                                            ylim = c(-5, 20),
                                            xlim= c(-95,-70),
                                            title = "")
+
 
 ggpubr::ggarrange(world_map_zoom, # First row with world map
                   ggpubr::ggarrange(caraib_map_NN_NS, gold_coast_map_NN_NS, 

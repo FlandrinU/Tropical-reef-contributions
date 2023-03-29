@@ -28,7 +28,8 @@ load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
 # load(here::here("outputs","NCP_site_log_SST20.Rdata"))
 # load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
 # load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
-# NCP_site <- NCP_site_condition
+# load(here::here("outputs","NCP_site_log_random.Rdata"))
+# NCP_site_log_transformed <- NCP_site_condition
 
 # Preping data  
 ## Clean data  

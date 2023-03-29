@@ -49,7 +49,7 @@ nutrients <- dplyr::select(RLS_nut_surv,-c("biom_tot")) #3628 surveys
 biodiv <- dplyr::select(surveys_biodiversity, SurveyID, taxo_richness, funct_entropy,
                         funct_distinctiveness, biom_lowTL, biom_mediumTL, biom_highTL)#3628 surveys
 
-phylo <- dplyr::select(phylo_indices_surveys, SurveyID, phylo_entropy_Mean, ED_Mean)#3619 surveys
+phylo <- dplyr::select(phylo_indices_surveys_all, SurveyID, phylo_entropy_Mean, ED_Mean)#3619 surveys
 
 aesthetic <- dplyr::select(survey_aesth_all, SurveyID, aesthe_survey) #7013 surveys
 
@@ -154,6 +154,12 @@ save(NCP_surveys, file = here::here("outputs", "all_NCP_surveys.Rdata"))
 #   select(-q95)|>
 #   spread(key, value)
 
+
+### randomisation test : melt sites
+set.seed(06)
+NCP_surveys_random <- questionr::na.rm(NCP) |>
+  dplyr::mutate(across(.cols = c("Biomass":"Public_Interest"), .fns = sample, .names = "{.col}"))
+
 ### keep only coral reef sites (according to Allen Atlas)
 allen_list <- dplyr::mutate(hab_filt, SurveyID = as.character(SurveyID))
 NCP_coral <- dplyr::filter(NCP, SurveyID %in% allen_list$SurveyID)
@@ -254,7 +260,7 @@ NCP_skewed_distribution <- c("Biomass","N_recycling","P_recycling","Productivity
 
 
 ### Mean per site
-mean_per_site_and_log <- function(var_survey = NCP_surveys){
+mean_per_site <- function(var_survey = NCP_surveys){
   var_survey |> dplyr::group_by( SiteCode, SiteCountry) |>
     dplyr::summarise(across(.cols = c("SurveyDepth","SiteMeanSST", "SiteLatitude", "SiteLongitude", "coral_imputation",
                                "Biomass","N_recycling","P_recycling","Taxonomic_Richness", "Functional_Entropy",
@@ -269,7 +275,7 @@ mean_per_site_and_log <- function(var_survey = NCP_surveys){
 }
 
 
-NCP_site <- mean_per_site_and_log(NCP_surveys)
+NCP_site <- mean_per_site(NCP_surveys)
 summary(NCP_site) # 1229 sites
 NCP_site <- NCP_site |>
   dplyr::left_join( 
@@ -282,7 +288,7 @@ save(NCP_site, file = here::here("outputs", "all_NCP_site.Rdata"))
 
 NCP_site_log_transformed <- NCP_site |>
   dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed
+                       .fns = ~ .x +1 , .names = "{.col}")) |>      
   dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
                        .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid negative values
 
@@ -292,12 +298,12 @@ save(NCP_site_log_transformed, file = here::here("outputs", "all_NCP_site_log_tr
 
 #save with different filter
 for(condition in c("coral_reef", "coral_0_imputed", "wo_australia", "coral_5_imputed",  "coral_10_imputed",
-"only_australia", "SST20")){
+"only_australia", "SST20", "random")){
   NCP_surveys_condition <- get(paste0("NCP_surveys_", condition))
-  NCP_site_condition <- mean_per_site_and_log(NCP_surveys_condition)
+  NCP_site_condition <- mean_per_site(NCP_surveys_condition)
   NCP_site_condition <- NCP_site_condition |>
     dplyr::left_join( dplyr::distinct( metadata_surveys,
-                                     SiteCode, SiteEcoregion,
+                                     SiteCode, SurveyDate, SiteEcoregion,
                                      HDI, MarineEcosystemDependency, gravtot2,
                                      mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat),
                       multiple = "all") |>

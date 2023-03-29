@@ -153,7 +153,7 @@ colnames(PE_surveys_summary) <- paste0("PE_", colnames(PE_surveys_summary))
 save(PE_surveys_summary, file = here::here("biodiversity", "outputs", "phylogenetic_endemism_surveys.Rdata"))
 
 
-## phylogenetic entropy: Marcon 2015, from Allen 2009  -> very long time to run
+## phylogenetic entropy: Marcon 2015, from Allen 2009  -> very long time to run: run only on 10 trees due to negligible variations
 library('entropart')
 phylo_entropy_raw <- lapply( phylo_100[1:10], function(x) {
   cat("Start computation for one tree... \n")
@@ -169,41 +169,13 @@ phylo_entropy_raw <- lapply( phylo_100[1:10], function(x) {
   do.call(rbind, list)
 })
 
-        # phylo_entropy_raw <- lapply( phylo_100[c(1:5)], function(x) {
-        #   list <- mclapply(rownames(surveys_sp_pbiom)[c(1:5)], mc.cores = 8, function(survey){
-        #     community_biom <- surveys_sp_pbiom[survey,]
-        #     #cat(names(x), "\n")
-        #     phylo_entropy <- entropart::ChaoPD(Ps=community_biom,
-        #                                        q = 1,
-        #                                        PhyloTree = x[["phy"]],
-        #                                        Normalize = T) #phylogenetic entropy from Choa 2010
-        #     phylo_entropy
-        #     
-        #     # cat(
-        #     #   length(
-        #     #     setdiff(x[["phy"]][["edge.length"]],phylo_100[[1]][["phy"]][["edge.length"]]))
-        #     #   , "\n")
-        #   })
-        #   do.call(rbind, list)
-        # })
-        # # Phylo entropy based on species weights and q=1
-        # entro_tree1<-entropart::ChaoPD(Ps=community_biom, 
-        #                                     q=1, 
-        #                                     PhyloTree=phylo_100[[1]][["phy"]], 
-        #                                     Normalize=TRUE, 
-        #                                     CheckArguments=FALSE)
-        # # Phylo entropy based on species weights and q=1
-        # entro_tree2<-entropart::ChaoPD(Ps=community_biom, 
-        #                                q=1, 
-        #                                PhyloTree=phylo_100[[2]][["phy"]], 
-        #                                Normalize=TRUE, 
-        #                                CheckArguments=FALSE)
 
 phylo_entropy_surveys_10 <- do.call(cbind, phylo_entropy_raw)
   # test variability
-  sd <- apply(phylo_entropy_surveys, 1, sd)
-  summary(sd)
+  sd <- apply(phylo_entropy_surveys_10, 1, sd)
+  summary(sd) # Median 0.0000918      Mean 0.0011747  3rd Qu. 0.0010619      Max. 0.0405119
   #
+  
 phylo_entropy_summary <- t(apply(phylo_entropy_surveys_10, 1, summary))
 colnames(phylo_entropy_summary) <- paste0("phylo_entropy_", colnames(phylo_entropy_summary))
 rownames(phylo_entropy_summary) <- rownames(surveys_sp_pbiom)
