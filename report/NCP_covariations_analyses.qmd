@@ -392,9 +392,15 @@ Separated studies of NN and NS help us to say that NN services are quite positiv
 We used the Estimator in Dependant Sample method (Kark 2002), to make a weighted mean of NN and NS: 
 
 $$
-EDS_{abs} = \frac{\mathrm 1}{\mathrm S_{i=1}^N w_{i}^{abs}} . \mathrm S_{i=1}^N (\mathrm a_i . w_{i}^{abs})
+EDS_{abs} = \frac{\mathrm 1}{\mathrm \sum_{i=1}^N w_{i}^{abs}} . \mathrm \sum_{i=1}^N (\mathrm a_i . w_{i}^{abs})
 \\  
-\text{with: } \mathrm w_{i}^{abs} =  \frac{1}{2} + \mathrm S_{j=1}^N(1 -\frac{\mathrm |r_{ij}| }{2})
+\text{with: } \mathrm w_{i}^{abs} =  \frac{1}{2} + \mathrm \sum_{j=1}^N(1 -\frac{\mathrm |r_{ij}| }{2})
+\\
+\text{or: }
+\\
+Score_{site} = \frac{\mathrm 1}{\mathrm \sum_{i=1}^N w_{i}} . \mathrm \sum_{i=1}^N (\mathrm a_{i, site} . w_{i})
+\\  
+\text{with: } \mathrm w_{i} =  \frac{1}{2} + \mathrm \sum_{j=1}^N(1 -\frac{\mathrm |r_{ij}| }{2})
 \\
 $$
 

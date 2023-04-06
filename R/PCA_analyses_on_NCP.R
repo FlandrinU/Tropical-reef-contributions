@@ -240,6 +240,90 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   print( corrplot::corrplot(contributions, is.corr=FALSE))
   dev.off()
   
+  
+  
+  ##------------------------figure contributions ------------------------------
+  ### change colors according to NN or NS
+  #divide into two plot
+  contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
+  contributions_NN <- contributions_NN[order(-contributions_NN[,"Dim.1"]), ]
+  row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
+  par(mar = c(0,0,0,0), new = T)
+  corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+                       col = c("forestgreen"), tl.col = "black", 
+                       cl.pos = "n", tl.cex = 0.7)
+  NN_corr <- grDevices::recordPlot()
+  
+  # gridGraphics::grid.echo()
+  # NN_plot <- grid::grid.grab()
+  # 
+  # # save correlation matrix colors to a vector, then make coloured matrix grob transparent
+  # matrix.colors <- grid::getGrob(NN_plot, grid::gPath("circle"), grep = TRUE)[["gp"]][["fill"]]
+  # NN_plot <- grid::editGrob(NN_plot,
+  #                           grid::gPath("circle"), grep = TRUE,
+  #                           gp = grid::gpar(col = NA,
+  #                                           fill = NA))
+  # 
+  # # apply the saved colours to the underlying matrix grob
+  # NN_plot <- grid::editGrob(NN_plot,
+  #                           grid::gPath("symbols-circle-1"), grep = TRUE,
+  #                           gp = grid::gpar(fill = matrix.colors))
+  # 
+  # # convert the background fill from white to transparent, while we are at it
+  # NN_plot <- grid::editGrob(NN_plot,
+  #                           grid::gPath("background"), grep = TRUE,
+  #                           gp = grid::gpar(fill = NA))
+  
+  contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
+  contributions_NS <- contributions_NS[order(-contributions_NS[,"Dim.1"]), ]
+  row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
+
+  row.names(contributions_NS)[1] <- paste(
+    c(rep(" ", 
+        max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])-1),
+    row.names(contributions_NS)[1]),
+    collapse="") #change legend length to have same width in both plot
+  par(mar = c(0,0,0,0), new = T)
+  corrplot::corrplot(contributions_NS, is.corr=FALSE,
+                       col = c("dodgerblue3"), tl.col = "black", 
+                       cl.pos = "n", tl.pos = 'l', tl.cex = 0.7)
+  NS_corr <- grDevices::recordPlot()
+
+  # ## grab the scene as a grid object & save it to NS_plot
+  # gridGraphics::grid.echo()
+  # NS_plot <- grid::grid.grab()
+  # 
+  # # save correlation matrix colors to a vector, then make coloured matrix grob transparent
+  # matrix.colors <- grid::getGrob(NS_plot, grid::gPath("circle"), grep = TRUE)[["gp"]][["fill"]]
+  # NS_plot <- grid::editGrob(NS_plot,
+  #                      grid::gPath("circle"), grep = TRUE,
+  #                gp = grid::gpar(col = NA,
+  #                          fill = NA))
+  # 
+  # # apply the saved colours to the underlying matrix grob
+  # NS_plot <- grid::editGrob(NS_plot,
+  #                      grid::gPath("symbols-circle-1"), grep = TRUE,
+  #                gp = grid::gpar(fill = matrix.colors))
+  # 
+  # # convert the background fill from white to transparent, while we are at it
+  # NS_plot <- grid::editGrob(NS_plot,
+  #                      grid::gPath("background"), grep = TRUE,
+  #                gp = grid::gpar(fill = NA))
+  # # metge plots
+  # gridExtra::grid.arrange(NN_plot, NS_plot, 
+  #                         heights=c(nrow(contributions_NN),nrow(contributions_NS)), 
+  #                         widths = c(5), nrow = 2, ncol = 1)
+  
+  #merge the two plot
+  png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
+      width=10, height = 24, units = "cm", res = 1000)
+  print(cowplot::plot_grid(NN_corr, NS_corr, ncol=1, 
+                     rel_heights = c(nrow(contributions_NN)+5, nrow(contributions_NS)), #change 0.7 to ajust relative sizes
+                     align= "v"))
+  dev.off()
+
+  #-----------------------------end of figure contributions ----------------------------
+  
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
   png(filename = here::here("outputs", "figures","PCA_all_NCP.png"), 
       width= 20, height = 17, units = "cm", res = 1000)
@@ -300,11 +384,15 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   ))
   dev.off()
   
-  factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, axe= c(5,6), repel = TRUE,
+  png(filename = here::here("outputs", "figures","PCA_NS_NN_axes5-6.png"), 
+      width= 30, height = 25, units = "cm", res = 1000)
+  print(
+    factoextra::fviz_pca_var(pca, col.var = grp_NN_NS, axe= c(5,6), repel = TRUE,
                palette = c("forestgreen", "dodgerblue3"),
                legend.title = "Nature Based Contributions",
                select.var = list(cos2 = 0))
-  
+  )
+  dev.off()
   
   #### PCA in dimensions 7 and 8 *(for variables with cos2 \> 0.1)*
   factoextra::fviz_pca_var(pca, col.var = "cos2",
@@ -486,6 +574,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   ### By countries
   ind.p <- factoextra::fviz_pca_ind(pca, geom = "point",
                         pointshape=21,
+                        col.ind = "grey20",
                         fill.ind = NCP_site_log_transformed$SiteCountry)
   
   png(filename = here::here("outputs", "figures","PCA_countries.png"), 
@@ -497,10 +586,11 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                 xlab = "PC1", ylab = "PC2",
                 legend.title = "Country", legend.position = "top",
                 font.legend = c(8, "plain", "black"),
-                ggtheme = theme_gray(), palette = scico::scico(38, palette = "roma")))
+                ggtheme = theme_minimal(),
+                palette = scico::scico(38, palette = "roma")))
   dev.off() 
   
-  
+
   #### By countries, with $cos2 > 0.4$ variables:
   png(filename = here::here("outputs", "figures","PCA_countries_cos2_0.4.png"), 
       width= 30, height = 20, units = "cm", res = 1000)

@@ -527,7 +527,7 @@ NN_NS_plot_stackchart <- NN_NS_plot +
                     ymin = 0.95, ymax =1.55 )
 NN_NS_plot_stackchart
 ggsave(here::here("outputs", "figures", "Sites in NN and NS scores _ with stackchart.png"),
-        plot = NN_NS_plot_stackchart, width=12, height = 8 )
+        plot = NN_NS_plot_stackchart, width=10, height = 8 )
 
 ## on map 
 function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36, 31),

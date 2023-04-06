@@ -23,10 +23,10 @@ load(here::here("outputs","NN_NS_score_wheighted_mean.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 ##-------------set parameters------------
 data <- NN_NS_scores
-score <- "NN_score"
+score <- "NS_score"
 res <- c(1000, 1000) #resolution of map x, y
-my_buffer <- 100*1000 # The size of the buffers around the points in metres
-p <- 0.6 #power for IDW
+my_buffer <- 200*1000 # The size of the buffers around the points in metres
+p <- 1 #power for IDW
 #1.6 for ella Clausius
 #0.5 was the default in the old code 
 #lower values mean its more influenced by distances further away
@@ -78,7 +78,7 @@ indic <- matrix(values, nrow = 1)
 isreal <- which(!is.na(indic))
 nvals <- length(isreal)
 
-val <- (indic[isreal] %*% w[isreal,])/colSums(w[isreal,]) # score of sites x weight_distance / sum of weights
+val <- (indic[isreal] %*% w[isreal,])/colSums(w[isreal,]) # matrix multiplication(score of sites x weight_distance) / sum of weights for each 
 val <- as.numeric(val)
 
 rval <- r
@@ -94,25 +94,29 @@ names(dat_global) <- c("SiteLongitude", "SiteLatitude", score)
 plot(value_rast)
 
 #Ggplot2
+library(ggplot2)
 map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
                          NCP = NN_NS_with_product$NN_score ,
+                         sites= NN_NS_scores,
                          col_NCP= "forestgreen",
                          ylim = c(-36, 31),
                          xlim= c(-180,180), title=""){
   ggplot(coord_NN_NS) +
     geom_tile(aes(x = SiteLongitude, y = SiteLatitude,
                    fill = NCP)) +
-    geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-               shape = 1, size = 2, stroke = 0.5,
-               color= "black",
-               data = head(coord_NN_NS[order(NCP, decreasing = T),], 15)) +
-    
     scale_fill_gradientn(colours = colorRampPalette(rev(c( col_NCP ,"white", "grey30")))(1000)) +
 
-    scale_size_continuous(range = c(0.5, 4), guide = "none") +
-    
     geom_sf(data = coast, color = NA, fill = "lightgrey") +
     coord_sf(xlim=xlim, ylim = ylim, expand = FALSE) +
+    
+    geom_point( aes(x = SiteLongitude, y = SiteLatitude),
+                shape = 1, size = 2, stroke = 0.5,
+                color= "black",
+                data = head(sites[order(NN_NS_scores$NS_score, decreasing = T),], 10)) +##########################change NN_score
+    geom_point( aes(x = SiteLongitude, y = SiteLatitude),
+                shape = 4, size = 2, stroke = 0.5,
+                color= "black",
+                data =sites) +##########################change NN_score
     
     theme_minimal()+
     labs(title = title,
@@ -124,11 +128,12 @@ map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
 }
 ## NN
 map_NN_or_NS(coord_NN_NS = dat_global,
-                             NCP = dat_global$NN_score,
-                             col_NCP= "forestgreen",
-                             ylim = c(-36, 31),
-                             xlim= c(-180,180) ,
-                             title="")
+             NCP = dat_global$NN_score,
+             sites=NN_NS_scores,
+             col_NCP= "forestgreen",
+             ylim = c(-36, 31),
+             xlim= c(-180,180) ,
+             title="")
 
 map_NN_or_NS(coord_NN_NS = dat_global,
              NCP = dat_global$NN_score,
@@ -138,4 +143,29 @@ map_NN_or_NS(coord_NN_NS = dat_global,
              title="")
 
 # ggsave( here::here("outputs", "figures", "world map with NN score.png"), plot = NN_worldwide, width=10, height = 6 )
+
+## NS
+map_NN_or_NS(coord_NN_NS = dat_global,
+             NCP = dat_global$NS_score,
+             sites=NN_NS_scores,
+             col_NCP= "dodgerblue3",
+             ylim = c(-36, 31),
+             xlim= c(-180,180) ,
+             title="")
+
+map_NN_or_NS(coord_NN_NS = dat_global,
+             NCP = dat_global$NS_score,
+             col_NCP= "dodgerblue3",
+             ylim = c(-36, 0),
+             xlim= c(130,180) ,
+             title="")
+
+
+map_NN_or_NS(coord_NN_NS = dat_global,
+             NCP = dat_global$NS_score,
+             col_NCP= "dodgerblue3",
+             ylim = c(-6, 20),
+             xlim= c(-90,-60) ,
+             title="")
+
 
