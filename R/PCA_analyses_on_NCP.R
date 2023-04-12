@@ -148,10 +148,8 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   
   summary(NCP_site$SiteCountry)
   
-  ####----------plot -------------
-  
-  ##---- PCA with all NCPs at the community scale ------
-  ### Number of dimension
+  ####----------plot PCA with all NCPs at the community scale -------------
+    ### Number of dimension
   #### Variance explained by the 15 first dimensions
   png(filename = here::here("outputs", "figures","barplot_variance_explained_all_NCP.png"), 
       width= 15, height = 10, units = "cm", res = 1000)
@@ -191,7 +189,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_explained,
                                                color = "black")) + 
     stat_summary(fun = "mean", geom = "line", size = 1, alpha = 0.4) +
-    stat_summary(fun = "mean", size = 0.5) +
+    stat_summary(fun = "mean", linewidth = 0.5) +
     
     labs(x = "Number of dimensions") + 
     labs(y = "Variance explained") +
@@ -242,87 +240,72 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   
   
   
-  ##------------------------figure contributions ------------------------------
-  ### change colors according to NN or NS
+  ##------------------------figure 1c: contributions ------------------------------
+  # #divide into two plot
+  # contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
+  # contributions_NN <- contributions_NN[order(-contributions_NN[,"Dim.1"]), ]
+  # row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
+  # par(mar = c(0,0,0,0), new = T)
+  # corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+  #                      col = c("forestgreen"), tl.col = "black", 
+  #                      cl.pos = "n", tl.cex = 0.7)
+  # NN_corr <- grDevices::recordPlot()
+  # 
+  # contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
+  # contributions_NS <- contributions_NS[order(-contributions_NS[,"Dim.1"]), ]
+  # row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
+  # row.names(contributions_NS)[1] <- paste(
+  #   c(rep(" ", 
+  #       max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])+3),
+  #   row.names(contributions_NS)[1]),
+  #   collapse="") #change legend length to have same width in both plot
+  # par(mar = c(0,0,0,0), new = T)
+  # corrplot::corrplot(contributions_NS, is.corr=FALSE,
+  #                      col = c("dodgerblue3"), tl.col = "black", 
+  #                      cl.pos = "n", tl.pos = 'l', tl.cex = 0.7)
+  # NS_corr <- grDevices::recordPlot()
+  # 
+  # #merge the two plot
+  # png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
+  #     width=10, height = 24, units = "cm", res = 1000)
+  # print(cowplot::plot_grid(NN_corr, NS_corr, ncol=1, 
+  #                    rel_heights = c(nrow(contributions_NN)+5, nrow(contributions_NS)), #change 0.7 to ajust relative sizes
+  #                    align= "hv"))
+  # dev.off()
+
+  
+  colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
   #divide into two plot
   contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
-  contributions_NN <- contributions_NN[order(-contributions_NN[,"Dim.1"]), ]
+  contributions_NN <- contributions_NN[order(-contributions_NN[,1]), ]
   row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
-  par(mar = c(0,0,0,0), new = T)
-  corrplot::corrplot(contributions_NN, is.corr=FALSE, 
-                       col = c("forestgreen"), tl.col = "black", 
-                       cl.pos = "n", tl.cex = 0.7)
-  NN_corr <- grDevices::recordPlot()
-  
-  # gridGraphics::grid.echo()
-  # NN_plot <- grid::grid.grab()
-  # 
-  # # save correlation matrix colors to a vector, then make coloured matrix grob transparent
-  # matrix.colors <- grid::getGrob(NN_plot, grid::gPath("circle"), grep = TRUE)[["gp"]][["fill"]]
-  # NN_plot <- grid::editGrob(NN_plot,
-  #                           grid::gPath("circle"), grep = TRUE,
-  #                           gp = grid::gpar(col = NA,
-  #                                           fill = NA))
-  # 
-  # # apply the saved colours to the underlying matrix grob
-  # NN_plot <- grid::editGrob(NN_plot,
-  #                           grid::gPath("symbols-circle-1"), grep = TRUE,
-  #                           gp = grid::gpar(fill = matrix.colors))
-  # 
-  # # convert the background fill from white to transparent, while we are at it
-  # NN_plot <- grid::editGrob(NN_plot,
-  #                           grid::gPath("background"), grep = TRUE,
-  #                           gp = grid::gpar(fill = NA))
   
   contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
-  contributions_NS <- contributions_NS[order(-contributions_NS[,"Dim.1"]), ]
+  contributions_NS <- contributions_NS[order(-contributions_NS[,1]), ]
   row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
-
   row.names(contributions_NS)[1] <- paste(
     c(rep(" ", 
-        max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])-1),
-    row.names(contributions_NS)[1]),
+          max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])+4),
+      row.names(contributions_NS)[1]),
     collapse="") #change legend length to have same width in both plot
-  par(mar = c(0,0,0,0), new = T)
-  corrplot::corrplot(contributions_NS, is.corr=FALSE,
-                       col = c("dodgerblue3"), tl.col = "black", 
-                       cl.pos = "n", tl.pos = 'l', tl.cex = 0.7)
-  NS_corr <- grDevices::recordPlot()
-
-  # ## grab the scene as a grid object & save it to NS_plot
-  # gridGraphics::grid.echo()
-  # NS_plot <- grid::grid.grab()
-  # 
-  # # save correlation matrix colors to a vector, then make coloured matrix grob transparent
-  # matrix.colors <- grid::getGrob(NS_plot, grid::gPath("circle"), grep = TRUE)[["gp"]][["fill"]]
-  # NS_plot <- grid::editGrob(NS_plot,
-  #                      grid::gPath("circle"), grep = TRUE,
-  #                gp = grid::gpar(col = NA,
-  #                          fill = NA))
-  # 
-  # # apply the saved colours to the underlying matrix grob
-  # NS_plot <- grid::editGrob(NS_plot,
-  #                      grid::gPath("symbols-circle-1"), grep = TRUE,
-  #                gp = grid::gpar(fill = matrix.colors))
-  # 
-  # # convert the background fill from white to transparent, while we are at it
-  # NS_plot <- grid::editGrob(NS_plot,
-  #                      grid::gPath("background"), grep = TRUE,
-  #                gp = grid::gpar(fill = NA))
-  # # metge plots
-  # gridExtra::grid.arrange(NN_plot, NS_plot, 
-  #                         heights=c(nrow(contributions_NN),nrow(contributions_NS)), 
-  #                         widths = c(5), nrow = 2, ncol = 1)
   
-  #merge the two plot
+  # plot pannel
   png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
-      width=10, height = 24, units = "cm", res = 1000)
-  print(cowplot::plot_grid(NN_corr, NS_corr, ncol=1, 
-                     rel_heights = c(nrow(contributions_NN)+5, nrow(contributions_NS)), #change 0.7 to ajust relative sizes
-                     align= "v"))
+      width=12, height = 20, units = "cm", res = 1000)
+  layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
+                ncol = 1))
+  par(mar = c(0,0,0,0))
+  corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+                     col = c("forestgreen"), tl.col = "black", 
+                     cl.pos = "n", tl.cex = 1.2,
+                     tl.srt = 60)
+  text(-3,21,"C)",cex=1.5)
+  corrplot::corrplot(contributions_NS, is.corr=FALSE,
+                     col = c("dodgerblue3"), tl.col = "black", 
+                     cl.pos = "n", tl.pos = 'l', tl.cex = 1.2)  
   dev.off()
-
-  #-----------------------------end of figure contributions ----------------------------
+  
+  #-----------------------------end of figure 1c ----------------------------
   
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
   png(filename = here::here("outputs", "figures","PCA_all_NCP.png"), 
@@ -402,8 +385,80 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                select.var = list(cos2 = 0.1)
   )
   
+  #-----------------------------figure 1a and 1b: NN and NS biplot ----------------------------
+  data <- data.frame(obsnames=row.names(pca$ind$coord), pca$ind$coord)
+  datapc <- data.frame(varnames=rownames(pca$var$coord), pca$var$coord)
+  mult <- min(
+    (max(data[,"Dim.2"]) - min(data[,"Dim.2"])/(max(datapc[,"Dim.2"])-min(datapc[,"Dim.2"]))),
+    (max(data[,"Dim.1"]) - min(data[,"Dim.1"])/(max(datapc[,"Dim.1"])-min(datapc[,"Dim.1"])))
+  )
+  datapc <- transform(datapc,
+                      v1 = .7 * mult * (get(x)),
+                      v2 = .7 * mult * (get(y)) )
+  set.seed(100)
   
+  png(filename = here::here("outputs", "figures","PCA_NSgrey_NN_axes1-2_with_biomass.png"), 
+      width= 25, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot( pca, 
+                                      col.var = grp_NN_NS, 
+                                      palette = c("forestgreen", "grey60"),
+                                      geom="point", pointshape=21,
+                                      geom.var = c("arrow"),
+                                      fill.ind = NCP_site_log_transformed$Biomass,
+                                      col.ind = "transparent",
+                                      alpha.ind = 1,
+                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                      repel = TRUE,
+                                      title = "A)") +
+           
+           ggrepel::geom_label_repel(data= datapc[which(grp_NN_NS== "NN"),],
+                                     aes(x= v1*1.02, y= v2*1.02, 
+                                         label= gsub("_", " ", 
+                                                     names(grp_NN_NS)[which(grp_NN_NS== "NN")])),
+                                     size=3.5, color = "forestgreen",
+                                     force_pull = 3,
+                                     direction = "both",
+                                     min.segment.length = Inf,
+                                     seed = T)+
+           xlim(c(-7,8)) +
+           ylim(c(-6,6)) +
+           labs(color ="Contributions", fill="log(Biomass)")) +
+    guides(fill = guide_legend(override.aes = aes(label = ""))) +
+    theme( legend.position = "none")
+  dev.off()
   
+  png(filename = here::here("outputs", "figures","PCA_NS_NNgrey_axes1-2_with_biomass.png"), 
+      width= 25, height = 20, units = "cm", res = 1000)
+  print( factoextra::fviz_pca_biplot( pca, 
+                                      col.var = grp_NN_NS, 
+                                      palette = c("grey60", "dodgerblue3"),
+                                      geom="point", pointshape=21,
+                                      geom.var = c("arrow"),
+                                      fill.ind = NCP_site_log_transformed$Biomass,
+                                      col.ind = "transparent",
+                                      alpha.ind = 1,
+                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+                                      repel = TRUE,
+                                      title = "B)") +
+           
+           ggrepel::geom_label_repel(data= datapc[which(grp_NN_NS== "NS"),],
+                                     aes(x= v1*1.02, y= v2*1.02, 
+                                         label= gsub("_", " ", 
+                                                     names(grp_NN_NS)[which(grp_NN_NS== "NS")])),
+                                     size=3.5, color = "dodgerblue3", 
+                                     force_pull = 3,
+                                     direction = "both",
+                                     min.segment.length = Inf,
+                                     seed = T)+           
+           xlim(c(-7,8)) +
+           ylim(c(-6,6)) +
+           labs(color ="Contributions", fill="log(Biomass)")) +
+    guides(fill = guide_legend(override.aes = aes(label = ""))) +
+    theme( legend.position = "none")
+  dev.off()
+  #-----------------------------end of figure 1a and 1b ----------------------------
+  
+
   #------Categories as Diaz 2022-------
   var_3cat <- factoextra::get_pca_var(pca)
   ### Dimensions 1 and 2
@@ -496,38 +551,6 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
                                      col.var = "black", repel = TRUE,
                                      legend.title = "log(Biomass)"))
-  dev.off()
-  
-  png(filename = here::here("outputs", "figures","PCA_NSgrey_NN_axes1-2_with_biomass.png"), 
-      width= 25, height = 20, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_biplot( pca, 
-                                      col.var = grp_NN_NS, 
-                                      palette = c("forestgreen", "grey60"),
-                                      geom="point", pointshape=21,
-                                      fill.ind = NCP_site_log_transformed$Biomass,
-                                      col.ind = "transparent",
-                                      alpha.ind = 1,
-                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
-                                      repel = TRUE) +
-           xlim(c(-7,8)) +
-           ylim(c(-6,6)) +
-           labs(color ="Contributions", fill="log(Biomass)"))
-  dev.off()
-  
-  png(filename = here::here("outputs", "figures","PCA_NS_NNgrey_axes1-2_with_biomass.png"), 
-      width= 25, height = 20, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_biplot( pca, 
-                                      col.var = grp_NN_NS, 
-                                      palette = c("grey60", "dodgerblue3"),
-                                      geom="point", pointshape=21,
-                                      fill.ind = NCP_site_log_transformed$Biomass,
-                                      col.ind = "transparent",
-                                      alpha.ind = 1,
-                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
-                                      repel = TRUE) +
-           xlim(c(-7,8)) +
-           ylim(c(-6,6)) +
-           labs(color ="Contributions", fill="log(Biomass)"))
   dev.off()
   
   ### Survey date

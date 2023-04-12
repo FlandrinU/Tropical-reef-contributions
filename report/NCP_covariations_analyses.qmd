@@ -679,12 +679,12 @@ __No rules?__ max 6-7 figures in the 10 last published papers in conservation re
 ## Results  
   1. ACP des services  
 
-::: {#fig-fig1 layout="[[70,30], [70,30]]"}
+::: {#fig-fig1 layout="[[60,40], [60,40]]"}
 
 ![](`r here::here("outputs", "figures", "PCA_NSgrey_NN_axes1-2_with_biomass.png") `)  
 ![](`r here::here("outputs", "figures", "PCA_NS_NNgrey_axes1-2_with_biomass.png") `)  
 
-![Contribution of NCP in total variance](`r here::here("outputs", "figures", "contribution_NCP_in_total_variance.png") `)
+![Contribution of NCP in total variance](`r here::here("outputs", "figures", "contribution_in_total_variance_NN_NS.png") `)
 
 Covariations des services dans les récifs tropicaux
 
