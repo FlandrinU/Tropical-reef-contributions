@@ -27,6 +27,7 @@ load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
 # load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
 # load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
 # load(here::here("outputs","NCP_site_log_random.Rdata"))
+# load(here::here("outputs","NCP_site_log_only_australia.Rdata"))
 # NCP_site_log_transformed <- NCP_site_condition
 
 
@@ -468,7 +469,7 @@ NN_NS_plot
 ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.png"), plot = NN_NS_plot, width=10, height = 8 )
 
 
-## with piechart
+## with mpa proportion
 plot_piechart <- function(quarter= "up_right", 
                           col="firebrick"){
   df <- as.data.frame(table(dplyr::filter(NN_NS_with_product, is.na(get(quarter))==F)$protection)) |>
@@ -528,6 +529,7 @@ NN_NS_plot_stackchart <- NN_NS_plot +
 NN_NS_plot_stackchart
 ggsave(here::here("outputs", "figures", "Sites in NN and NS scores _ with stackchart.png"),
         plot = NN_NS_plot_stackchart, width=10, height = 8 )
+
 
 ## on map 
 function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36, 31),
@@ -707,6 +709,12 @@ prop_plot <- ggplot(df_plot_mpa) +
 prop_plot
 ggsave( here::here("outputs", "figures", "Proportion of MPA in NN and NS quartiles.png"), 
         plot = prop_plot, width=6, height = 6 )
+
+## test on MPA
+mpa_prop <- NN_NS_with_product |> 
+  dplyr::mutate( NN = round(NN_score,1)) |> 
+  dplyr::group_by(NN) |> 
+  dplyr::mutate(fished_prop = length(protection))
 
 
 #### map of NN or NS only ####

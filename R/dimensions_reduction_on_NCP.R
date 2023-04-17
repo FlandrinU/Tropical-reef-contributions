@@ -23,28 +23,19 @@ ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 rm(list=ls())
 
 ##------------- loading data -------------
-load(here::here("outputs","all_NCP_site.Rdata"))
+load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
 load(here::here("data","metadata_surveys.Rdata"))
 
 ##------------- preping data -------------
 #NCP_site <- dplyr::filter(NCP_site, SiteCountry != "Australia")
-NCP_to_transformed <- c("Btot","recycling_N","recycling_P","Productivity",
-                        "funct_distinctiveness","Omega_3_C","Calcium_C","Vitamin_A_C",
-                        "phylo_entropy","ED_Mean", "iucn_species", "elasmobranch_diversity",
-                        "low_mg_calcite", "high_mg_calcite", "aragonite", "monohydrocalcite",
-                        "amorphous_carbonate", "biom_lowTL", "biom_mediumTL", "biom_highTL",
-                        "fishery_biomass")
-
-NCP_site <- NCP_site |>
-  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>     
-  dplyr::mutate(across(.cols = all_of(NCP_to_transformed),
-                       .fns = log10 , .names = "{.col}"))
-
-NCP_site_clean <- subset(NCP_site, select = -c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
-                                                 SiteMeanSST, SiteLatitude, SiteLongitude, Btot,
-                                                 HDI, gravtot2, MarineEcosystemDependency,
-                                                 coral_imputation))
+NCP_site_clean <- subset(NCP_site_log_transformed, 
+                         select = -c(Biomass, SiteCode, SurveyDate,
+                                     SiteCountry, SiteEcoregion, SurveyDepth, 
+                                     SiteMeanSST, SiteLatitude, SiteLongitude,
+                                     HDI, MarineEcosystemDependency,
+                                     coral_imputation, gravtot2, mpa_name,
+                                     mpa_enforcement, protection_status, 
+                                     mpa_iucn_cat))
 NCP_scaled <- scale(NCP_site_clean)
 
 
@@ -57,7 +48,7 @@ data_emb <- lapply(embed_methods, function(x){
 names(data_emb) <- embed_methods
 
 lapply(data_emb, plot, type = "2vars")
-plot_R_NX(data_emb)
+dimRed::plot_R_NX(data_emb)
 
 
 embed_methods <- c("PCA", "tSNE" , "UMAP")
@@ -116,8 +107,8 @@ tsne <- dimRed::embed( NCP_scaled, "tSNE", ndim = 3)
 plot(tsne, type = "3vars")
 dimRed::AUC_lnK_R_NX(tsne)
 tsne_coordinates <- cbind( tsne@data@data , 
-                           subset(NCP_site, select = c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
-                                                                         SiteMeanSST, SiteLatitude, SiteLongitude, Btot,
+                           subset(NCP_site_log_transformed, select = c(SiteCode, SiteCountry, SiteEcoregion, SurveyDepth, 
+                                                                         SiteMeanSST, SiteLatitude, SiteLongitude,
                                                                          HDI, gravtot2, MarineEcosystemDependency,
                                                                          coral_imputation)))
 
@@ -127,12 +118,13 @@ tsne_coordinates <- cbind( tsne@data@data ,
 # dimRed::AUC_lnK_R_NX(tsne)
 
 plotly::plot_ly(tsne_coordinates,
-                x= ~tSNE1, y= ~tSNE2, z= ~tSNE3,
-                size = 10 ) %>%
+                x= ~tSNE1, y= ~tSNE2, #z= ~tSNE3,
+                size = 10 ) |> 
   plotly::add_markers(color= ~SiteCountry)
 
 
 #temperature pattern
+library(ggplot2)
 ggplot(data =tsne_coordinates) +
  aes(x = tSNE1, y = tSNE2, 
      colour = SiteMeanSST) +
@@ -166,7 +158,7 @@ ggplot(data =tsne_coordinates) +
 #gravtot2 pattern
 ggplot(data =tsne_coordinates) +
   aes(x = tSNE1, y = tSNE2, 
-      colour = gravtot2) +
+      colour = log(gravtot2)) +
   geom_point(shape = "circle", 
              size = 1.5) +
   geom_hline(yintercept=0, linetype="dashed", color = "black", size = 0.3)+
@@ -177,7 +169,7 @@ ggplot(data =tsne_coordinates) +
 
 #countries distribution
 tsne_coordinates |> 
-  filter(SiteCountry != '') |>
+  dplyr::filter(SiteCountry != '') |>
   ggplot() +
   aes(x = tSNE1, y = tSNE2, 
       colour = SiteCountry) +

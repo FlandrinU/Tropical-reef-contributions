@@ -23,7 +23,7 @@ load(here::here("outputs","NN_NS_score_wheighted_mean.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 ##-------------set parameters------------
 data <- NN_NS_scores
-score <- "NS_score"
+score <- "NN_score"
 res <- c(1000, 1000) #resolution of map x, y
 my_buffer <- 200*1000 # The size of the buffers around the points in metres
 p <- 1 #power for IDW
@@ -100,7 +100,8 @@ map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
                          sites= NN_NS_scores,
                          col_NCP= "forestgreen",
                          ylim = c(-36, 31),
-                         xlim= c(-180,180), title=""){
+                         xlim= c(-180,180), title="",
+                         title_legend = ""){
   ggplot(coord_NN_NS) +
     geom_tile(aes(x = SiteLongitude, y = SiteLatitude,
                    fill = NCP)) +
@@ -113,19 +114,21 @@ map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
                 shape = 1, size = 2, stroke = 0.5,
                 color= "black",
                 data = head(sites[order(NN_NS_scores$NS_score, decreasing = T),], 10)) +##########################change NN_score
-    geom_point( aes(x = SiteLongitude, y = SiteLatitude),
-                shape = 4, size = 2, stroke = 0.5,
-                color= "black",
-                data =sites) +##########################change NN_score
+    # geom_point( aes(x = SiteLongitude, y = SiteLatitude),
+    #             shape = 4, size = 2, stroke = 0.5,
+    #             color= "black",
+    #             data =sites) +
     
     theme_minimal()+
-    labs(title = title,
+    labs(title = title, fill = title_legend,
          x="Longitude", y= "Latitude") +
     guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
     theme(
       # legend.position = "none",
+      legend.title = element_text(size = 10),
       plot.title = element_text(size=10, face="bold"))
 }
+
 ## NN
 map_NN_or_NS(coord_NN_NS = dat_global,
              NCP = dat_global$NN_score,
@@ -133,39 +136,45 @@ map_NN_or_NS(coord_NN_NS = dat_global,
              col_NCP= "forestgreen",
              ylim = c(-36, 31),
              xlim= c(-180,180) ,
-             title="")
+             title="",
+             title_legend = "Nature to \n Nature")
 
 map_NN_or_NS(coord_NN_NS = dat_global,
              NCP = dat_global$NN_score,
+             sites= NN_NS_scores,
              col_NCP= "forestgreen",
              ylim = c(-36, 0),
              xlim= c(130,180) ,
-             title="")
+             title="",
+             title_legend = "Nature to \n Nature")
 
 # ggsave( here::here("outputs", "figures", "world map with NN score.png"), plot = NN_worldwide, width=10, height = 6 )
-
-## NS
-map_NN_or_NS(coord_NN_NS = dat_global,
-             NCP = dat_global$NS_score,
-             sites=NN_NS_scores,
-             col_NCP= "dodgerblue3",
-             ylim = c(-36, 31),
-             xlim= c(-180,180) ,
-             title="")
-
-map_NN_or_NS(coord_NN_NS = dat_global,
-             NCP = dat_global$NS_score,
-             col_NCP= "dodgerblue3",
-             ylim = c(-36, 0),
-             xlim= c(130,180) ,
-             title="")
-
-
-map_NN_or_NS(coord_NN_NS = dat_global,
-             NCP = dat_global$NS_score,
-             col_NCP= "dodgerblue3",
-             ylim = c(-6, 20),
-             xlim= c(-90,-60) ,
-             title="")
-
-
+# 
+# ## NS
+# map_NN_or_NS(coord_NN_NS = dat_global,
+#              NCP = dat_global$NS_score,
+#              sites=NN_NS_scores,
+#              col_NCP= "dodgerblue3",
+#              ylim = c(-36, 31),
+#              xlim= c(-180,180) ,
+#              title="",
+#              title_legend = "Nature to \n People")
+# 
+# map_NN_or_NS(coord_NN_NS = dat_global,
+#              NCP = dat_global$NS_score,
+#              col_NCP= "dodgerblue3",
+#              ylim = c(-36, 0),
+#              xlim= c(130,180) ,
+#              title="",
+#              title_legend = "Nature to \n People")
+# 
+# 
+# map_NN_or_NS(coord_NN_NS = dat_global,
+#              NCP = dat_global$NS_score,
+#              col_NCP= "dodgerblue3",
+#              ylim = c(-6, 20),
+#              xlim= c(-90,-60) ,
+#              title="",
+#              title_legend = "Nature to \n People")
+# 
+# 

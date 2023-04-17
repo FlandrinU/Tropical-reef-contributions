@@ -29,6 +29,7 @@ load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
 # load(here::here("outputs","NCP_site_log_coral_5_imputed.Rdata"))
 # load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
 # load(here::here("outputs","NCP_site_log_random.Rdata"))
+# load(here::here("outputs","NCP_site_log_only_australia.Rdata"))
 # NCP_site_log_transformed <- NCP_site_condition
 
 #benthic_imputed <- read.csv(here::here("data_raw", "source", "RLS_benthic_imputed.txt"), sep= " ")
@@ -179,6 +180,9 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   #   theme_minimal()
   # ggsave(filename = here::here("outputs", "figures","barplot_cumulative_variance_explained_all_NCP.png"), cumulative_variance, width = 15, height =10 )
   
+  
+  
+  ##------------------------figure 1c: variables eigenvalues ------------------------------
   elbow_values <- elbow(variance_explained[,c("Axe", "cumulative_variance_explained")])
   
   elbow_point <- c( elbow_values$"Axe"[tail(which(elbow_values$"SelectedorNot" =="Selected"), n = 1)],
@@ -186,23 +190,33 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                       which(elbow_values$"SelectedorNot" =="Selected"), n = 1)])
   
   
+  ndim=20
   elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_explained,
                                                color = "black")) + 
+    #barchart of eigenvalues
+    geom_bar(data = as.data.frame(eig)[c(1:ndim),], 
+             aes(x= c(1:ndim), y = variance.percent), 
+             stat= "identity",
+             col = "grey30",
+             fill = "grey30")+
+  
+    #cumulative curve
     stat_summary(fun = "mean", geom = "line", size = 1, alpha = 0.4) +
     stat_summary(fun = "mean", linewidth = 0.5) +
     
     labs(x = "Number of dimensions") + 
-    labs(y = "Variance explained") +
-    theme_bw() +
+    labs(y = "Variance explained (in %)") +
+    theme_bw(base_line_size = 0) +
     theme(strip.background = element_blank(),
           strip.text.x = element_blank(),
           axis.title.x = element_text(size = 12, face = "bold"),
           axis.title.y = element_text(size = 12, face = "bold"),
           panel.background = element_blank(),
           legend.position = "none") +
-    coord_cartesian(expand = FALSE, xlim = c(0, 31), ylim = c(0, 105))+
+    coord_cartesian(expand = FALSE, xlim = c(0, ndim), ylim = c(0, 100))+
     harrypotter::scale_colour_hp_d(option = "LunaLovegood") +
     
+    # elbow point
     geom_segment(aes(x = elbow_point[1], xend = elbow_point[1],
                      y = 0 , yend = elbow_point[2]),
                      color = "black", linetype = "dotted", linewidth = 1) +
@@ -211,16 +225,20 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                      x = 0, xend = elbow_point[1]),
                      color = "black", linetype = "dotted", linewidth = 1) +
     
-      geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
+    geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
                  color = "black", size = 4, shape = 19)+
     geom_label(aes(label = paste0("Number of dimensions = ", elbow_point[1], "\n", 
                                   "Variance explained = ", round(elbow_point[2],1) , " %"),
                y = elbow_point[2]-5, x = elbow_point[1]+1), size = 5,
                color = "black", hjust = 0)
+    
+
   elbow_plot
   ggsave(filename = here::here("outputs", "figures",
          "Variance explained by ACP_elbow rule.png"), elbow_plot, 
          width = 15, height =10 )
+  ##------------------------end of figure 1c ------------------------------
+  
   
   #### Contribution of NCP in dimensions
   var <- factoextra::get_pca_var(pca)
@@ -240,7 +258,8 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   
   
   
-  ##------------------------figure 1c: contributions ------------------------------
+  
+##------------------------figure 1d: contributions ------------------------------
   # #divide into two plot
   # contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
   # contributions_NN <- contributions_NN[order(-contributions_NN[,"Dim.1"]), ]
@@ -305,7 +324,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                      cl.pos = "n", tl.pos = 'l', tl.cex = 1.2)  
   dev.off()
   
-  #-----------------------------end of figure 1c ----------------------------
+  #-----------------------------end of figure 1d ----------------------------
   
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
   png(filename = here::here("outputs", "figures","PCA_all_NCP.png"), 
@@ -386,6 +405,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   )
   
   #-----------------------------figure 1a and 1b: NN and NS biplot ----------------------------
+  #label position
   data <- data.frame(obsnames=row.names(pca$ind$coord), pca$ind$coord)
   datapc <- data.frame(varnames=rownames(pca$var$coord), pca$var$coord)
   mult <- min(
@@ -393,72 +413,166 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
     (max(data[,"Dim.1"]) - min(data[,"Dim.1"])/(max(datapc[,"Dim.1"])-min(datapc[,"Dim.1"])))
   )
   datapc <- transform(datapc,
-                      v1 = .7 * mult * (get(x)),
-                      v2 = .7 * mult * (get(y)) )
-  set.seed(100)
+                      v1 = .7 * mult * (datapc$Dim.1),
+                      v2 = .7 * mult * (datapc$Dim.2) )
   
+  set.seed(100)
   png(filename = here::here("outputs", "figures","PCA_NSgrey_NN_axes1-2_with_biomass.png"), 
       width= 25, height = 20, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_biplot( pca, 
-                                      col.var = grp_NN_NS, 
-                                      palette = c("forestgreen", "grey60"),
-                                      geom="point", pointshape=21,
-                                      geom.var = c("arrow"),
-                                      fill.ind = NCP_site_log_transformed$Biomass,
-                                      col.ind = "transparent",
-                                      alpha.ind = 1,
-                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
-                                      repel = TRUE,
-                                      title = "A)") +
+  plot_1a <- factoextra::fviz_pca_biplot(
+    pca, 
+    col.var = "forestgreen", 
+    select.var = list(cos2 = 0.25,
+                      name = names(grp_NN_NS)[
+                        which(grp_NN_NS== "NN")]),
+    geom="point", pointshape=21, 
+    pointsize = 3,
+    geom.var = c("arrow"),
+    fill.ind = NCP_site_log_transformed$Biomass,
+    col.ind =  NCP_site_log_transformed$Biomass,
+    alpha.ind = 0.8,
+    gradient.cols = rev(
+      RColorBrewer::brewer.pal(10,name="RdYlBu")),
+    repel = TRUE,
+    ggtheme = theme_bw(base_line_size = 0)) +
            
-           ggrepel::geom_label_repel(data= datapc[which(grp_NN_NS== "NN"),],
-                                     aes(x= v1*1.02, y= v2*1.02, 
-                                         label= gsub("_", " ", 
-                                                     names(grp_NN_NS)[which(grp_NN_NS== "NN")])),
-                                     size=3.5, color = "forestgreen",
-                                     force_pull = 3,
-                                     direction = "both",
-                                     min.segment.length = Inf,
-                                     seed = T)+
-           xlim(c(-7,8)) +
-           ylim(c(-6,6)) +
-           labs(color ="Contributions", fill="log(Biomass)")) +
-    guides(fill = guide_legend(override.aes = aes(label = ""))) +
-    theme( legend.position = "none")
+    ggrepel::geom_label_repel(
+      data= datapc[which(grp_NN_NS== "NN" &
+                           factoextra::facto_summarize(pca, element= "var", axes = c(1,2))$cos2 > 0.25),], #extract cos2 of variables
+      aes(x= v1*1.02, y= v2*1.02, 
+          label= gsub("_"," ", varnames)),
+      size=4, color = "forestgreen",
+      force_pull = 3,
+      direction = "both",
+      min.segment.length = Inf,
+      seed = T)+
+    
+    xlim(c(-7,8)) +
+    ylim(c(-6,6)) +
+    labs(fill="log(Biomass)",
+         title = "Nature to Nature contributions") +
+    guides(color = "none",
+           fill = guide_colourbar(title.position="top", title.hjust = 0.5)) +
+    theme( legend.position =c(0.15,0.1),
+           legend.direction = "horizontal",
+           legend.title = element_text(hjust = 0.5, size = 15),
+           legend.title.align = 0,
+           legend.key.size = unit(1, 'cm'),
+           legend.text = element_text(size = 12),
+           plot.title = element_text(colour = "forestgreen", face = "bold"))
+  print(plot_1a)
   dev.off()
+  
+  
   
   png(filename = here::here("outputs", "figures","PCA_NS_NNgrey_axes1-2_with_biomass.png"), 
       width= 25, height = 20, units = "cm", res = 1000)
-  print( factoextra::fviz_pca_biplot( pca, 
-                                      col.var = grp_NN_NS, 
-                                      palette = c("grey60", "dodgerblue3"),
-                                      geom="point", pointshape=21,
-                                      geom.var = c("arrow"),
-                                      fill.ind = NCP_site_log_transformed$Biomass,
-                                      col.ind = "transparent",
-                                      alpha.ind = 1,
-                                      gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
-                                      repel = TRUE,
-                                      title = "B)") +
-           
-           ggrepel::geom_label_repel(data= datapc[which(grp_NN_NS== "NS"),],
-                                     aes(x= v1*1.02, y= v2*1.02, 
-                                         label= gsub("_", " ", 
-                                                     names(grp_NN_NS)[which(grp_NN_NS== "NS")])),
-                                     size=3.5, color = "dodgerblue3", 
-                                     force_pull = 3,
-                                     direction = "both",
-                                     min.segment.length = Inf,
-                                     seed = T)+           
-           xlim(c(-7,8)) +
-           ylim(c(-6,6)) +
-           labs(color ="Contributions", fill="log(Biomass)")) +
-    guides(fill = guide_legend(override.aes = aes(label = ""))) +
-    theme( legend.position = "none")
+  plot_1b <- factoextra::fviz_pca_biplot( 
+    pca, 
+    col.var = "dodgerblue3", 
+    select.var = list(cos2 = 0,
+                      name = names(grp_NN_NS)[
+                        which(grp_NN_NS== "NS")]),
+    geom="point", pointshape=21,
+    pointsize = 3,
+    geom.var = c("arrow"),
+    fill.ind = NCP_site_log_transformed$Biomass,
+    col.ind = NCP_site_log_transformed$Biomass,
+    alpha.ind = 0.8,
+    gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+    repel = TRUE,
+    ggtheme = theme_bw(base_line_size = 0)) +
+    
+    ggrepel::geom_label_repel(
+      data= datapc[which(grp_NN_NS== "NS" &
+                           factoextra::facto_summarize(pca, element= "var", axes = c(1,2))$cos2 > 0),],
+      aes(x= v1*1.02, y= v2*1.02, 
+          label= gsub("_"," ", varnames)),
+      size=4, color = "dodgerblue3", 
+      force_pull = 3,
+      direction = "both",
+      min.segment.length = Inf,
+      seed = T)+           
+    xlim(c(-7,8)) +
+    ylim(c(-6,6)) +
+    labs(title = "Nature to People contributions") +
+    guides(color = "none") +
+    theme( legend.position = "none",
+           plot.title = element_text(colour = "dodgerblue3", face = "bold"))
+  print(plot_1b)
   dev.off()
-  #-----------------------------end of figure 1a and 1b ----------------------------
   
+  
+  
+  Plot_legend <- function (var, color, zlevels=10, 
+                            title = c("Contributions", "log(Biomass)"),
+                            digit=1, step.legend = 0.5, cex.axis.leg=1.3,
+                            cex.title = 1.3,
+                            col_contrib =c("forestgreen", "dodgerblue3"),
+                            x0_arrows = c(-3, -3),
+                            y0_arrows = c(1.22, 1.17)){
+    par(mar =c(1,2,10,5))
+    color <- rev(RColorBrewer::brewer.pal(10,name="RdYlBu"))
+    jet.color = grDevices::colorRampPalette(color)
+    col =jet.color(100)
+    breaks<- NCP_site_log_transformed$Biomass
+    vect = seq(round(min(breaks),0), max(breaks), step.legend)
+    digit=3
+    
+    image(matrix(1:100,nrow=1), col=col, axes=FALSE)
+    
+    mtext(text= title[1],side=3,line=8,at= 0.5,cex=cex.title)
+    mtext(text= "Nature to Nature ", side=3, line=6, at= 2,
+          cex=cex.title-0.3, col = col_contrib[1])
+    mtext(text= "Nature to Peolple", side=3, line=4.5  , at= 2,
+          cex=cex.title-0.3, col = col_contrib[2])
 
+    arrows(x0_arrows, y0_arrows, x1 = x0_arrows+1.4, y1 = y0_arrows, 
+           xpd =T, length = 0.1, lwd = 1.5, col = col_contrib)
+    
+    mtext(text= title[2],side=3,line=1,at= 0.5,cex=cex.title)
+    axis(side=4, at=seq(0,1,length=length(vect)), labels=round(vect,digit),
+         cex.axis=cex.axis.leg, tcl=-0.25, mgp=c(3, 0.5, 0), las = 1)
+    box()
+    
+  } # end of Plot_legend
+  
+  #----------------------------- Plot panel Figure 1  ----------------------------
+  # png(filename = here::here("outputs", "figures",""), 
+  #     width=12, height = 20, units = "cm", res = 1000)
+  # 
+  # layout(matrix(rbind(c(1,1,1,1,3,3,3),
+  #              c(1,1,1,1,3,3,3),
+  #              c(1,1,1,1,3,3,3),
+  #              c(2,2,2,2,3,3,3),
+  #              c(2,2,2,2,4,4,0),
+  #              c(2,2,2,2,4,4,0))))
+  # par(mar=c(1,1,1,1))
+  # plot(plot_1a, add=T)
+  # plot(plot_1b, add= T)
+  # 
+  # ## plot contribution
+  # layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
+  #               ncol = 1))
+  # par(mar = c(0,0,0,0))
+  # corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+  #                    col = c("forestgreen"), tl.col = "black", 
+  #                    cl.pos = "n", tl.cex = 1.2,
+  #                    tl.srt = 60)
+  # text(-3,21,"C)",cex=1.5)
+  # corrplot::corrplot(contributions_NS, is.corr=FALSE,
+  #                    col = c("dodgerblue3"), tl.col = "black", 
+  #                    cl.pos = "n", tl.pos = 'l', tl.cex = 1.2) 
+  # 
+  # # end of panel
+  # dev.off()
+  
+  cowplot::plot_grid(plot_1a, plot_1b, elbow_plot, NULL,
+                     byrow = F)+
+    annotate()
+  
+  #----------------------------- end of panel Figure 1  ----------------------------
+  
   #------Categories as Diaz 2022-------
   var_3cat <- factoextra::get_pca_var(pca)
   ### Dimensions 1 and 2

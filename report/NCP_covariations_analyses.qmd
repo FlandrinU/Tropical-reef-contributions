@@ -612,6 +612,8 @@ summary(multiple_regression_pbiom_NS)
 
 #### NB: Correlation between families and Biomass
 ```{r}
+#| eval: false
+
 #Families richness
 site_family <- site_family_richness
 
