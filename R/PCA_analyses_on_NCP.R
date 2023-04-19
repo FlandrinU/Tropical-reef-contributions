@@ -14,7 +14,7 @@
 pkgs <- c("here", "tidyverse","FactoMineR", "tibble", "questionr", "corrplot",
           "factoextra", "ggpubr", "scico", "RColorBrewer", "plotly", "fishualize", 
           "ggplot2", "patchwork", "colormap", "grDevices", "ggnewscale", "sf",
-          "rdacca.hp", "harrypotter")
+          "rdacca.hp", "harrypotter", "grid", "gridExtra")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -150,7 +150,9 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   summary(NCP_site$SiteCountry)
   
   ####----------plot PCA with all NCPs at the community scale -------------
-    ### Number of dimension
+   
+  ##------------------------variables contributions and  eigenvalues ------------------------------
+   ### Number of dimension
   #### Variance explained by the 15 first dimensions
   png(filename = here::here("outputs", "figures","barplot_variance_explained_all_NCP.png"), 
       width= 15, height = 10, units = "cm", res = 1000)
@@ -160,29 +162,14 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                        barfill = "darkred", ncp=15) )
   dev.off()
   
+
   
   eig <- factoextra::get_eig(pca)
   variance_explained <- data.frame(
     Axe = c(1:nrow(eig)), 
     cumulative_variance_explained = eig[,3],
     contribution_coefficient = eig[,2]/100)
-
-  # cumulative_variance <- ggplot(variance_explained) +
-  #   aes(x = Axe, y = cumulative_variance_explained) +
-  #   geom_step(colour = "darkred") +
-  #   geom_hline(yintercept=70, linetype="dashed", color = "black")+
-  #   ylim(0,100) +
-  #   labs(
-  #     x = "Dimensions",
-  #     y = "Variance explained",
-  #     title = "Cumulative variance explained by dimensions (threshold at 70%)"
-  #   ) +
-  #   theme_minimal()
-  # ggsave(filename = here::here("outputs", "figures","barplot_cumulative_variance_explained_all_NCP.png"), cumulative_variance, width = 15, height =10 )
   
-  
-  
-  ##------------------------figure 1c: variables eigenvalues ------------------------------
   elbow_values <- elbow(variance_explained[,c("Axe", "cumulative_variance_explained")])
   
   elbow_point <- c( elbow_values$"Axe"[tail(which(elbow_values$"SelectedorNot" =="Selected"), n = 1)],
@@ -227,9 +214,9 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
     
     geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
                  color = "black", size = 4, shape = 19)+
-    geom_label(aes(label = paste0("Number of dimensions = ", elbow_point[1], "\n", 
+    geom_label(aes(label = paste0("Elbow rule: ", elbow_point[1], " dimensions \n", 
                                   "Variance explained = ", round(elbow_point[2],1) , " %"),
-               y = elbow_point[2]-5, x = elbow_point[1]+1), size = 5,
+               y = elbow_point[2]-5, x = elbow_point[1]+1), size = 4,
                color = "black", hjust = 0)
     
 
@@ -237,9 +224,10 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   ggsave(filename = here::here("outputs", "figures",
          "Variance explained by ACP_elbow rule.png"), elbow_plot, 
          width = 15, height =10 )
-  ##------------------------end of figure 1c ------------------------------
+
   
   
+  ##------------------------contributions ------------------------------
   #### Contribution of NCP in dimensions
   var <- factoextra::get_pca_var(pca)
   contributions <- var$contrib
@@ -258,8 +246,6 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   
   
   
-  
-##------------------------figure 1d: contributions ------------------------------
   # #divide into two plot
   # contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
   # contributions_NN <- contributions_NN[order(-contributions_NN[,"Dim.1"]), ]
@@ -293,7 +279,12 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   # dev.off()
 
   
-  colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+  var <- factoextra::get_pca_var(pca)
+  contributions <- var$contrib
+  for( i in 1:ncol(contributions)){ 
+    contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
+  # colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+
   #divide into two plot
   contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
   contributions_NN <- contributions_NN[order(-contributions_NN[,1]), ]
@@ -318,14 +309,15 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                      col = c("forestgreen"), tl.col = "black", 
                      cl.pos = "n", tl.cex = 1.2,
                      tl.srt = 60)
-  text(-3,21,"C)",cex=1.5)
+  # text(-3,21,"D)",cex=1.5)
   corrplot::corrplot(contributions_NS, is.corr=FALSE,
                      col = c("dodgerblue3"), tl.col = "black", 
                      cl.pos = "n", tl.pos = 'l', tl.cex = 1.2)  
   dev.off()
   
-  #-----------------------------end of figure 1d ----------------------------
   
+  
+  #-----------------------------variables in PCA ----------------------------
   #### PCA in the 2 first dimensions, with representation quality ($cos^{2}$) of each variables
   png(filename = here::here("outputs", "figures","PCA_all_NCP.png"), 
       width= 20, height = 17, units = "cm", res = 1000)
@@ -404,7 +396,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
                select.var = list(cos2 = 0.1)
   )
   
-  #-----------------------------figure 1a and 1b: NN and NS biplot ----------------------------
+  #-----------------------------PCA: NN and NS biplot ----------------------------
   #label position
   data <- data.frame(obsnames=row.names(pca$ind$coord), pca$ind$coord)
   datapc <- data.frame(varnames=rownames(pca$var$coord), pca$var$coord)
@@ -430,7 +422,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
     geom.var = c("arrow"),
     fill.ind = NCP_site_log_transformed$Biomass,
     col.ind =  NCP_site_log_transformed$Biomass,
-    alpha.ind = 0.8,
+    alpha.ind = 0.7,
     gradient.cols = rev(
       RColorBrewer::brewer.pal(10,name="RdYlBu")),
     repel = TRUE,
@@ -453,12 +445,12 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
          title = "Nature to Nature contributions") +
     guides(color = "none",
            fill = guide_colourbar(title.position="top", title.hjust = 0.5)) +
-    theme( legend.position =c(0.15,0.1),
+    theme( legend.position =c(0.15,0.13),
            legend.direction = "horizontal",
-           legend.title = element_text(hjust = 0.5, size = 15),
+           legend.title = element_text(hjust = 0.5, size = 14),
            legend.title.align = 0,
-           legend.key.size = unit(1, 'cm'),
-           legend.text = element_text(size = 12),
+           legend.key.size = unit(0.8, 'cm'),
+           legend.text = element_text(size = 10),
            plot.title = element_text(colour = "forestgreen", face = "bold"))
   print(plot_1a)
   dev.off()
@@ -478,7 +470,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
     geom.var = c("arrow"),
     fill.ind = NCP_site_log_transformed$Biomass,
     col.ind = NCP_site_log_transformed$Biomass,
-    alpha.ind = 0.8,
+    alpha.ind = 0.7,
     gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
     repel = TRUE,
     ggtheme = theme_bw(base_line_size = 0)) +
@@ -537,41 +529,6 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
     
   } # end of Plot_legend
   
-  #----------------------------- Plot panel Figure 1  ----------------------------
-  # png(filename = here::here("outputs", "figures",""), 
-  #     width=12, height = 20, units = "cm", res = 1000)
-  # 
-  # layout(matrix(rbind(c(1,1,1,1,3,3,3),
-  #              c(1,1,1,1,3,3,3),
-  #              c(1,1,1,1,3,3,3),
-  #              c(2,2,2,2,3,3,3),
-  #              c(2,2,2,2,4,4,0),
-  #              c(2,2,2,2,4,4,0))))
-  # par(mar=c(1,1,1,1))
-  # plot(plot_1a, add=T)
-  # plot(plot_1b, add= T)
-  # 
-  # ## plot contribution
-  # layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
-  #               ncol = 1))
-  # par(mar = c(0,0,0,0))
-  # corrplot::corrplot(contributions_NN, is.corr=FALSE, 
-  #                    col = c("forestgreen"), tl.col = "black", 
-  #                    cl.pos = "n", tl.cex = 1.2,
-  #                    tl.srt = 60)
-  # text(-3,21,"C)",cex=1.5)
-  # corrplot::corrplot(contributions_NS, is.corr=FALSE,
-  #                    col = c("dodgerblue3"), tl.col = "black", 
-  #                    cl.pos = "n", tl.pos = 'l', tl.cex = 1.2) 
-  # 
-  # # end of panel
-  # dev.off()
-  
-  cowplot::plot_grid(plot_1a, plot_1b, elbow_plot, NULL,
-                     byrow = F)+
-    annotate()
-  
-  #----------------------------- end of panel Figure 1  ----------------------------
   
   #------Categories as Diaz 2022-------
   var_3cat <- factoextra::get_pca_var(pca)
