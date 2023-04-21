@@ -147,6 +147,9 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   NCP_site_for_pca <- scale(NCP_site_selected)
   pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=9) 
   
+  pca_test <- ade4::dudi.pca(NCP_site_for_pca)
+  plot(pca_test)
+  
   summary(NCP_site$SiteCountry)
   
   ####----------plot PCA with all NCPs at the community scale -------------
@@ -233,6 +236,10 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   contributions <- var$contrib
   for( i in 1:ncol(contributions)){ 
     contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
+  
+  colSums(contributions)
+  rowSums(contributions)
+  
   
   png(filename = here::here("outputs", "figures","contribution_NCP_in_dimensions.png"), 
       width= 12, height = 15, units = "cm", res = 1000)

@@ -363,10 +363,11 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "darkred",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
-                    quantile(NN_NS_with_product$rank_u_r, probs=c(0.98), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
+                    quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=paste(SiteCode, ":", SiteEcoregion)), size=3, 
+                             nudge_y = 0.1, nudge_x = 0.1,
              data=NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
-                  quantile(NN_NS_with_product$rank_u_r, probs=c(0.98), na.rm=T)), ] )+
+                  quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
   
   guides(color = "none") + ggnewscale::new_scale("colour") +
   
@@ -381,10 +382,10 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "dodgerblue4",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
-                                               quantile(NN_NS_with_product$rank_u_l, probs=c(0.98), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
-                             data=NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
-                                                             quantile(NN_NS_with_product$rank_u_l, probs=c(0.98), na.rm=T)), ] )+
+                        quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=paste(SiteCode, ":", SiteEcoregion)), size=3, 
+                data=NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
+                        quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
   guides(color = "none") + ggnewscale::new_scale("colour") +
   
   #down right quarter
@@ -398,10 +399,11 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "darkgreen",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
-                                               quantile(NN_NS_with_product$rank_d_r, probs=c(0.98), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
-                             data=NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
-                                                             quantile(NN_NS_with_product$rank_d_r, probs=c(0.98), na.rm=T)), ] )+
+                       quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label=paste(SiteCode, ":", SiteEcoregion)), size=3, 
+             nudge_y = -0.2,
+             data=NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
+                       quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
   guides(color = "none") + ggnewscale::new_scale("colour") +
   
   #down left quarter
@@ -415,10 +417,10 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
              size = 2, stroke = 1,
              color= "black",
              data = NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
-                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.98), na.rm=T)), ] )+
-  ggrepel::geom_label_repel( aes(label=SiteEcoregion), size=3, 
-                             data=NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
-                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.98), na.rm=T)), ] )+
+                       quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
+  ggrepel::geom_label_repel( aes(label= paste(SiteCode, ":", SiteEcoregion)), size=3, 
+             data=NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
+                       quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
   
   # see MPAs
   scale_shape_manual(values=c(20,17,18))+
@@ -466,7 +468,9 @@ NN_NS_plot <- ggplot(NN_NS_with_product, aes( y= NS_score, x = NN_score) ) +
 #NN_NS_plot_legend <- ggfun::keybox( "roundrect", gp = ggfun::gpar(lty="dashed"))
 
 NN_NS_plot
-ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.png"), plot = NN_NS_plot, width=10, height = 8 )
+ggsave( here::here("outputs", "figures", "Sites in NN and NS scores.png"), 
+        plot = NN_NS_plot, 
+        width=15, height = 12 )
 
 
 ## with mpa proportion

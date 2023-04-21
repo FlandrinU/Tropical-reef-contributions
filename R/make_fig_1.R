@@ -131,7 +131,11 @@ plot_1a <- factoextra::fviz_pca_biplot(
        title = "Nature to Nature") +
   xlab("")+
   theme( legend.position = "none",
-         plot.title = element_text(colour = "forestgreen", face = "bold",
+         axis.text = element_text(size = 12),
+         axis.title = element_text(size = 14),
+         plot.margin =unit(c(0,0,0,0), 'cm'),
+         plot.title = element_text(colour = "forestgreen", 
+                                   face = "bold", size = 17,
                                    margin=margin(t = 20, b = -20),
                                    hjust = 0.01))
 print(plot_1a)
@@ -180,12 +184,16 @@ plot_1b <- factoextra::fviz_pca_biplot(
   guides(color = "none",
          fill = guide_colourbar(title.position="top", title.hjust = 0.5)) +
   theme( legend.position =c(0.15,0.13),
+         axis.text = element_text(size = 12),
+         axis.title = element_text(size = 14),
+         plot.margin =unit(c(0,0,0,0), 'cm'),
          legend.direction = "horizontal",
          legend.title = element_text(hjust = 0.5, size = 14),
          legend.title.align = 0,
          legend.key.size = unit(0.8, 'cm'),
          legend.text = element_text(size = 10),
-         plot.title = element_text(colour = "dodgerblue3", face = "bold",
+         plot.title = element_text(colour = "dodgerblue3",
+                                   face = "bold", size = 17,
                                    margin=margin(t = 20, b = -20),
                                    hjust = 0.01))
 print(plot_1b)
@@ -205,8 +213,10 @@ elbow_point <- c( elbow_values$"Axe"[tail(which(elbow_values$"SelectedorNot" =="
 
 
 ndim=15
-elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_explained,
-                                             color = "black")) + 
+elbow_plot <- ggplot(variance_explained, 
+                     aes(x = Axe, 
+                         y = cumulative_variance_explained,
+                         color = "black")) + 
   #barchart of eigenvalues
   geom_bar(data = as.data.frame(eig)[c(1:ndim),], 
            aes(x= c(1:ndim), y = variance.percent), 
@@ -218,18 +228,6 @@ elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_ex
   stat_summary(fun = "mean", geom = "line", size = 1, alpha = 0.4) +
   stat_summary(fun = "mean", linewidth = 0.5) +
   
-  # labs(x = "Number of dimensions") + 
-  # labs(y = "Variance explained (in %)") +
-  labs(x = "", y = "%")+
-  theme_bw(base_line_size = 0) +
-  theme(strip.background = element_blank(),
-        strip.text.x = element_blank(),
-        axis.title.x = element_text(size = 15, face = "bold"),
-        axis.title.y = element_text(size = 15, face = "bold"),
-        legend.position = "none") +
-  coord_cartesian(expand = FALSE, xlim = c(0, ndim), ylim = c(0, 100))+
-  harrypotter::scale_colour_hp_d(option = "LunaLovegood") +
-  
   # elbow point
   geom_segment(aes(x = elbow_point[1], xend = elbow_point[1],
                    y = 0 , yend = elbow_point[2]),
@@ -240,11 +238,33 @@ elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_ex
                color = "black", linetype = "dotted", linewidth = 1) +
   
   geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
-             color = "black", size = 4, shape = 19)
+             color = "black", size = 4, shape = 19)+
   # geom_label(aes(label = paste0("Elbow rule: ", elbow_point[1], " dimensions \n", 
   #                               "Variance explained = ", round(elbow_point[2],1) , " %"),
   #                y = elbow_point[2]-5, x = elbow_point[1]+1), size = 4,
   #            color = "black", hjust = 0)
+
+  # labs(x = "Number of dimensions") + 
+  # labs(y = "Variance explained (in %)") +
+  labs(x = "", y = "",
+       title = "%") +
+  theme_bw(base_line_size = 0) +
+  theme(plot.margin = unit(c(1,0.3,-.5,-.5), 'cm'),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.background = element_rect(fill = "transparent", color=NA),
+        panel.background = element_rect(fill = alpha("white", 0.7), color=NA), 
+        strip.text.x = element_blank(),
+        axis.text = element_text(size = 12),
+        # axis.title.x = element_text(size = 15, face = "bold",
+        #                             hjust = 1.12, vjust = 9),
+        plot.title = element_text(face = "bold", size = 16,
+                                  margin=margin(t=-20, b = 5),
+                                  hjust = -.1),
+        legend.position = "none") +
+  coord_cartesian(expand = FALSE, xlim = c(0, ndim), ylim = c(0, 100))+
+  harrypotter::scale_colour_hp_d(option = "LunaLovegood")
+    
 
 
 elbow_plot
@@ -291,7 +311,8 @@ var <- factoextra::get_pca_var(pca)
 contributions <- var$contrib
 for( i in 1:ncol(contributions)){ 
   contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
-# colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+
+colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
 
 #divide into two plot
 contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
@@ -309,7 +330,7 @@ row.names(contributions_NS)[1] <- paste(
 
 # plot pannel
 png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
-    width=12, height = 20, units = "cm", res = 1000)
+    width=11, height = 20, units = "cm", res = 1000)
 layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
               ncol = 1))
 par(mar = c(0,0,0,0))
@@ -325,48 +346,53 @@ dev.off()
 
 
 #----------------------------- Plot panel Figure 1  ----------------------------
+#merge 1a and 1c
+plot_merged <- plot_1a +
+  annotation_custom( ggplotGrob(elbow_plot),
+                     xmin = -7.5,
+                     xmax = -1.5,
+                     ymin = -6.5,
+                     ymax = -0.5)
+plot_merged
+
 
 corrplot_fig1c <- cowplot::ggdraw() + 
   cowplot::draw_image(here::here("outputs","figures",
-                                 "contribution_in_total_variance_NN_NS.png"))
+                                 "contribution_in_total_variance_NN_NS.png"))+
+  theme(plot.margin =unit(c(0,0,0,-0.5), 'cm'))
+         
 
-fig1 <- gridExtra::grid.arrange(
-  plot_1a, plot_1b, elbow_plot, corrplot_fig1c, 
-  ncol=2,
-  layout_matrix = rbind(c(1,1,1,1,3,3,3),
-                        c(1,1,1,1,3,3,3),
-                        c(1,1,1,1,4,4,4),
-                        c(2,2,2,2,4,4,4),
-                        c(2,2,2,2,4,4,4),
-                        c(2,2,2,2,4,4,4)))                                  
-# Add labels 
-grid::grid.text("A", x=unit(0.05, "npc"), y=unit(0.95, "npc"), 
-                just="left", gp=grid::gpar(fontsize=14, fontface="bold"))
-grid::grid.text("B", x=unit(0.05, "npc"), y=unit(0.68, "npc"), 
-                just="left", gp=grid::gpar(fontsize=14, fontface="bold"))
-grid::grid.text("C", x=unit(0.05, "npc"), y=unit(0.41, "npc"), 
-                just="left", gp=grid::gpar(fontsize=14, fontface="bold"))
-grid::grid.text("D", x=unit(0.05, "npc"), y=unit(0.41, "npc"), 
-                just="left", gp=grid::gpar(fontsize=14, fontface="bold"))
-
-
-ggsave(filename = here::here("outputs", "figures",
-                             "Figure_1_with_eigenval.png"),
-       fig1, width = 15, height =10 )
+# fig1 <- gridExtra::grid.arrange(
+#   plot_1a, plot_1b, elbow_plot, corrplot_fig1c, 
+#   ncol=2,
+#   layout_matrix = rbind(c(1,1,1,1,3,3,3),
+#                         c(1,1,1,1,3,3,3),
+#                         c(1,1,1,1,4,4,4),
+#                         c(2,2,2,2,4,4,4),
+#                         c(2,2,2,2,4,4,4),
+#                         c(2,2,2,2,4,4,4)))                                  
 
 
 
-fig1 <- gridExtra::grid.arrange(
-  plot_1a, plot_1b, corrplot_fig1c, 
-  ncol=2,
-  layout_matrix = rbind(c(1,1,1,3,3),
-                        c(1,1,1,3,3),
-                        c(1,1,1,3,3),
-                        c(2,2,2,3,3),
-                        c(2,2,2,3,3),
-                        c(2,2,2,3,3)))
-ggsave(filename = here::here("outputs", "figures",
-                             "Figure_1_no_eigenval.png"),
-       fig1, width = 15, height =10 )
+png(filename = here::here("outputs", "figures","Panel_fig_1.png"), 
+    width=40, height = 27, units = "cm", res = 1000)
+  gridExtra::grid.arrange(
+    plot_merged, plot_1b, corrplot_fig1c, 
+    ncol=2,
+    layout_matrix = rbind(c(1,1,1,3,3),
+                          c(1,1,1,3,3),
+                          c(1,1,1,3,3),
+                          c(2,2,2,3,3),
+                          c(2,2,2,3,3),
+                          c(2,2,2,3,3)))
+    # Add labels 
+    grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
+                    just="left", gp=grid::gpar(fontsize=15, fontface="bold"))
+    grid::grid.text("B", x=unit(0.01, "npc"), y=unit(0.48, "npc"), 
+                    just="left", gp=grid::gpar(fontsize=15, fontface="bold"))
+    grid::grid.text("C", x=unit(0.65, "npc"), y=unit(0.98, "npc"), 
+                    just="left", gp=grid::gpar(fontsize=15, fontface="bold"))
+    
+dev.off()
 
 
