@@ -110,20 +110,20 @@ plot_1a <- factoextra::fviz_pca_biplot(
                            pca, element= "var",axes = c(1,2))$cos2 > 0.25)
                  ,], #extract cos2 of variables
     aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
-    size=4, fill = NA, label.size = NA,
+    size=4, fill = "white", label.size = 0.1,
     fontface = "bold", 
-    color = "forestgreen",
+    color = "forestgreen", alpha = 0.8,
     force_pull = 3,
     direction = "both",
     seed = 1968)+
-  #Add boxes
-  ggrepel::geom_label_repel(
-    data= datapc[which(grp_NN_NS== "NN" &
-                         factoextra::facto_summarize(
-                           pca, element= "var",axes = c(1,2))$cos2 > 0.25), ], 
-    aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
-    alpha = 0.2, size=4, label.size = NA, fill = "forestgreen", force_pull = 3,
-    fontface = "bold", direction = "both", seed = 1968)+
+  # #Add boxes
+  # ggrepel::geom_label_repel(
+  #   data= datapc[which(grp_NN_NS== "NN" &
+  #                        factoextra::facto_summarize(
+  #                          pca, element= "var",axes = c(1,2))$cos2 > 0.25), ], 
+  #   aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
+  #   alpha = 1, size=4, label.size = NA,  force_pull = 3, color = "forestgreen",
+  #   fontface = "bold", direction = "both", seed = 1968)+
 
   xlim(c(-7,8)) +
   ylim(c(-6,6)) +
@@ -163,18 +163,18 @@ plot_1b <- factoextra::fviz_pca_biplot(
   ggrepel::geom_label_repel(
     data= datapc[which(grp_NN_NS== "NS"),],
     aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
-    size=4, fill = NA, label.size = NA,
+    size=4, fill = "white", label.size = 0.1,
     fontface = "bold", 
-    color = "dodgerblue3",
+    color = "dodgerblue3", alpha = 0.8,
     force_pull = 3,
     direction = "both",
     seed = 1968)+
-  #Add boxes
-  ggrepel::geom_label_repel(
-    data= datapc[which(grp_NN_NS== "NS"), ], 
-    aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
-    alpha = 0.2, size=4, label.size = NA, fill = "dodgerblue3", force_pull = 3,
-    fontface = "bold", direction = "both", seed = 1968)+
+  # #Add boxes
+  # ggrepel::geom_label_repel(
+  #   data= datapc[which(grp_NN_NS== "NS"), ], 
+  #   aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
+  #   alpha = 0.2, size=4, label.size = NA, fill = "dodgerblue3", force_pull = 3,
+  #   fontface = "bold", direction = "both", seed = 1968)+
 
   
   xlim(c(-7,8)) +
@@ -225,8 +225,9 @@ elbow_plot <- ggplot(variance_explained,
            fill = "grey30")+
   
   #cumulative curve
-  stat_summary(fun = "mean", geom = "line", size = 1, alpha = 0.4) +
-  stat_summary(fun = "mean", linewidth = 0.5) +
+  stat_summary(fun = "mean", geom = "line", size = 0.5, alpha = 1) +
+  stat_summary(fun = "mean", size = 0.1) +
+  scale_y_continuous(labels = c("", "25", "50", "75", "100%"))+
   
   # elbow point
   geom_segment(aes(x = elbow_point[1], xend = elbow_point[1],
@@ -246,8 +247,7 @@ elbow_plot <- ggplot(variance_explained,
 
   # labs(x = "Number of dimensions") + 
   # labs(y = "Variance explained (in %)") +
-  labs(x = "", y = "",
-       title = "%") +
+  labs(x = "", y = "") +
   theme_bw(base_line_size = 0) +
   theme(plot.margin = unit(c(1,0.3,-.5,-.5), 'cm'),
         panel.grid.major = element_blank(),
@@ -255,7 +255,7 @@ elbow_plot <- ggplot(variance_explained,
         plot.background = element_rect(fill = "transparent", color=NA),
         panel.background = element_rect(fill = alpha("white", 0.7), color=NA), 
         strip.text.x = element_blank(),
-        axis.text = element_text(size = 12),
+        axis.text = element_text(size = 12, face = "bold"),
         # axis.title.x = element_text(size = 15, face = "bold",
         #                             hjust = 1.12, vjust = 9),
         plot.title = element_text(face = "bold", size = 16,
@@ -263,7 +263,7 @@ elbow_plot <- ggplot(variance_explained,
                                   hjust = -.1),
         legend.position = "none") +
   coord_cartesian(expand = FALSE, xlim = c(0, ndim), ylim = c(0, 100))+
-  harrypotter::scale_colour_hp_d(option = "LunaLovegood")
+  harrypotter::scale_colour_hp_d(option = "DracoMalfoy")
     
 
 
@@ -350,9 +350,9 @@ dev.off()
 plot_merged <- plot_1a +
   annotation_custom( ggplotGrob(elbow_plot),
                      xmin = -7.5,
-                     xmax = -1.5,
+                     xmax = -1.2,
                      ymin = -6.5,
-                     ymax = -0.5)
+                     ymax = -0.3)
 plot_merged
 
 
@@ -387,11 +387,11 @@ png(filename = here::here("outputs", "figures","Panel_fig_1.png"),
                           c(2,2,2,3,3)))
     # Add labels 
     grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
-                    just="left", gp=grid::gpar(fontsize=15, fontface="bold"))
+                    just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
     grid::grid.text("B", x=unit(0.01, "npc"), y=unit(0.48, "npc"), 
-                    just="left", gp=grid::gpar(fontsize=15, fontface="bold"))
+                    just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
     grid::grid.text("C", x=unit(0.65, "npc"), y=unit(0.98, "npc"), 
-                    just="left", gp=grid::gpar(fontsize=15, fontface="bold"))
+                    just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
     
 dev.off()
 

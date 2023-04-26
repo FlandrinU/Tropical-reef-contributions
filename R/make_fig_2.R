@@ -11,7 +11,7 @@
 ################################################################################
 
 #-----------------Loading packages-------------------
-pkgs <- c("here", "ggplot2", "grid", "gridExtra")
+pkgs <- c("here", "ggplot2", "grid", "gridExtra", "ggpp", "dplyr")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -68,7 +68,7 @@ list_sites_ggrepel <- c(
 #### plot NN against NN ####
 NN_NS_plot <- ggplot(NN_NS_with_product, 
                      aes( y= NS_score, x = NN_score) ) +
-
+  
   #up right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_right == 1),
              size = 3, shape = 19, 
@@ -78,7 +78,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
                         limits =quantile(NN_NS_with_product$rank_u_r,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
   geom_point(data = NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
-                      quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ],
+                                               quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ],
              aes(y= NS_score, x = NN_score),
              size = 3, shape = 1, stroke = 1)+
   guides(color = "none") + ggnewscale::new_scale("colour") +
@@ -131,11 +131,11 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
                          up_right ==1),
     aes(label= paste(SiteEcoregion)), size=4, nudge_x = 0.2, nudge_y = 0.2)+  
   ggrepel::geom_label_repel(
-      data = dplyr::filter(NN_NS_with_product,
-                           SiteCode %in% list_sites_ggrepel,
-                           down_right ==1),
-      aes(label= paste(SiteEcoregion)), size=4, box.padding = 0.7,
-      nudge_x = 0.2, nudge_y = -0.2)+
+    data = dplyr::filter(NN_NS_with_product,
+                         SiteCode %in% list_sites_ggrepel,
+                         down_right ==1),
+    aes(label= paste(SiteEcoregion)), size=4, box.padding = 0.7,
+    nudge_x = 0.2, nudge_y = -0.2)+
   ggrepel::geom_label_repel(
     data = dplyr::filter(NN_NS_with_product,
                          SiteCode %in% list_sites_ggrepel,
@@ -147,11 +147,11 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
                          up_left ==1),
     aes(label= paste(SiteEcoregion)), size=4, nudge_x = -0.2, nudge_y = 0.2)+
   
-
+  
   # # see MPAs
   # scale_shape_manual(values=c(20,17,18))+
   
-# add 50% square: equation: abs(x)^p + abs(y)^p = 1 -> p=0.5
+  # add 50% square: equation: abs(x)^p + abs(y)^p = 1 -> p=0.5
   geom_function(aes(x= NN_score, y = NS_score),
                 fun = function(x){(1-abs(x)^0.5)^(1/0.5) },
                 xlim=c(-1,1), linetype=3, linewidth=0.3) +
@@ -163,7 +163,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   geom_vline(xintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
   geom_hline(yintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
   
-
+  
   xlim(c(-1.8,1.8)) +
   ylim(c(-1.8,1.8)) +
   labs( x=  "Nature to Nature", y = "Nature to People")+
@@ -178,47 +178,105 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
                                     size = 15),
         axis.text = element_text(size=13),
         legend.position = c(0.9,0.1),
-        legend.background = element_rect())+
+        legend.background = element_rect(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
   guides(color = "none", shape = guide_legend("Protection status")) +
   
   #add arrows in margin
   annotation_custom( 
     grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
                            gp=grid::gpar(col="forestgreen", lwd=6)), 
-    xmin = -1.1, xmax = -0.4, ymin =-2.17, ymax = -2.17) +
+    xmin = -0.85, xmax = -0.15, ymin =-2.18, ymax = -2.18) +
   annotation_custom( 
     grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
                            gp=grid::gpar(col="dodgerblue3", lwd=6)), 
-    xmin = -2.1, xmax = -2.1, ymin =-0.9, ymax = -0.2) 
+    xmin = -2.17, xmax = -2.17, ymin =-0.8, ymax = -0.1)
+
 
 
 NN_NS_plot
 
 plot_with_arrows <- ggplot_gtable(ggplot_build(NN_NS_plot))
-plot_with_arrows$layout$clip[gt$layout$name == "panel"] <- "off"
+plot_with_arrows$layout$clip[plot_with_arrows$layout$name == "panel"] <- "off"
 grid::grid.draw(plot_with_arrows)
 
 
 
-## Stack plot mpa proportion
-mpa_proportion <- data.frame(quarter=NA, protection=NA, Freq=NA)
+
+## --------------- Stack plot mpa proportion -------------
+mpa_proportion <- data.frame(rect= NA, tot=NA, quarter=NA, protection=NA, Freq=NA, pct=NA)
 quart = c("up_right", "up_left", "down_left", "down_right")
-names = c("Top NN and NS", "NS only", "Dark NN ent NS", "NN only")
+names = c("NN +  NS +", "NN -  NS +", "NN -  NS -", "NN +  NS -")
 for(i in c(1:4)){
-  df <- cbind(rep(names[i], 3),
+  df <- cbind(c(names[i], NA,NA),
+              rep(sum(NN_NS_with_product[,quart[i]], na.rm = T), 3),
+              rep(names[i], 3),
               as.data.frame(table(dplyr::filter(
-                NN_NS_with_product, is.na(get(quart[i]))==F)$protection)))
+                NN_NS_with_product, is.na(get(quart[i]))==F)$protection))) |>
+    dplyr::mutate(pct = Freq / sum(Freq) *100)
+  
   colnames(df) <- colnames(mpa_proportion)
   mpa_proportion <- rbind(mpa_proportion,df)
 }
 
 
-dplyr::mutate(pct = Freq / sum(Freq) *100)
+#order the stack plot
+mpa_proportion$protection <- factor(mpa_proportion$protection , levels = c("No take", "Restricted", "Fished"))
+mpa_proportion$quarter <- factor(mpa_proportion$quarter , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +"))
+mpa_proportion$rect <- factor(mpa_proportion$rect , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +"))
 
 # Stacked
-ggplot(na.omit(mpa_proportion), aes(fill=protection, y=Freq, x=quarter)) + 
-  geom_bar(position="fill", stat="identity",
-           aes(linewidth= 0.5, color = quarter))+
-  scale_fill_grey()
+mpa_plot <- ggplot(mpa_proportion[-1,], 
+                   aes(x=factor(quarter , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +")),
+                       y=Freq, 
+                       fill= protection)) +
+  geom_bar(position = position_fill(), stat = "identity") +
+  scale_fill_grey(start=0.8, end=0.2) +
+  
+  geom_text(aes( label = paste0(round(pct, 0), "%")),
+            stat= "identity",
+            position = position_fill(vjust = 0.5),
+            size=5,
+            angle = 90,
+            color=rep(c("white", "black", "black"), 4)) +
+  
+  
+  #Add rectangles
+  geom_bar(aes(x=factor(rect , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +")),
+               color=rect),
+           stat = "identity",
+           alpha=0, linewidth=1.5,
+           position = position_fill())+
+  scale_colour_manual(values=c("grey10", "forestgreen", "dodgerblue3", "darkgoldenrod3" )) +
+  geom_text(size = 5, aes(y=1.07, label = paste0("n=", tot)))+
+  
+  #Define theme
+  labs( x=  "", y = "")+
+  theme_minimal()+
+  theme(axis.text.y=element_blank(), 
+        axis.text.x = element_text(size=13, face = "bold", vjust =1.2, hjust = 1,
+                                   angle = 45, color="black"),
+        legend.background = element_rect(),
+        legend.text = element_text(size = 11),
+        legend.title = element_text(size = 12),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.margin = margin(0.5,0.1,0.5,1.5, unit = "cm"))+
+  guides(color = "none", fill = guide_legend("Protection status"))
+
+mpa_plot  
 
 
+
+#### ----------------- Panel -------------------
+arrange <- ggpubr::ggarrange(plot_with_arrows,
+                             mpa_plot, 
+                             widths = c(3,2),
+                             labels = c("A", "B"),
+                             font.label = list(size=17),
+                             ncol = 2)
+arrange
+
+ggsave(plot=arrange, filename = here::here("outputs", "figures", "Panel_Fig_2_NNvsNS.png"),
+       width = 35, height = 21 , units = "cm") #5:3 = x:y ratio
