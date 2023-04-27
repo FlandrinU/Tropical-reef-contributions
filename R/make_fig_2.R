@@ -20,10 +20,11 @@ rm(list=ls())
 
 ##-------------loading data-------------
 load(file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
+coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 library(ggplot2)
 
-## --------------- NN against NS -------------
+## --------------- Figure 2a: NN against NS -------------
 #### Define colors by quarter ####
 NN_NS_with_product <- NN_NS_scores |>
   dplyr::bind_cols( protection = ifelse(NN_NS_scores$mpa_enforcement == "High" &
@@ -52,6 +53,8 @@ NN_NS_with_product <- NN_NS_with_product |>
   dplyr::bind_cols(rank_d_r = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_right, na.last="keep")) |>
   dplyr::bind_cols(rank_d_l = rank(NN_NS_with_product$NNxNS * NN_NS_with_product$down_left, na.last="keep"))
 
+NN_NS_with_product$protection <- factor(NN_NS_with_product$protection , levels = c("No take", "Restricted", "Fished"))
+
 summary(NN_NS_with_product)
 
 list_sites_ggrepel <- c(
@@ -71,85 +74,92 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   
   #up right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_right == 1),
-             size = 3, shape = 19, 
-             aes(colour= rank_u_r)) +
-  scale_colour_gradient(name="up_right",
+             size = 3,  
+             stroke=0,
+             aes(fill= rank_u_r, shape = protection)) +
+  scale_fill_gradient(name="up_right",
                         low = "white", high="darkgoldenrod3",
                         limits =quantile(NN_NS_with_product$rank_u_r,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(data = NN_NS_with_product[which(NN_NS_with_product$rank_u_r >=
-                                               quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ],
-             aes(y= NS_score, x = NN_score),
-             size = 3, shape = 1, stroke = 1)+
-  guides(color = "none") + ggnewscale::new_scale("colour") +
+  guides(fill = "none") + ggnewscale::new_scale("fill") +
   
   #up left quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_left == 1),
-             size = 3, shape = 19, 
-             aes(colour= rank_u_l)) +
-  scale_colour_gradient(name="up_left",
+             size = 3, 
+             stroke = 0,
+             aes(fill= rank_u_l, shape = protection)) +
+  scale_fill_gradient(name="up_left",
                         low = "white", high="dodgerblue3",
                         limits =quantile(NN_NS_with_product$rank_u_l,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(aes( y= NS_score, x = NN_score),
-             size = 3, stroke = 1, shape = 1,
-             data = NN_NS_with_product[which(NN_NS_with_product$rank_u_l >=
-                                               quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
-  guides(color = "none") + ggnewscale::new_scale("colour") +
+  guides(fill = "none") + ggnewscale::new_scale("fill") +
   
   #down right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, down_right == 1),
-             size = 3, shape = 19, 
-             aes(colour= rank_d_r)) +
-  scale_colour_gradient(name="down_right",
+             size = 3, 
+             stroke=0,
+             aes(fill= rank_d_r, shape = protection)) +
+  scale_fill_gradient(name="down_right",
                         low = "white", high="forestgreen",
                         limits =quantile(NN_NS_with_product$rank_d_r,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(aes( y= NS_score, x = NN_score),
-             size = 3, stroke = 1,shape = 1,
-             data = NN_NS_with_product[which(NN_NS_with_product$rank_d_r >=
-                                               quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
-  guides(color = "none") + ggnewscale::new_scale("colour") +
+  guides(fill = "none") + ggnewscale::new_scale("fill") +
   
   #down left quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, down_left == 1),
-             size = 3, shape = 19,
-             aes(colour= rank_d_l)) +
-  scale_colour_gradient(name="down_left",
+             size = 3,
+             stroke=0,
+             aes(fill= rank_d_l, shape = protection)) +
+  scale_fill_gradient(name="down_left",
                         low = "white", high="grey40",
                         limits =quantile(NN_NS_with_product$rank_d_l,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
-  geom_point(aes( y= NS_score, x = NN_score),
-             size = 3, stroke = 1, shape = 1,
-             data = NN_NS_with_product[which(NN_NS_with_product$rank_d_l >=
-                                               quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
-  
-  #Add exemples
-  ggrepel::geom_label_repel(
-    data = dplyr::filter(NN_NS_with_product,
-                         SiteCode %in% list_sites_ggrepel,
-                         up_right ==1),
-    aes(label= paste(SiteEcoregion)), size=4, nudge_x = 0.2, nudge_y = 0.2)+  
-  ggrepel::geom_label_repel(
-    data = dplyr::filter(NN_NS_with_product,
-                         SiteCode %in% list_sites_ggrepel,
-                         down_right ==1),
-    aes(label= paste(SiteEcoregion)), size=4, box.padding = 0.7,
-    nudge_x = 0.2, nudge_y = -0.2)+
-  ggrepel::geom_label_repel(
-    data = dplyr::filter(NN_NS_with_product,
-                         SiteCode %in% list_sites_ggrepel,
-                         down_left ==1),
-    aes(label= paste(SiteEcoregion)), size=4, nudge_x = -0.2, nudge_y = -0.1)+
-  ggrepel::geom_label_repel(
-    data = dplyr::filter(NN_NS_with_product,
-                         SiteCode %in% list_sites_ggrepel,
-                         up_left ==1),
-    aes(label= paste(SiteEcoregion)), size=4, nudge_x = -0.2, nudge_y = 0.2)+
+  guides(fill = "none") +
   
   
-  # # see MPAs
-  # scale_shape_manual(values=c(20,17,18))+
+  # Add outliers
+  geom_point(data = NN_NS_with_product[ c(
+    which(NN_NS_with_product$rank_u_r >= 
+            quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)) ,
+      which(NN_NS_with_product$rank_d_l >= 
+            quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)) ,
+    which(NN_NS_with_product$rank_d_r >=
+            quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)) ,
+    which(NN_NS_with_product$rank_u_l >=
+            quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T))
+    ), ],
+    aes(y= NS_score, x = NN_score, shape = protection),
+    size = 3,  
+    stroke = 1)+
+
+  
+    # see MPAs
+  scale_shape_manual(values=c(24,23,21))+
+    
+  
+  # # Add exemples
+  # ggrepel::geom_label_repel(
+  #   data = dplyr::filter(NN_NS_with_product,
+  #                        SiteCode %in% list_sites_ggrepel,
+  #                        up_right ==1),
+  #   aes(label= paste(SiteEcoregion)), size=4, nudge_x = 0.2, nudge_y = 0.2)+
+  # ggrepel::geom_label_repel(
+  #   data = dplyr::filter(NN_NS_with_product,
+  #                        SiteCode %in% list_sites_ggrepel,
+  #                        down_right ==1),
+  #   aes(label= paste(SiteEcoregion)), size=4, box.padding = 0.7,
+  #   nudge_x = 0.2, nudge_y = -0.2)+
+  # ggrepel::geom_label_repel(
+  #   data = dplyr::filter(NN_NS_with_product,
+  #                        SiteCode %in% list_sites_ggrepel,
+  #                        down_left ==1),
+  #   aes(label= paste(SiteEcoregion)), size=4, nudge_x = -0.2, nudge_y = -0.1)+
+  # ggrepel::geom_label_repel(
+  #   data = dplyr::filter(NN_NS_with_product,
+  #                        SiteCode %in% list_sites_ggrepel,
+  #                        up_left ==1),
+  #   aes(label= paste(SiteEcoregion)), size=4, nudge_x = -0.2, nudge_y = 0.2)+
+  
   
   # add 50% square: equation: abs(x)^p + abs(y)^p = 1 -> p=0.5
   geom_function(aes(x= NN_score, y = NS_score),
@@ -164,7 +174,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   geom_hline(yintercept = 0, linetype = 1, col = "black", linewidth = 0.2)+
   
   
-  xlim(c(-1.8,1.8)) +
+  xlim(c(-2,2)) +
   ylim(c(-1.8,1.8)) +
   labs( x=  "Nature to Nature", y = "Nature to People")+
   theme_bw(base_line_size = 0)+
@@ -177,7 +187,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
                                     face = "bold",
                                     size = 15),
         axis.text = element_text(size=13),
-        legend.position = c(0.9,0.1),
+        legend.position = c(0.9,0.2),
         legend.background = element_rect(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())+
@@ -187,11 +197,11 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   annotation_custom( 
     grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
                            gp=grid::gpar(col="forestgreen", lwd=6)), 
-    xmin = -0.85, xmax = -0.15, ymin =-2.18, ymax = -2.18) +
+    xmin = -0.95, xmax = -0.25, ymin =-2.18, ymax = -2.18) +
   annotation_custom( 
     grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
                            gp=grid::gpar(col="dodgerblue3", lwd=6)), 
-    xmin = -2.17, xmax = -2.17, ymin =-0.8, ymax = -0.1)
+    xmin = -2.35, xmax = -2.35, ymin =-0.7, ymax = 0)
 
 
 
@@ -204,7 +214,7 @@ grid::grid.draw(plot_with_arrows)
 
 
 
-## --------------- Stack plot mpa proportion -------------
+## --------------- Figure 2b: Stack plot mpa proportion -------------
 mpa_proportion <- data.frame(rect= NA, tot=NA, quarter=NA, protection=NA, Freq=NA, pct=NA)
 quart = c("up_right", "up_left", "down_left", "down_right")
 names = c("NN +  NS +", "NN -  NS +", "NN -  NS -", "NN +  NS -")
@@ -239,7 +249,7 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
             position = position_fill(vjust = 0.5),
             size=5,
             angle = 90,
-            color=rep(c("white", "black", "black"), 4)) +
+            color=rep(c("black", "black", "white"), 4)) +
   
   
   #Add rectangles
@@ -257,6 +267,7 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
   theme(axis.text.y=element_blank(), 
         axis.text.x = element_text(size=13, face = "bold", vjust =1.2, hjust = 1,
                                    angle = 45, color="black"),
+        legend.position = "none",
         legend.background = element_rect(),
         legend.text = element_text(size = 11),
         legend.title = element_text(size = 12),
@@ -269,6 +280,83 @@ mpa_plot
 
 
 
+## --------------- Figure 2c: Plot outliers on map -------------
+#set parameters
+stroke = 0.5 
+size_point = 4
+width_jitter = 2
+height_jitter = 2
+
+set.seed(06)
+
+#plot map
+fig_2c <- ggplot() +
+  geom_sf(data = coast, color = NA, fill = "grey70") +
+  
+  #down left quarter
+  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+             position = position_jitter(width =width_jitter, height =height_jitter),
+             size = size_point, stroke = stroke, 
+             fill= "grey10",
+             data = NN_NS_with_product[
+               which(NN_NS_with_product$rank_d_l >=
+                       quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
+  
+  
+  #up left quarter
+  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+             position = position_jitter(width =width_jitter, height =height_jitter),
+             size = size_point, 
+             stroke = stroke,
+             fill= "dodgerblue3",
+             data = NN_NS_with_product[
+               which(NN_NS_with_product$rank_u_l >=
+                       quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
+  
+  
+  #down right quarter
+  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+             position = position_jitter(width =width_jitter, height =height_jitter),
+             size = size_point, stroke = stroke, 
+             fill= "forestgreen",
+             data = NN_NS_with_product[
+               which(NN_NS_with_product$rank_d_r >=
+                       quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
+  
+  
+  #up right quarter
+  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+             position = position_jitter(width =width_jitter, height =height_jitter),
+             size = size_point, stroke = stroke, 
+             fill= "darkgoldenrod3",
+             data = NN_NS_with_product[
+               which(NN_NS_with_product$rank_u_r >=
+                       quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
+  
+  
+  # see MPAs
+  scale_shape_manual(values=c(21,24,23))+
+  
+  coord_sf(xlim = c(-180,180), ylim= c(-37, 32),expand = FALSE) +
+  theme_bw()+
+  labs(x="Longitude", y= "Latitude") +
+  theme(axis.title.x = element_text(face = "bold",
+                                    size = 15),
+        axis.title.y = element_text(face = "bold",
+                                    size = 15),
+        axis.text = element_text(size=13),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "grey95"),
+        legend.position = "none",
+        plot.title = element_text(size=10, face="bold"),
+        # axis.text.x = element_blank(),
+        # axis.ticks.x = element_blank(),
+        plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
+  )
+
+fig_2c 
+
 #### ----------------- Panel -------------------
 arrange <- ggpubr::ggarrange(plot_with_arrows,
                              mpa_plot, 
@@ -278,5 +366,33 @@ arrange <- ggpubr::ggarrange(plot_with_arrows,
                              ncol = 2)
 arrange
 
-ggsave(plot=arrange, filename = here::here("outputs", "figures", "Panel_Fig_2_NNvsNS.png"),
+ggsave(plot=arrange, filename = here::here("outputs", "figures", "Panel_NNvsNS_and_MPA.png"),
        width = 35, height = 21 , units = "cm") #5:3 = x:y ratio
+
+
+
+
+
+png(filename = here::here("outputs", "figures","Panel_fig_2.png"), 
+    width=40, height = 27, units = "cm", res = 1000)
+
+gridExtra::grid.arrange(
+  plot_with_arrows,
+  mpa_plot, 
+  fig_2c,
+  ncol=2,
+  layout_matrix = rbind(c(1,1,1,2,2),
+                        c(1,1,1,2,2),
+                        c(1,1,1,2,2),
+                        c(1,1,1,2,2),
+                        c(3,3,3,3,3),
+                        c(3,3,3,3,3),
+                        c(3,3,3,3,3)))
+# Add labels 
+grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
+                just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
+grid::grid.text("B", x=unit(0.60, "npc"), y=unit(0.98, "npc"), 
+                just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
+grid::grid.text("C", x=unit(0.01, "npc"), y=unit(0.42, "npc"), 
+                just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
+dev.off()

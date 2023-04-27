@@ -58,7 +58,7 @@ data_emb <- lapply(embed_methods, function(x){
 names(data_emb) <- embed_methods
 
 lapply(data_emb, plot, type = "3vars")
-plot_R_NX(data_emb)
+dimRed::plot_R_NX(data_emb)
 
 # Tuto pkg
 # embed_methods <- c("Isomap", "PCA") 

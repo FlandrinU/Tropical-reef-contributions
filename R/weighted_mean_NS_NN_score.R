@@ -714,12 +714,6 @@ prop_plot
 ggsave( here::here("outputs", "figures", "Proportion of MPA in NN and NS quartiles.png"), 
         plot = prop_plot, width=6, height = 6 )
 
-## test on MPA
-mpa_prop <- NN_NS_with_product |> 
-  dplyr::mutate( NN = round(NN_score,1)) |> 
-  dplyr::group_by(NN) |> 
-  dplyr::mutate(fished_prop = length(protection))
-
 
 #### map of NN or NS only ####
 map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
@@ -768,3 +762,86 @@ NS_worldwide <- map_NN_or_NS(coord_NN_NS = NN_NS_with_product,
                              xlim= c(-180,180), title="Nature to People contributions worldwide")
 ggsave( here::here("outputs", "figures", "world map with NS score.png"), plot = NS_worldwide, width=10, height = 6 )
 
+
+
+#### plot outliers only ####
+function_outliers_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36, 31),
+                                  xlim= c(-180,180), title=""){
+  ggplot(coord_NN_NS) +
+    geom_sf(data = coast, color = NA, fill = "lightgrey") +
+    
+    #down left quarter
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+               size = 4, stroke = 1, 
+               color= "grey10",
+               data = coord_NN_NS[which(coord_NN_NS$rank_d_l >=
+                                          quantile(coord_NN_NS$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
+    
+    ggnewscale::new_scale("colour") +
+    
+    #up left quarter
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+               size = 4, stroke = 1,
+               color= "dodgerblue3",
+               data = coord_NN_NS[which(coord_NN_NS$rank_u_l >=
+                                          quantile(coord_NN_NS$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
+    
+    ggnewscale::new_scale("colour") +
+    
+    #down right quarter
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+               size = 4, stroke = 1, 
+               color= "forestgreen",
+               data = coord_NN_NS[which(coord_NN_NS$rank_d_r >=
+                                          quantile(coord_NN_NS$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
+    
+    ggnewscale::new_scale("colour") +
+    
+    #up right quarter
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+               size = 4, stroke = 1, 
+               color= "darkgoldenrod3",
+               data = coord_NN_NS[which(coord_NN_NS$rank_u_r >=
+                                          quantile(coord_NN_NS$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
+    
+    #add shape
+    scale_shape_manual(values=c(20,17,18))+
+    
+    coord_sf(xlim= xlim, ylim = ylim, expand = FALSE) +
+    guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
+    # scale_size_continuous(range = c(0.5, 4), guide = FALSE) +
+    theme_minimal()+
+    labs(title = title,
+         x="Longitude", y= "Latitude") +
+    theme(legend.position = "right",
+          plot.title = element_text(size=10, face="bold"),
+          # axis.text.x = element_blank(),
+          # axis.ticks.x = element_blank(),
+          plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
+    )
+}
+
+#world
+outliers_world <- function_outliers_on_map( NN_NS_with_product, 
+                       ylim = c(-36, 31),
+                       xlim= c(-180,180),
+                       title = "Trade-offs in Nature Based Contribution Worldwide")
+ggsave( here::here("outputs", "figures", "world map with NN and NS outliers.png"), 
+        plot = outliers_world, width=11, height = 6 )
+
+#Australia
+function_outliers_on_map( NN_NS_with_product, 
+                       ylim = c(-39, 0),
+                       xlim= c(100,180),
+                       title = "Trade-offs in Nature Based Contribution in Australia")
+
+#Caraib
+function_outliers_on_map( NN_NS_with_product, 
+                       ylim = c(-5, 20),
+                       xlim= c(-95,-70),
+                       title = "Trade-offs in Nature Based Contribution in caraïbe")
+#Polynesia
+function_outliers_on_map( NN_NS_with_product, 
+                       ylim = c(-25, -10),
+                       xlim= c(-180,-130),
+                       title = "Trade-offs in Nature Based Contribution in polynesia")

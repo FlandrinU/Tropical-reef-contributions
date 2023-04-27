@@ -239,7 +239,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   
   colSums(contributions)
   rowSums(contributions)
-  
+
   
   png(filename = here::here("outputs", "figures","contribution_NCP_in_dimensions.png"), 
       width= 12, height = 15, units = "cm", res = 1000)
