@@ -186,6 +186,85 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   })
   dev.off() 
   
+##------------- Check spatial robustness with Mantel test ---------------
+  corr_matrix_all_data <- cor(NCP_site_clean)
+  
+  load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
+  NCP_site_wo <- subset(NCP_site_condition, 
+                           select = -c(SiteCode, SiteCountry, SurveyDate,
+                                       SiteEcoregion, SurveyDepth, 
+                                       SiteMeanSST, SiteLatitude, SiteLongitude,
+                                       HDI, MarineEcosystemDependency,
+                                       coral_imputation, gravtot2, mpa_name,
+                                       mpa_enforcement, protection_status, 
+                                       mpa_iucn_cat))
+  corr_matrix_wo_aust <- cor(NCP_site_wo)
+  
+  load(here::here("outputs","NCP_site_log_only_australia.Rdata"))
+  NCP_site_only <- subset(NCP_site_condition, 
+                           select = -c(SiteCode, SiteCountry, SurveyDate,
+                                       SiteEcoregion, SurveyDepth, 
+                                       SiteMeanSST, SiteLatitude, SiteLongitude,
+                                       HDI, MarineEcosystemDependency,
+                                       coral_imputation, gravtot2, mpa_name,
+                                       mpa_enforcement, protection_status, 
+                                       mpa_iucn_cat))
+  corr_matrix_only_aust <- cor(NCP_site_only)
+  
+  mantel_test_aust <- vegan::mantel(corr_matrix_wo_aust, corr_matrix_only_aust)
+  
+  
+  ## Plot correlation between corr_matrix
+  corr_matrix_wo_aust[upper.tri(corr_matrix_wo_aust)] <- NA
+  corr_matrix_only_aust[upper.tri(corr_matrix_only_aust)] <- NA
+  corr_matrix_all_data[upper.tri(corr_matrix_all_data)] <- NA
+  
+  mantel_data <- dplyr::left_join(reshape2::melt(corr_matrix_wo_aust),
+                                  reshape2::melt(corr_matrix_only_aust),
+                                  by=c("Var1", "Var2")) |> 
+    dplyr::left_join(reshape2::melt(corr_matrix_all_data)) |> 
+    dplyr::rename(wo_aust= "value.x", only_aust = "value.y", all_data="value")|>
+    na.omit()
+    
+  
+  plot_mantel <- ggplot(mantel_data, aes(x=wo_aust, y=only_aust, colour = all_data)) +
+    geom_point()+theme_bw()+
+    scale_colour_gradientn(name  ="correlation with \n all data",
+                           colours = RColorBrewer::brewer.pal(n = 8, name = "RdBu"))+
+    xlab("Correlations without australia")+
+    ylab("Correlations in australia only") +
+    guides(colour = guide_colourbar(title.position="top")) +
+    theme(legend.position = "right",
+          legend.key.size = unit(0.5, 'cm'),
+          legend.direction = "vertical",
+          legend.title = element_text( size = 11),
+          legend.background = element_rect(fill='transparent'),
+          axis.title=element_text(size=14)) +
+    geom_abline(intercept = 0, slope = 1,color="#757575",linetype = "dashed",
+                linewidth = 1)+
+    geom_label(aes(label = paste0("Mantel statistic r: ", 
+                                  round(mantel_test_aust[["statistic"]], 3),
+                                  ", p = ", mantel_test_aust[["signif"]], 
+                                  "\n 95% quantiles in null model: ", 
+                                  round(quantile(mantel_test_aust[["perm"]], 0.95),2)),
+                   y = 0.9, x = -0.8), size = 3,
+               color = "black", hjust = 0)+
+    ggrepel::geom_label_repel(
+      data=dplyr::filter(mantel_data, abs(wo_aust - only_aust) >
+                           quantile(abs(wo_aust - only_aust), 0.98) ),
+      aes(label= paste(Var1, "-", Var2)),
+      size=2, fill = "white", 
+      min.segment.length = 0.1,
+      color = "black", alpha = 0.8,
+      direction = "both",
+      seed = 1968)
+  
+  plot_mantel
+  ggsave(filename = here::here("outputs", "figures",
+                               "Mantel_test_correlation_between_corrmatrix.png"),
+         plot_mantel, width = 8, height =5)
+  
+  
 ##-------------Links of socio-envir with biomass -------------
   socio_envir <- c("HDI", "MarineEcosystemDependency", "coral_imputation",
                    "SiteLatitude", "mpa_iucn_cat")
@@ -211,26 +290,28 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
 ##-------------plot NCPs on map-------------
   #plot function
   plot_NCP_on_world_map <- function(NCP = "Taxonomic_Richness", xlim=c(-180,180), ylim = c(-36, 31),
-                                    title="world map with "){
+                                    title="world map with ", jitter=1.5, pt_size=2){
+    data <- NCP_site_log_transformed[order(NCP_site_log_transformed[,NCP][[1]]),]
     library(ggplot2)
-    map <- ggplot(NCP_site_log_transformed) +
+    map <- ggplot(data) +
       geom_sf(data = coast, color = "grey30", fill = "lightgrey",
-              aes(size=0.1)) +
+              size=0.1) +
       
-      geom_point(data=NCP_site_log_transformed,
-                 size = 4, shape = 20,
+      geom_point(data=data,
+                 size = pt_size, shape = 20,
+                 position=position_jitter(width=jitter, height = jitter),
                  aes(x = SiteLongitude, y = SiteLatitude,
-                     colour= NCP_site_log_transformed[,NCP][[1]],
-                     alpha = scale(NCP_site_log_transformed[,NCP][[1]]))) +
-      scale_colour_gradient(NCP,
-                            low = "dodgerblue", high="darkred",
-                            na.value=NA) +
+                     colour= data[,NCP][[1]],
+                     alpha = 0.7)) +
+      scale_colour_gradientn(name  = NCP,
+                             colours = rev(RColorBrewer::brewer.pal(n = 8, name = "RdBu")))+
+      
       
       coord_sf(xlim, ylim, expand = FALSE) +
-      guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-      scale_size_continuous(range = c(0.5, 4), guide = "none") +
+      guides(alpha= "none" ) +
+      # scale_size_continuous(range = c(0.5, 4), guide = "none") +
       theme_minimal()+
-      labs(title = paste0(NCP, " geographic distribution"),
+      labs(#title = paste0(NCP, " geographic distribution"),
            x="", y= "") +
       theme(legend.position = "right",
             plot.title = element_text(size=10, face="bold"),
@@ -245,24 +326,35 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
   # save maps
 parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
-    plot_NCP_on_world_map(NCP, xlim=c(-180,180), ylim = c(-36, 31), title="world_map_with_")
+    plot_NCP_on_world_map(NCP, xlim=c(-180,180), ylim = c(-36, 31), 
+                          title="world_map_with_", jitter=1.5, pt_size=2)
 })
   
   #focus on Biomass
-  plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-39, 0), xlim= c(100,180),
+                        title= "Australian_map_with_", jitter=0.5, pt_size=4)
+  plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-5, 30), xlim= c(-100,-55),
+                        title= "Caraib_map_with_", jitter=0.5, pt_size=4)
+  plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-27, -10), xlim= c(-180,-110),
+                        title= "Pacific_map_with_", jitter=0.5, pt_size=4)
   
   #focus on robustness
-  plot_NCP_on_world_map(NCP= "Trophic_web_robustness", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "Trophic_web_robustness", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "Trophic_web_robustness", ylim = c(-39, 0), xlim= c(100,180),
+                        title= "Australian_map_with_", jitter=0.5, pt_size=4)
+  plot_NCP_on_world_map(NCP= "Trophic_web_robustness", ylim = c(-5, 30), xlim= c(-100,-55),
+                        title= "Caraib_map_with_", jitter=0.5, pt_size=4)
   
   #focus on mean TL
-  plot_NCP_on_world_map(NCP= "mean_Trophic_Level", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "mean_Trophic_Level", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "mean_Trophic_Level", ylim = c(-39, 0), xlim= c(100,180),
+                        title= "Australian_map_with_", jitter=0.5, pt_size=4)
+  plot_NCP_on_world_map(NCP= "mean_Trophic_Level", ylim = c(-5, 30), xlim= c(-100,-55),
+                        title= "Caraib_map_with_", jitter=0.5, pt_size=4)
   
   # #focus on public interest
-  plot_NCP_on_world_map(NCP= "Public_Interest", ylim = c(-39, 0), xlim= c(100,180), title= "Australian_map_with_")
-  plot_NCP_on_world_map(NCP= "Public_Interest", ylim = c(-5, 30), xlim= c(-100,-55), title= "Caraib_map_with_")
+  plot_NCP_on_world_map(NCP= "Public_Interest", ylim = c(-39, 0), xlim= c(100,180),
+                        title= "Australian_map_with_", jitter=0.5, pt_size=4)
+  plot_NCP_on_world_map(NCP= "Public_Interest", ylim = c(-5, 30), xlim= c(-100,-55),
+                        title= "Caraib_map_with_", jitter=0.5, pt_size=4)
   
 ##-------------plot MPAs on map-------------
 NCP_site$mpa_iucn_cat[which(NCP_site$mpa_iucn_cat == "Not Applicable" |

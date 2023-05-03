@@ -26,7 +26,7 @@ data <- NN_NS_scores
 score <- "NN_score"
 res <- c(1000, 1000) #resolution of map x, y
 my_buffer <- 200*1000 # The size of the buffers around the points in metres
-p <- 1 #power for IDW
+p <- 0.02 #power for IDW
 #1.6 for ella Clausius
 #0.5 was the default in the old code 
 #lower values mean its more influenced by distances further away
@@ -105,8 +105,8 @@ map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
   ggplot(coord_NN_NS) +
     geom_tile(aes(x = SiteLongitude, y = SiteLatitude,
                    fill = NCP)) +
-    scale_fill_gradientn(colours = colorRampPalette(rev(c( col_NCP ,"white", "grey30")))(1000)) +
-
+    # scale_fill_gradientn(colours = colorRampPalette(rev(c( col_NCP ,"white", "grey30")))(1000), midpoint=0) +
+    scale_fill_gradient2(low="grey30", mid="white", high=col_NCP, midpoint = 0)+
     geom_sf(data = coast, color = NA, fill = "lightgrey") +
     coord_sf(xlim=xlim, ylim = ylim, expand = FALSE) +
     

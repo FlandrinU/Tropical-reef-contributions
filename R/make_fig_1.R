@@ -221,25 +221,25 @@ elbow_plot <- ggplot(variance_explained,
   geom_bar(data = as.data.frame(eig)[c(1:ndim),], 
            aes(x= c(1:ndim), y = variance.percent), 
            stat= "identity",
-           col = "grey30",
-           fill = "grey30")+
+           col = "grey50",
+           fill = "grey50")+
   
   #cumulative curve
-  stat_summary(fun = "mean", geom = "line", size = 0.5, alpha = 1) +
+  stat_summary(fun = "mean", geom = "line", size = 0.5, alpha = 0.8) +
   stat_summary(fun = "mean", size = 0.1) +
   scale_y_continuous(labels = c("", "25", "50", "75", "100%"))+
   
   # elbow point
   geom_segment(aes(x = elbow_point[1], xend = elbow_point[1],
                    y = 0 , yend = elbow_point[2]),
-               color = "black", linetype = "dotted", linewidth = 1) +
+               color = "grey30", linetype = "dotted", linewidth = 1) +
   
   geom_segment(aes(y = elbow_point[2], yend = elbow_point[2],
                    x = 0, xend = elbow_point[1]),
-               color = "black", linetype = "dotted", linewidth = 1) +
+               color = "grey30", linetype = "dotted", linewidth = 1) +
   
   geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
-             color = "black", size = 4, shape = 19)+
+             color = "grey30", size = 4, shape = 19)+
   # geom_label(aes(label = paste0("Elbow rule: ", elbow_point[1], " dimensions \n", 
   #                               "Variance explained = ", round(elbow_point[2],1) , " %"),
   #                y = elbow_point[2]-5, x = elbow_point[1]+1), size = 4,
@@ -253,7 +253,7 @@ elbow_plot <- ggplot(variance_explained,
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         plot.background = element_rect(fill = "transparent", color=NA),
-        panel.background = element_rect(fill = alpha("white", 0.7), color=NA), 
+        panel.background = element_rect(fill = alpha("white", 0.8), color=NA), 
         strip.text.x = element_blank(),
         axis.text = element_text(size = 12, face = "bold"),
         # axis.title.x = element_text(size = 15, face = "bold",
@@ -263,7 +263,7 @@ elbow_plot <- ggplot(variance_explained,
                                   hjust = -.1),
         legend.position = "none") +
   coord_cartesian(expand = FALSE, xlim = c(0, ndim), ylim = c(0, 100))+
-  harrypotter::scale_colour_hp_d(option = "DracoMalfoy")
+  harrypotter::scale_colour_hp_d(option = "DracoMalfoy", alpha = 0.8)
     
 
 
@@ -274,39 +274,6 @@ elbow_plot
 #        width = 15, height =10 )
 
 ##------------------------figure 1d: contributions ------------------------------
-# #divide into two plot
-# contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
-# contributions_NN <- contributions_NN[order(-contributions_NN[,"Dim.1"]), ]
-# row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
-# par(mar = c(0,0,0,0), new = T)
-# corrplot::corrplot(contributions_NN, is.corr=FALSE, 
-#                      col = c("forestgreen"), tl.col = "black", 
-#                      cl.pos = "n", tl.cex = 0.7)
-# NN_corr <- grDevices::recordPlot()
-# 
-# contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
-# contributions_NS <- contributions_NS[order(-contributions_NS[,"Dim.1"]), ]
-# row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
-# row.names(contributions_NS)[1] <- paste(
-#   c(rep(" ", 
-#       max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])+3),
-#   row.names(contributions_NS)[1]),
-#   collapse="") #change legend length to have same width in both plot
-# par(mar = c(0,0,0,0), new = T)
-# corrplot::corrplot(contributions_NS, is.corr=FALSE,
-#                      col = c("dodgerblue3"), tl.col = "black", 
-#                      cl.pos = "n", tl.pos = 'l', tl.cex = 0.7)
-# NS_corr <- grDevices::recordPlot()
-# 
-# #merge the two plot
-# png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
-#     width=10, height = 24, units = "cm", res = 1000)
-# print(cowplot::plot_grid(NN_corr, NS_corr, ncol=1, 
-#                    rel_heights = c(nrow(contributions_NN)+5, nrow(contributions_NS)), #change 0.7 to ajust relative sizes
-#                    align= "hv"))
-# dev.off()
-
-
 var <- factoextra::get_pca_var(pca)
 contributions <- var$contrib
 for( i in 1:ncol(contributions)){ 
@@ -333,15 +300,63 @@ png(filename = here::here("outputs", "figures","contribution_in_total_variance_N
     width=11, height = 20, units = "cm", res = 1000)
 layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
               ncol = 1))
-par(mar = c(0,0,0,0))
+par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
 corrplot::corrplot(contributions_NN, is.corr=FALSE, 
                    col = c("forestgreen"), tl.col = "black", 
                    cl.pos = "n", tl.cex = 1.2,
-                   tl.srt = 60)
-# text(-3,21,"D)",cex=1.5)
+                   tl.srt = 60, na.label.col = "transparent")
 corrplot::corrplot(contributions_NS, is.corr=FALSE,
                    col = c("dodgerblue3"), tl.col = "black", 
-                   cl.pos = "n", tl.pos = 'l', tl.cex = 1.2)  
+                   cl.pos = "n", tl.pos = 'l', tl.cex = 1.2,  na.label.col = "transparent")
+dev.off()
+
+
+#-----other option------- from N Casajus
+var <- factoextra::get_pca_var(pca)
+contributions <- var$contrib
+for( i in 1:ncol(contributions)){ 
+  contributions[,i] <- contributions[,i] * 
+    variance_explained$contribution_coefficient[i]
+  }
+
+colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+
+contributions <- cbind(contributions, cat=grp_NN_NS[rownames(contributions)]) 
+contributions <- contributions[order(-contributions[,1], contributions[,"cat"]),]
+
+
+contributions <- contributions[ c(
+  order(contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ],][,1]),
+  order(contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ],][,1])
+  ), ]
+rownames(contributions)[order(-contributions[,1])]
+
+
+
+#divide into two plot
+contributions_NN <- contributions
+contributions_NN[names(grp_NN_NS)[ grp_NN_NS!="NN" ],] <- NA
+row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
+
+contributions_NS <- contributions
+contributions_NS[names(grp_NN_NS)[ grp_NN_NS!="NS" ],] <- NA
+row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
+
+# plot pannel
+png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
+    width=11, height = 20, units = "cm", res = 1000)
+par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
+corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+                   col = c("forestgreen"), tl.col = "black", 
+                   cl.pos = "n", tl.cex = 1.2,
+                   tl.srt = 60, 
+                   na.label.col = "transparent")
+
+corrplot::corrplot(contributions_NS, is.corr=FALSE,
+                   col = c("dodgerblue3"), tl.col = "transparent",
+                   cl.pos = "n", tl.cex = 1.2, bg = "transparent",
+                   tl.srt = 60, na.label.col = "transparent", 
+                   add = TRUE)
 dev.off()
 
 

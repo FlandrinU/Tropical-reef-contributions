@@ -130,7 +130,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
     ), ],
     aes(y= NS_score, x = NN_score, shape = protection),
     size = 3,  
-    stroke = 1)+
+    stroke = 0.5)+
 
   
     # see MPAs
@@ -211,13 +211,52 @@ plot_with_arrows <- ggplot_gtable(ggplot_build(NN_NS_plot))
 plot_with_arrows$layout$clip[plot_with_arrows$layout$name == "panel"] <- "off"
 grid::grid.draw(plot_with_arrows)
 
+# Construct gradient for legend
+png(filename = here::here("outputs", "figures","legend_gradient_NN.png"), 
+    width=40, height = 3, units = "cm", res = 1000)
+  cols = colorRampPalette(c("white", "forestgreen"))(500)
+  par(mar = rep(0, 4), xaxs = "i", yaxs = "i")
+  plot(0, type = "n", bty = "n", xlim = c(0, length(cols)), ylim = c(-0.5, 0.5), axes = FALSE, 
+       ann = FALSE)
+  for (i in 1:length(cols)) {
+    rect(i - 1, 0.5, i, 0.5 - i /length(cols), border = NA, col = cols[i])
+  }
+  abline(h=0.5)
+  abline(v=length(cols))
+  abline(a=0.5, b=-1/length(cols))
+dev.off()
 
+png(filename = here::here("outputs", "figures","legend_gradient_NS.png"), 
+    width=3, height = 15, units = "cm", res = 500)
+  cols = colorRampPalette(c("white", "dodgerblue3"))(500)
+  par(mar = rep(0, 4), xaxs = "i", yaxs = "i")
+  plot(0, type = "n", bty = "n", ylim = c(0, length(cols)), xlim = c(-0.5, 0.5), axes = FALSE, 
+       ann = FALSE)
+  for (i in 1:length(cols)) {
+    rect(0.5 - i /length(cols), i - 1, 0.5, i, border = NA, col = cols[i])
+  }
+  abline(h=0.5)
+  abline(v=length(cols))
+  abline(a=0.5, b=-1/length(cols))
+dev.off()
 
+##Add gradient
+grad_NN <- cowplot::ggdraw() +
+  cowplot::draw_image(here::here("outputs", "figures","legend_gradient_NN.png"))
+grad_NS <- cowplot::ggdraw() +
+  cowplot::draw_image(here::here("outputs", "figures","legend_gradient_NS.png"))
 
+fig_2a <- NN_NS_plot +
+  annotation_custom( ggplotGrob(grad_NN),
+                     xmin=-3,
+                     xmax=1,
+                     ymin = -2.5,
+                     ymax = -2.2)
+fig_2a
 ## --------------- Figure 2b: Stack plot mpa proportion -------------
 mpa_proportion <- data.frame(rect= NA, tot=NA, quarter=NA, protection=NA, Freq=NA, pct=NA)
 quart = c("up_right", "up_left", "down_left", "down_right")
-names = c("NN +  NS +", "NN -  NS +", "NN -  NS -", "NN +  NS -")
+names = c("4-bright", "3", "1-dark", "2")
 for(i in c(1:4)){
   df <- cbind(c(names[i], NA,NA),
               rep(sum(NN_NS_with_product[,quart[i]], na.rm = T), 3),
@@ -233,12 +272,12 @@ for(i in c(1:4)){
 
 #order the stack plot
 mpa_proportion$protection <- factor(mpa_proportion$protection , levels = c("No take", "Restricted", "Fished"))
-mpa_proportion$quarter <- factor(mpa_proportion$quarter , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +"))
-mpa_proportion$rect <- factor(mpa_proportion$rect , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +"))
+# mpa_proportion$quarter <- factor(mpa_proportion$quarter , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +"))
+# mpa_proportion$rect <- factor(mpa_proportion$rect , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +"))
 
 # Stacked
 mpa_plot <- ggplot(mpa_proportion[-1,], 
-                   aes(x=factor(quarter , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +")),
+                   aes(x=quarter,
                        y=Freq, 
                        fill= protection)) +
   geom_bar(position = position_fill(), stat = "identity") +
@@ -253,12 +292,13 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
   
   
   #Add rectangles
-  geom_bar(aes(x=factor(rect , levels = c("NN -  NS -", "NN +  NS -", "NN -  NS +", "NN +  NS +")),
+  geom_bar(aes(x=rect,
                color=rect),
            stat = "identity",
            alpha=0, linewidth=1.5,
            position = position_fill())+
   scale_colour_manual(values=c("grey10", "forestgreen", "dodgerblue3", "darkgoldenrod3" )) +
+  scale_x_discrete(labels=c("nn ns", "NN ns", "NS nn","NN NS"))+
   geom_text(size = 5, aes(y=1.07, label = paste0("n=", tot)))+
   
   #Define theme
@@ -286,6 +326,7 @@ stroke = 0.5
 size_point = 4
 width_jitter = 2
 height_jitter = 2
+qt = 0.95
 
 set.seed(06)
 
@@ -300,7 +341,7 @@ fig_2c <- ggplot() +
              fill= "grey10",
              data = NN_NS_with_product[
                which(NN_NS_with_product$rank_d_l >=
-                       quantile(NN_NS_with_product$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
+                       quantile(NN_NS_with_product$rank_d_l, probs=c(qt), na.rm=T)), ] )+
   
   
   #up left quarter
@@ -311,7 +352,7 @@ fig_2c <- ggplot() +
              fill= "dodgerblue3",
              data = NN_NS_with_product[
                which(NN_NS_with_product$rank_u_l >=
-                       quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
+                       quantile(NN_NS_with_product$rank_u_l, probs=c(qt), na.rm=T)), ] )+
   
   
   #down right quarter
@@ -321,7 +362,7 @@ fig_2c <- ggplot() +
              fill= "forestgreen",
              data = NN_NS_with_product[
                which(NN_NS_with_product$rank_d_r >=
-                       quantile(NN_NS_with_product$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
+                       quantile(NN_NS_with_product$rank_d_r, probs=c(qt), na.rm=T)), ] )+
   
   
   #up right quarter
@@ -331,11 +372,11 @@ fig_2c <- ggplot() +
              fill= "darkgoldenrod3",
              data = NN_NS_with_product[
                which(NN_NS_with_product$rank_u_r >=
-                       quantile(NN_NS_with_product$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
+                       quantile(NN_NS_with_product$rank_u_r, probs=c(qt), na.rm=T)), ] )+
   
   
   # see MPAs
-  scale_shape_manual(values=c(21,24,23))+
+  scale_shape_manual(values=c(24,23,21))+
   
   coord_sf(xlim = c(-180,180), ylim= c(-37, 32),expand = FALSE) +
   theme_bw()+
@@ -348,7 +389,7 @@ fig_2c <- ggplot() +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_rect(fill = "grey95"),
-        legend.position = "none",
+        legend.position = "right",
         plot.title = element_text(size=10, face="bold"),
         # axis.text.x = element_blank(),
         # axis.ticks.x = element_blank(),
@@ -373,7 +414,7 @@ ggsave(plot=arrange, filename = here::here("outputs", "figures", "Panel_NNvsNS_a
 
 
 
-png(filename = here::here("outputs", "figures","Panel_fig_2.png"), 
+png(filename = here::here("outputs", "figures","Panel_fig_2_quantile5.png"), 
     width=40, height = 27, units = "cm", res = 1000)
 
 gridExtra::grid.arrange(

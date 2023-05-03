@@ -12,7 +12,7 @@
 
 #-----------------Loading packages-------------------
 pkgs <- c("here", "tidyverse", "ggplot2", "sf", "patchwork", "stats", "ggrepel",
-          "ggfun", "scatterpie", "scales", "ggpattern", "ggpubr")
+          "ggfun", "scatterpie", "scales", "ggpattern", "ggpubr", "lsr")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -543,7 +543,7 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
     
     #down left quarter
     geom_point(data= dplyr::filter(coord_NN_NS,  down_left == 1),
-               size = 2, alpha = 0.5,
+               size = 2, alpha = 0.7,
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="down_left",
                           low = "white", high="grey20",
@@ -553,7 +553,7 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
     
     #up left quarter
     geom_point(data= dplyr::filter(coord_NN_NS,  up_left == 1),
-               size = 2, alpha = 0.5,
+               size = 2, alpha = 0.7,
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="up_left",
                           low = "white", high="dodgerblue3",
@@ -569,7 +569,7 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
     
     #down right quarter
     geom_point(data= dplyr::filter(coord_NN_NS,  down_right == 1),
-               size = 2, alpha = 0.5,
+               size = 2, alpha = 0.7,
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="down_right",
                           low = "white", high="forestgreen",
@@ -585,20 +585,20 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
     
     #up right quarter
     geom_point(data= dplyr::filter(coord_NN_NS,  up_right == 1),
-               size = 2, alpha = 0.5,
+               size = 2, alpha = 0.7,
                aes(x = SiteLongitude, y = SiteLatitude, colour= rank)) +
     scale_colour_gradient(name="up_right",
-                          low = "white", high="firebrick",
+                          low = "white", high="darkgoldenrod3",
                           limits =quantile(coord_NN_NS$rank * coord_NN_NS$up_right,
                                            probs=c( 0.5,1), na.rm=T), na.value=NA) +
     geom_point(aes( x= SiteLongitude, y = SiteLatitude),
                size = 2, stroke = 1, shape = 1,
-               color= "darkred",
+               color= "darkgoldenrod4",
                data = coord_NN_NS[which(coord_NN_NS$rank_u_r >=
                          quantile(coord_NN_NS$rank_u_r, probs=c(0.99), na.rm=T)), ] )+
 
-        #add transparency
-    scale_alpha_continuous(range = c(-0.5, 0.6)) +
+    #     #add transparency
+    # scale_alpha_continuous(range = c(-0.5, 0.6)) +
     
     
     coord_sf(xlim= xlim, ylim = ylim, expand = FALSE) +
@@ -664,10 +664,31 @@ ggpubr::ggarrange(world_map_zoom, # First row with world map
                   ggpubr::ggarrange(caraib_map_NN_NS, gold_coast_map_NN_NS, 
                                     ncol = 2, labels = c("B", "C")), # Second row with zooms
                   nrow = 2, labels = "A") 
-ggsave(plot = last_plot(), filename = here::here("outputs", "figures",
-                                                 "world map with NN and NS score with zoom.png"))
+ggsave(plot = last_plot(), width=11, height =7,
+       filename = here::here("outputs", "figures", "world map with NN and NS score with zoom.png"))
 
-#### which proportion of mpa in quantiles: ####
+##------------------------Study MPAs distribution ------------------------------------
+mpa_distribution <- NN_NS_with_product |>
+  dplyr::mutate(quarter = ifelse(!is.na(up_right), "up_right", ifelse(
+                            !is.na(up_left), "up_left", ifelse(
+                              !is.na(down_left), "down_left", "down_right")))) |>
+  dplyr::select(SiteCode, protection, quarter)
+
+contingency_table <-table(mpa_distribution$quarter, 
+                                     mpa_distribution$protection)
+margin.table(contingency_table,1)
+margin.table(contingency_table,2)
+prop.table(contingency_table,1)
+
+#chi-squared test
+summary(contingency_table)
+# Test for independence of all factors:
+#   Chisq = 19.067, df = 6, p-value = 0.004051
+
+# Effect size
+lsr::cramersV(contingency_table) #0.0877899
+
+## which proportion of mpa in NN and NS quantiles:
 df_plot_mpa <- NN_NS_with_product |>
   dplyr::filter(NN_score > quantile(NN_NS_with_product$NN_score, 0.75)) |>
   dplyr::mutate(score = "Nature to Nature", quantile = "best 25%") |>
@@ -742,14 +763,17 @@ map_NN_or_NS <- function(coord_NN_NS = NN_NS_with_product,
        x="Longitude", y= "Latitude") +
   theme(
     legend.position = "none",
-    plot.title = element_text(size=10, face="bold"))
+    plot.title = element_text(colour = col_NCP, 
+                              face = "bold", size = 12,
+                              margin=margin(t = 20, b = -15),
+                              hjust = 0.01))
 }
 ## NN
 NN_worldwide <- map_NN_or_NS(coord_NN_NS = NN_NS_with_product,
                             NCP = NN_NS_with_product$NN_score,
                             col_NCP= "forestgreen",
                             ylim = c(-36, 31),
-                            xlim= c(-180,180), title="Nature to nature contributions worldwide")
+                            xlim= c(-180,180), title="Nature to Nature")
 ggsave( here::here("outputs", "figures", "world map with NN score.png"), plot = NN_worldwide, width=10, height = 6 )
 
 
@@ -759,9 +783,14 @@ NS_worldwide <- map_NN_or_NS(coord_NN_NS = NN_NS_with_product,
                              NCP = NN_NS_with_product$NS_score,
                              col_NCP= "dodgerblue3",
                              ylim = c(-36, 31),
-                             xlim= c(-180,180), title="Nature to People contributions worldwide")
+                             xlim= c(-180,180), title="Nature to People")
 ggsave( here::here("outputs", "figures", "world map with NS score.png"), plot = NS_worldwide, width=10, height = 6 )
 
+#panel
+ggpubr::ggarrange(NN_worldwide, NS_worldwide,
+                  nrow = 2, labels = c("A", "B")) 
+ggsave(plot = last_plot(), width=11, height =6,
+       filename = here::here("outputs", "figures", "world map with NN and NS score SEPARATLY.png"))
 
 
 #### plot outliers only ####
