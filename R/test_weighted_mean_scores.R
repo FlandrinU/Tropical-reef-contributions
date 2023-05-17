@@ -93,6 +93,7 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
 
 ##-------------Check the Kark 2002 formula-------------
 set.seed(6)
+####5 variables
 dat <- faux::rnorm_multi(n = 1000, 
                    mu = c(0, 10, 20, 25,10),
                    sd = c(1, 5, 5,1,2),
@@ -132,7 +133,89 @@ pca_test <- FactoMineR::PCA(dat, scale.unit = FALSE, graph=F, ncp=3,
                             quanti.sup = c("EDS", "mean")) 
 factoextra::fviz_pca_var(pca_test, repel = TRUE )
 
+### 3 variables
+dat <- faux::rnorm_multi(n = 1000, 
+                         mu = c(0, 10, 20),
+                         sd = c(1, 5, 2),
+                         r = c(0.9,0,0), 
+                         varnames = c("A", "B", "C"),
+                         empirical = FALSE)
+plot(dat$A~dat$C)
+plot(dat$B~dat$C)
+plot(dat$A~dat$B)
 
+dat <- scale(dat)
+corr_pearson <- stats::cor(dat, method="pearson")
+
+## calculates weighting parameter (Kark 2002):
+weighting_par <- c()
+for( i in colnames(dat)){
+  S<-0
+  for( j in colnames(dat)){
+    S <- S + (1 - abs(corr_pearson[i,j])/2)
+  }
+  weighting_par <- c(weighting_par, 1/2 + S)
+}
+
+## calculates mean score: Estimator in Dependant Sample (Kark 2002):
+EDS <- c()
+for( site in 1:nrow(dat)){
+  EDS_site <- sum(weighting_par * dat[site,]) / sum(weighting_par)
+  EDS <- c(EDS, EDS_site)
+}
+
+mean <- rowMeans(dat)
+
+## add mean score:
+dat <- cbind(dat, EDS, mean)
+pca_test <- FactoMineR::PCA(dat, scale.unit = FALSE, graph=F, ncp=3,
+                            quanti.sup = c("EDS", "mean")) 
+factoextra::fviz_pca_var(pca_test, repel = TRUE )
+
+
+### 10 variables
+dat <- faux::rnorm_multi(n = 1000, 
+                         mu = c(0, 10, 20, 25,10,0,0,0,0,0),
+                         sd = c(1, 5, 5,1,2,1,1,1,1,1),
+                         r = c(0.9,0.9,0,0,0,0,0,0,0,
+                               0.9,0,0,0,0,0,0,0,
+                               0,0,0,0,0,0,0,
+                               0.9,0.9,0,0,0,0,
+                               0.9,0,0,0,0,
+                               0,0,0,0,
+                               0,0,0,
+                               0.9,0.9,
+                               0.9), 
+                         varnames = c("A", "B", "C", "D","E", "F", "G", "H", "I", "J"),
+                         empirical = FALSE)
+
+dat <- scale(dat)
+corr_pearson <- stats::cor(dat, method="pearson")
+
+## calculates weighting parameter (Kark 2002):
+weighting_par <- c()
+for( i in colnames(dat)){
+  S<-0
+  for( j in colnames(dat)){
+    S <- S + (1 - abs(corr_pearson[i,j])/2)
+  }
+  weighting_par <- c(weighting_par, 1/2 + S)
+}
+
+## calculates mean score: Estimator in Dependant Sample (Kark 2002):
+EDS <- c()
+for( site in 1:nrow(dat)){
+  EDS_site <- sum(weighting_par * dat[site,]) / sum(weighting_par)
+  EDS <- c(EDS, EDS_site)
+}
+
+mean <- rowMeans(dat)
+
+## add mean score:
+dat <- cbind(dat, EDS, mean)
+pca_test <- FactoMineR::PCA(dat, scale.unit = FALSE, graph=F, ncp=3,
+                            quanti.sup = c("EDS", "mean")) 
+factoextra::fviz_pca_var(pca_test, repel = TRUE )
 
 
 ####### Test new formula #######

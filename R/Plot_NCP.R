@@ -211,7 +211,22 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
                                        mpa_iucn_cat))
   corr_matrix_only_aust <- cor(NCP_site_only)
   
+  mantel_test_allVSaust <- vegan::mantel(corr_matrix_all_data, corr_matrix_only_aust)
   mantel_test_aust <- vegan::mantel(corr_matrix_wo_aust, corr_matrix_only_aust)
+  
+  
+  load(here::here("outputs","NCP_site_log_SST20.Rdata"))
+  NCP_site_SST20 <- subset(NCP_site_condition, 
+                          select = -c(SiteCode, SiteCountry, SurveyDate,
+                                      SiteEcoregion, SurveyDepth, 
+                                      SiteMeanSST, SiteLatitude, SiteLongitude,
+                                      HDI, MarineEcosystemDependency,
+                                      coral_imputation, gravtot2, mpa_name,
+                                      mpa_enforcement, protection_status, 
+                                      mpa_iucn_cat))
+  corr_matrix_SST20 <- cor(NCP_site_SST20)
+  mantel_test_SST20 <- vegan::mantel(corr_matrix_all_data, corr_matrix_SST20)
+  
   
   
   ## Plot correlation between corr_matrix
@@ -324,12 +339,24 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
     #map
   }
   
-  # save maps
+  # save world maps
 parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
     plot_NCP_on_world_map(NCP, xlim=c(-180,180), ylim = c(-36, 31), 
                           title="world_map_with_", jitter=1.5, pt_size=2)
 })
   
+# save central america maps
+parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
+  plot_NCP_on_world_map(NCP, ylim = c(-5, 30), xlim= c(-100,-55),
+                        title= "Caraib_map_with_", jitter=0.5, pt_size=4)
+})
+
+# save Pacific maps
+parallel::mclapply(colnames(NCP_site_clean), mc.cores=15, function(NCP){
+  plot_NCP_on_world_map(NCP,ylim = c(-27, -10), xlim= c(-180,-110),
+                        title= "Pacific_map_with_", jitter=0.5, pt_size=4)
+})
+
   #focus on Biomass
   plot_NCP_on_world_map(NCP= "Biomass", ylim = c(-39, 0), xlim= c(100,180),
                         title= "Australian_map_with_", jitter=0.5, pt_size=4)

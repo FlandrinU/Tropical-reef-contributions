@@ -81,6 +81,7 @@ NCP_log_transformed <- subset(NCP_site_log_transformed,
                                           mpa_iucn_cat))
 
 #### NCPs distribution
+library(ggplot2)
 plot_distribution <- function(ncp, data){
   col <- fishualize::fish(n = ncol(data), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   names(col) <- colnames(data)
@@ -161,7 +162,16 @@ for( site in 1:nrow(NCP_NN)){
   EDS_NN <- c(EDS_NN, EDS_site)
 }
 
+## test arithmetic mean ##
+weighting_par <- rep(1, length(NN_names))
+mean_NN <- c()
+for( site in 1:nrow(NCP_NN)){
+  EDS_site <- sum(weighting_par * NCP_NN[site,]) / sum(weighting_par)
+  mean_NN <- c(mean_NN, EDS_site) }
 
+plot(EDS_NN ~ mean_NN)
+hist(EDS_NN - mean_NN)
+summary(lm(EDS_NN ~ mean_NN))
 
 #### Nature to Society (NS) score ####
 NS_names <- names(grp_NN_NS)[ grp_NN_NS=="NS" ]
@@ -185,7 +195,16 @@ for( site in 1:nrow(NCP_NS)){
   EDS_NS <- c(EDS_NS, EDS_site)
 }
 
+## test arithmetic mean ##
+weighting_par <- rep(1, length(NS_names))
+mean_NS <- c()
+for( site in 1:nrow(NCP_NS)){
+  EDS_site <- sum(weighting_par * NCP_NS[site,]) / sum(weighting_par)
+  mean_NS <- c(mean_NS, EDS_site) }
 
+plot(EDS_NS ~ mean_NS)
+hist(EDS_NS - mean_NS)
+###
 
 
 NN_NS_scores <- cbind(NCP_site_log_transformed[ , c("SiteCode", "SiteLongitude", "SiteLatitude", 
@@ -196,6 +215,7 @@ NN_NS_scores <- cbind(NCP_site_log_transformed[ , c("SiteCode", "SiteLongitude",
                                                     "mpa_iucn_cat")],
   data.frame(NN_score = EDS_NN, NS_score = EDS_NS) )
 save(NN_NS_scores, file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
+
 
 ##-------------plot NN and NS scores-------------
 library(ggplot2)
@@ -303,6 +323,16 @@ plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]]+
 
 ggsave(filename = here::here("outputs", "figures","Socio_envir_variables_with_NS_scores.png"), plot, width = 22, height =14 )
 
+
+
+##-------------NN and NS correlation -----------------
+cor.test(NN_NS_scores$NS_score, NN_NS_scores$NN_score)
+
+l<- lm(NS_score ~ NN_score, NN_NS_scores)
+summary(l)
+
+plot(NN_NS_scores$NS_score ~ NN_NS_scores$NN_score)
+abline(h=0, lty=3 ); abline(v=0, lty=3)
 
 ## --------------- NN against NS -------------
 #### Define colors by quarter ####
@@ -549,6 +579,11 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                           low = "white", high="grey20",
                           limits =quantile(coord_NN_NS$rank * coord_NN_NS$down_left,
                                            probs=c( 0.5,1), na.rm=T), na.value=NA) +
+    geom_point(aes( x= SiteLongitude, y = SiteLatitude),
+               size = 2, stroke = 1, shape = 1,
+               color= "grey5",
+               data = coord_NN_NS[which(coord_NN_NS$rank_d_l >=
+                                          quantile(coord_NN_NS$rank_d_l, probs=c(0.95), na.rm=T)), ] )+
     ggnewscale::new_scale("colour") +
     
     #up left quarter
@@ -563,7 +598,7 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                size = 2, stroke = 1, shape = 1,
                color= "darkblue",
                data = coord_NN_NS[which(coord_NN_NS$rank_u_l >=
-                                          quantile(coord_NN_NS$rank_u_l, probs=c(0.99), na.rm=T)), ] )+
+                                          quantile(coord_NN_NS$rank_u_l, probs=c(0.95), na.rm=T)), ] )+
     
     ggnewscale::new_scale("colour") +
     
@@ -579,7 +614,7 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                size = 2, stroke = 1, shape = 1,
                color= "darkgreen",
                data = coord_NN_NS[which(coord_NN_NS$rank_d_r >=
-                                          quantile(coord_NN_NS$rank_d_r, probs=c(0.99), na.rm=T)), ] )+
+                                          quantile(coord_NN_NS$rank_d_r, probs=c(0.95), na.rm=T)), ] )+
     
     ggnewscale::new_scale("colour") +
     
@@ -595,7 +630,7 @@ function_NN_NS_on_map <- function(coord_NN_NS = NN_NS_with_product, ylim = c(-36
                size = 2, stroke = 1, shape = 1,
                color= "darkgoldenrod4",
                data = coord_NN_NS[which(coord_NN_NS$rank_u_r >=
-                         quantile(coord_NN_NS$rank_u_r, probs=c(0.99), na.rm=T)), ] )+
+                         quantile(coord_NN_NS$rank_u_r, probs=c(0.95), na.rm=T)), ] )+
 
     #     #add transparency
     # scale_alpha_continuous(range = c(-0.5, 0.6)) +
@@ -666,6 +701,28 @@ ggpubr::ggarrange(world_map_zoom, # First row with world map
                   nrow = 2, labels = "A") 
 ggsave(plot = last_plot(), width=11, height =7,
        filename = here::here("outputs", "figures", "world map with NN and NS score with zoom.png"))
+
+##------------------------NN and NP scores by countries ------------------------------------
+countries_quant <- NN_NS_scores |> 
+  dplyr::group_by(SiteCountry) |> 
+  dplyr::summarise(NN_quant90 = quantile(NN_score, 0.9),
+                   NS_quant90 = quantile(NS_score, 0.9))
+
+library(ggplot2)
+ggplot(countries_quant) +
+  aes(x = forcats::fct_reorder(SiteCountry, NN_quant90), y = NN_quant90, fill = NN_quant90) +
+  geom_col() +
+  scale_fill_gradient2(low="grey20", mid="white", high="forestgreen") +
+  geom_text(aes(label = SiteCountry), vjust = 0, angle = 90)+
+  theme_minimal()
+
+ggplot(countries_quant) +
+  aes(x = forcats::fct_reorder(SiteCountry, NS_quant90), y = NS_quant90, fill = NS_quant90) +
+  geom_col() +
+  scale_fill_gradient2(low="grey20", mid="white", high="dodgerblue3") +
+  geom_text(aes(label = SiteCountry), vjust = 0, angle = 90)+
+  theme_minimal()
+
 
 ##------------------------Study MPAs distribution ------------------------------------
 mpa_distribution <- NN_NS_with_product |>
@@ -874,3 +931,4 @@ function_outliers_on_map( NN_NS_with_product,
                        ylim = c(-25, -10),
                        xlim= c(-180,-130),
                        title = "Trade-offs in Nature Based Contribution in polynesia")
+

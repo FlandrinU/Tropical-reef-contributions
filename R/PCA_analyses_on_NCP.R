@@ -147,8 +147,8 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
   NCP_site_for_pca <- scale(NCP_site_selected)
   pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=9) 
   
-  pca_test <- ade4::dudi.pca(NCP_site_for_pca)
-  plot(pca_test)
+  # pca_test <- ade4::dudi.pca(NCP_site_for_pca)
+  # plot(pca_test)
   
   summary(NCP_site$SiteCountry)
   
@@ -1315,3 +1315,4 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
 
 #run plot_ACP_NCP function
 plot_PCA_NCP(NCP_site_log_transformed)
+

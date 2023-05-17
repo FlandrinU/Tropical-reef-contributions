@@ -50,8 +50,8 @@ spdep::moran.plot(NN_NS_scores$NN_score, lstw)
 
 ## -------------Moran index per distance class-------------
 correlog_plot <- function(score = "NN_score",
-                          increment = 500, 
-                          resamp= 30){
+                          increment = 200, 
+                          resamp= 99){
   cat("compute correlog ... \n")
   spatial_cor <- ncf::correlog(x= NN_NS_scores$SiteLongitude, 
                                y= NN_NS_scores$SiteLatitude, 
@@ -59,19 +59,24 @@ correlog_plot <- function(score = "NN_score",
                                resamp= resamp, latlon = TRUE) #distance and increment are in km
   library(ggplot2)
   ggplot() +
-    geom_point(aes(y = spatial_cor$correlation, x = spatial_cor$mean.of.class),
+    geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
+                   x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]),
                alpha = 0.6, size = 1) +
-    geom_smooth(aes(y = spatial_cor$correlation, x = spatial_cor$mean.of.class))+
+    geom_smooth(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
+                    x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]))+
     
-    geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$p < 0.05) ] ,
-                   x = spatial_cor$mean.of.class[ which(spatial_cor$p < 0.05) ]),
+    geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$p <= 0.01 &
+                                                      spatial_cor$mean.of.class < 15000) ] ,
+                   x = spatial_cor$mean.of.class[ which(spatial_cor$p <= 0.01 &
+                                                        spatial_cor$mean.of.class < 15000) ]),
                alpha = 0.8, size = 1, col ="red") +
     geom_vline(xintercept = spatial_cor[["x.intercept"]], linetype="dashed", 
                color = "black", linewidth=1)+
 
     xlab("Distance class (in km)") + ylab("spatial correlation (Moran I)")+
-    labs(title = paste("Spatial correlation of", score, ", increment = ", increment, "km"),
-         subtitle = paste("x intercept = ", round(spatial_cor[["x.intercept"]],1), "km"))+
+    labs(title = paste("Spatial correlation of", score),
+         subtitle = paste("Increment = ", increment, "km, ", "resample = ", resamp,
+                          ", x intercept = ", round(spatial_cor[["x.intercept"]],1), "km"))+
     # ylim(-0.7,0.9)+
     theme_bw()
 }
@@ -82,9 +87,15 @@ spatial_cor_NN
 ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
         "Spatial correlation per distance NN, increment 500.png"))
 
-spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 100, resamp= 30)
+spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 100, resamp= 99)
 ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
         "Spatial correlation per distance NN, increment 100.png"))
+
+spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 200, resamp= 99)
+ggsave(plot = spatial_cor_NN, width=6, height =6,
+       filename = here::here("outputs", "figures",
+        "Spatial correlation per distance NN, increment 200.png"))
+
 
 spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 5000, resamp= 30)
 ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
@@ -101,6 +112,10 @@ spatial_cor_NS
 ggsave(plot = spatial_cor_NS, filename = here::here("outputs", "figures",
             "Spatial correlation per distance NS, increment 100.png"))
 
+spatial_cor_NS <- correlog_plot(score = "NS_score", increment = 200, resamp= 99)
+spatial_cor_NS
+ggsave(plot = spatial_cor_NS, width=6, height =6,
+       filename = here::here("outputs", "figures","Spatial correlation per distance NS, increment 200.png"))
 
 ##-------------Variogram-------------
 dist_matrix <- geodist::geodist(x= coord[,c("longitude", "latitude")],

@@ -87,15 +87,16 @@ NCP <- metadata_surveys |>
   dplyr::select(SurveyID, SiteCode, SiteCountry, SiteLatitude, SiteLongitude, 
                 SiteMeanSST, SurveyDepth, coral_imputation,
                 Biomass = Btot, 
-                N_recycling = recycling_N, P_recycling = recycling_P,
+                N_Recycling = recycling_N,
+                P_Recycling = recycling_P,
                 Taxonomic_Richness = taxo_richness,
                 Functional_Entropy = funct_entropy, 
                 Phylogenetic_Entropy = phylo_entropy_Mean,
                 Functional_Distinctiveness = funct_distinctiveness,
-                Evolutionary_distinctiveness = ED_Mean,
-                Low_TL_Biomass = biom_lowTL,
-                Medium_TL_Biomass = biom_mediumTL,
-                High_TL_Biomass = biom_highTL,
+                Evolutionary_Distinctiveness = ED_Mean,
+                Herbivores_Biomass = biom_lowTL,
+                Invertivores_Biomass = biom_mediumTL,
+                Piscivores_Biomass = biom_highTL,
                 # IUCN_Species = iucn_species,
                 Endemism,
                 Elasmobranch_Diversity = elasmobranch_diversity,
@@ -104,8 +105,8 @@ NCP <- metadata_surveys |>
                 Aragonite = aragonite,
                 Monohydrocalcite = monohydrocalcite,
                 Amorphous_Carbonate = amorphous_carbonate,
-                Trophic_web_robustness = robustness,
-                mean_Trophic_Level = mean_TL,
+                Trophic_Web_Robustness = robustness,
+                Mean_Trophic_Level = mean_TL,
                 
                 Productivity = Productivity,
                 Selenium = Selenium_C,
@@ -137,12 +138,12 @@ save(NCP_surveys, file = here::here("outputs", "all_NCP_surveys.Rdata"))
 # NCP_surveys <- questionr::na.rm(NCP) 
 # NCP_surveys_without_5outliers <- NCP_surveys |>
 #   dplyr::filter(
-#     if_all(everything( vars = c("Biomass","N_recycling","P_recycling","Taxonomic_Richness", "Functional_Entropy",
-#                                 "Phylogenetic_Entropy", "Functional_Distinctiveness","Evolutionary_distinctiveness",
-#                                 "Low_TL_Biomass", "Medium_TL_Biomass", "High_TL_Biomass","IUCN_Species",
+#     if_all(everything( vars = c("Biomass","N_Recycling","P_Recycling","Taxonomic_Richness", "Functional_Entropy",
+#                                 "Phylogenetic_Entropy", "Functional_Distinctiveness","Evolutionary_Distinctiveness",
+#                                 "Herbivores_Biomass", "Invertivores_Biomass", "Piscivores_Biomass","IUCN_Species",
 #                                 "Elasmobranch_Diversity", "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", 
-#                                 "Monohydrocalcite", "Amorphous_Carbonate", "Trophic_web_robustness",
-#                                 "mean_Trophic_Level", 
+#                                 "Monohydrocalcite", "Amorphous_Carbonate", "Trophic_Web_Robustness",
+#                                 "Mean_Trophic_Level", 
 #                                 "Productivity","Selenium","Zinc","Omega_3","Calcium","Iron","Vitamin_A",
 #                                 "Fishery_Biomass", "Aesthetic","Public_Interest" )),
 #            ~.x <= quantile(.x,.99)))
@@ -250,33 +251,25 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
 all_plot
 
 ## NCPs distribution with right skewed distribution
-NCP_skewed_distribution <- c("Biomass","N_recycling","P_recycling","Productivity",
+NCP_skewed_distribution <- c("Biomass","N_Recycling","P_Recycling","Productivity",
                              "Functional_Distinctiveness","Omega_3","Calcium","Vitamin_A",
-                             "Phylogenetic_Entropy","Evolutionary_distinctiveness",
-                             "Elasmobranch_Diversity",#"IUCN_Species",
+                             "Phylogenetic_Entropy","Evolutionary_Distinctiveness",
+                             "Elasmobranch_Diversity",
                              "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", "Monohydrocalcite",
-                             "Amorphous_Carbonate", "Low_TL_Biomass", "Medium_TL_Biomass", "High_TL_Biomass",
-                             "Fishery_Biomass", "mean_Trophic_Level")
+                             "Amorphous_Carbonate", "Herbivores_Biomass", "Invertivores_Biomass", "Piscivores_Biomass",
+                             "Fishery_Biomass", "Mean_Trophic_Level")
 
 
 ### Mean per site
 mean_per_site <- function(var_survey = NCP_surveys){
   var_survey |> dplyr::group_by( SiteCode, SiteCountry) |>
-    dplyr::summarise(across(.cols = c("SurveyDepth","SiteMeanSST", "SiteLatitude", "SiteLongitude", "coral_imputation",
-                               "Biomass","N_recycling","P_recycling","Taxonomic_Richness", "Functional_Entropy",
-                               "Phylogenetic_Entropy", "Functional_Distinctiveness","Evolutionary_distinctiveness",
-                               "Low_TL_Biomass", "Medium_TL_Biomass", "High_TL_Biomass","Endemism", #IUCN_Species",
-                               "Elasmobranch_Diversity", "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", 
-                               "Monohydrocalcite", "Amorphous_Carbonate", "Trophic_web_robustness",
-                               "mean_Trophic_Level", 
-                               "Productivity","Selenium","Zinc","Omega_3","Calcium","Iron","Vitamin_A",
-                               "Fishery_Biomass", "Aesthetic","Public_Interest" ), #/!\ the order matter
+    dplyr::summarise(across(.cols = c("SiteLatitude":"Public_Interest"),
                      .fns = mean, .names = "{.col}"))
 }
 
 
 NCP_site <- mean_per_site(NCP_surveys)
-summary(NCP_site) # 1229 sites
+summary(NCP_site) # 1237 sites
 NCP_site <- NCP_site |>
   dplyr::left_join( 
       dplyr::distinct(metadata_surveys,

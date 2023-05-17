@@ -26,17 +26,16 @@ source(here::here("R", "elbow.R"))
 
 ##-------------NCP in categories-------------
 ## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
-grp_NN_NS <- as.factor(c(N_recycling = "NN",
-                         P_recycling = "NN",
+grp_NN_NS <- as.factor(c(N_Recycling = "NN",
+                         P_Recycling = "NN",
                          Taxonomic_Richness = "NN",
                          Functional_Entropy = "NN", 
                          Phylogenetic_Entropy = "NN",
                          Functional_Distinctiveness = "NN",
-                         Evolutionary_distinctiveness = "NN",
-                         Low_TL_Biomass = "NN",
-                         Medium_TL_Biomass = "NN",
-                         High_TL_Biomass = "NN",
-                         # IUCN_Species = "NN",
+                         Evolutionary_Distinctiveness = "NN",
+                         Herbivores_Biomass = "NN",
+                         Invertivores_Biomass = "NN",
+                         Piscivores_Biomass = "NN",
                          Endemism = "NN",
                          Elasmobranch_Diversity = "NN",
                          Low_Mg_Calcite = "NN",
@@ -44,8 +43,8 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Aragonite = "NN",
                          Monohydrocalcite = "NN",
                          Amorphous_Carbonate = "NN",
-                         Trophic_web_robustness = "NN",
-                         mean_Trophic_Level = "NN",
+                         Trophic_Web_Robustness = "NN",
+                         Mean_Trophic_Level = "NN",
                          
                          Productivity = "NS",
                          Selenium = "NS",
@@ -198,7 +197,7 @@ plot_1b <- factoextra::fviz_pca_biplot(
                                    hjust = 0.01))
 print(plot_1b)
 
-##------------------------figure 1c: variables eigenvalues ------------------------------
+##------------------------Insert figure 1a: variables eigenvalues ------------------------------
 eig <- factoextra::get_eig(pca)
 variance_explained <- data.frame(
   Axe = c(1:nrow(eig)), 
@@ -295,7 +294,7 @@ row.names(contributions_NS)[1] <- paste(
     row.names(contributions_NS)[1]),
   collapse="") #change legend length to have same width in both plot
 
-# plot pannel
+# plot panel
 png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
     width=11, height = 20, units = "cm", res = 1000)
 layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
@@ -319,17 +318,18 @@ for( i in 1:ncol(contributions)){
     variance_explained$contribution_coefficient[i]
   }
 
-colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+# colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+colnames(contributions) <- c(1:ncol(contributions))
 
-contributions <- cbind(contributions, cat=grp_NN_NS[rownames(contributions)]) 
-contributions <- contributions[order(-contributions[,1], contributions[,"cat"]),]
-
-
-contributions <- contributions[ c(
-  order(contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ],][,1]),
-  order(contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ],][,1])
-  ), ]
-rownames(contributions)[order(-contributions[,1])]
+contributions <- cbind(contributions, category = grp_NN_NS[rownames(contributions)])
+contributions <- contributions[order( contributions[,"category"], -contributions[,1]),]
+contributions <- contributions[, colnames(contributions) !="category"]
+# contributions <- contributions[ c(
+#   order(contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ],][,1]),
+#   order(contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ],][,1])
+#   ), ]
+# 
+# rownames(contributions)[order(-contributions[,1])]
 
 
 
@@ -337,6 +337,14 @@ rownames(contributions)[order(-contributions[,1])]
 contributions_NN <- contributions
 contributions_NN[names(grp_NN_NS)[ grp_NN_NS!="NN" ],] <- NA
 row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
+# row.names(contributions_NN)[c(
+#   which(row.names(contributions_NN)=="N Recycling"),
+#   which(row.names(contributions_NN)=="P Recycling"),
+#   which(row.names(contributions_NN)=="High Mg Calcite"),
+#   which(row.names(contributions_NN)=="Low Mg Calcite")) ] <- c("Nitrogen (N) Recycling",
+#                                                                "Phosphorous (P) Recycling",
+#                                                                "High Magnesium (Mg) Calcite",
+#                                                                "Low Magnesium (Mg) Calcite")
 
 contributions_NS <- contributions
 contributions_NS[names(grp_NN_NS)[ grp_NN_NS!="NS" ],] <- NA
@@ -348,15 +356,18 @@ png(filename = here::here("outputs", "figures","contribution_in_total_variance_N
 par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
 corrplot::corrplot(contributions_NN, is.corr=FALSE, 
                    col = c("forestgreen"), tl.col = "black", 
-                   cl.pos = "n", tl.cex = 1.2,
-                   tl.srt = 60, 
-                   na.label.col = "transparent")
+                   cl.pos = "n", 
+                   tl.cex = 1.1,
+                   tl.srt = 0, 
+                   na.label.col = "transparent",
+                   mar=c(2,0,2,0))
 
 corrplot::corrplot(contributions_NS, is.corr=FALSE,
                    col = c("dodgerblue3"), tl.col = "transparent",
                    cl.pos = "n", tl.cex = 1.2, bg = "transparent",
                    tl.srt = 60, na.label.col = "transparent", 
                    add = TRUE)
+lines(x=c(0.5,9.5), y=rep(10.5, 2), lty = 1, lwd = 3)
 dev.off()
 
 

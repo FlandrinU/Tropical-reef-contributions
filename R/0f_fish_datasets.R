@@ -221,7 +221,7 @@ save(species_spec_code, file = here::here("data", "species_spec_code.Rdata"))
 # 
 # species_spec_code$spec_code[which(species_spec_code$species == "Abalistes_stellatus")] <- 9
 
-## Deal with rls names
+## Deal with rls names ### code for N. Mouquet
 sp <- rlsall$rls_sci_name
 Species <- gsub("_", " ", sp)
 Species_corrected <- rep("NA",length(sp))
@@ -245,7 +245,7 @@ head(list_sp_rls)
 save(list_sp_rls, file = here::here("data", "rls_species_with_spec_code.Rdata"))
 
 
-
+#compare data between "data_species and rls list of species
 species_spec_code <- dplyr::mutate(species_spec_code, fb_sci_name = NA, rls_sci_name = NA)
 for( i in 1:nrow(species_spec_code)){
   j <- NA
@@ -279,7 +279,10 @@ list_sp <- dplyr::bind_cols(list_sp_rls, multicontribution_study = ifelse(
 ))
 table(list_sp$multicontribution_study)
 
-
+#Compare with N.Mouquet data:
+rls_harmo <- read.csv("/home/u_flandrin/Téléchargements/RLS_harmo.csv", sep=";")
+species_spec_code$species_corrected[which(is.element(species_spec_code$species_corrected, rls_harmo$fb_sci_name)==F)] #15sp are lacking in rls_harmo
+rls_harmo[which(rls_harmo$rls_sci_name != rls_harmo$fb_sci_name),] #seems OK
 
 
 ##----------------- Merge dataset ----------------

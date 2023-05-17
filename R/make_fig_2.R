@@ -389,7 +389,7 @@ fig_2c <- ggplot() +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_rect(fill = "grey95"),
-        legend.position = "right",
+        legend.position = "none",
         plot.title = element_text(size=10, face="bold"),
         # axis.text.x = element_blank(),
         # axis.ticks.x = element_blank(),
