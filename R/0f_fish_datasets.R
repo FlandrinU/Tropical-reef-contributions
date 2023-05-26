@@ -145,7 +145,7 @@ data_species$Position<-factor(data_species$Position,
                               levels=c("Benthic", "Demersal", "Pelagic"), ordered = TRUE)
 
 
-# Diet categories from Parravicini et al (https://doi.org/10.1371/journal.pbio.3000702)
+# Diet categories from Parravicini et al 2020 (https://doi.org/10.1371/journal.pbio.3000702)
 diet_pbiol <- species_parameters |>
   dplyr::select(species, diet_cat, a = lwa_m, b = lwb_m) |>
   dplyr::mutate(Diet=factor(diet_cat) ) |>

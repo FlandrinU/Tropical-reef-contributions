@@ -1,9 +1,10 @@
 #-----------------Loading packages-------------------
 pkgs <- c("here", "dplyr", "stringr", "rfishprod", "stats", "googledrive", "tidyverse",
-          "devtools")
+          "devtools", "robinmap")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 devtools::install_github("renatoamorais/rfishprod")
+remotes::install_github("FRBCesab/robinmap")
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 #-----------------renv---------------------
@@ -18,7 +19,13 @@ renv::snapshot()
 devtools::load_all(here::here())
 
 #-----------------Loading all data---------------------
+#world shapefile
+# Behrmann projection - Pacific-centered ----
+behrmann <- "+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs"
+world <- robinmap::robinmap(center = 160, crs = behrmann)
+sf::st_write(obj=world, here::here("data", "ShapeFiles coast", "shapefile_coast_pacific_centered.shp"))
 
+#data
 path = (here::here("data"))
 setwd(path)
 files <- list.files(path, pattern = ".RData|Rdata")

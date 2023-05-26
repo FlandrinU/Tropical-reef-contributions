@@ -11,7 +11,7 @@
 ################################################################################
 
 #-----------------Loading packages-------------------
-pkgs <- c("here", "ggplot2", "grid", "gridExtra", "ggpp", "dplyr")
+pkgs <- c("here", "ggplot2", "grid", "gridExtra", "ggpp", "dplyr", "mdthemes")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -22,6 +22,9 @@ rm(list=ls())
 load(file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
+coast_pacific_centered <- sf::st_read(here::here("data", "ShapeFiles coast",
+                                                 "shapefile_coast_pacific_centered.shp"))
+
 library(ggplot2)
 
 ## --------------- Figure 2a: NN against NS -------------
@@ -29,8 +32,7 @@ library(ggplot2)
 NN_NS_with_product <- NN_NS_scores |>
   dplyr::bind_cols( protection = ifelse(NN_NS_scores$mpa_enforcement == "High" &
                                           stringr::str_detect(NN_NS_scores$protection_status, "No take"),
-                                        "No take",
-                                        ifelse(is.na(NN_NS_scores$mpa_name)==F, 
+                                        "No take",ifelse(is.na(NN_NS_scores$mpa_name)==F, 
                                                "Restricted", "Fished"))) |>
   # # dplyr::bind_cols(
   #   protection = ifelse(is.na(NN_NS_scores$mpa_name)==F &
@@ -104,6 +106,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
                         limits =quantile(NN_NS_with_product$rank_d_r,
                                          probs=c( 0.5,1), na.rm=T), na.value=NA) +
   guides(fill = "none") + ggnewscale::new_scale("fill") +
+
   
   #down left quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, down_left == 1),
@@ -176,42 +179,44 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   
   xlim(c(-2,2)) +
   ylim(c(-1.8,1.8)) +
-  labs( x=  "Nature to Nature", y = "Nature to People")+
+  labs( x=  "", y = "")+
   theme_bw(base_line_size = 0)+
-  theme(axis.title.x = element_text(hjust = 0.04,
-                                    colour = "forestgreen", 
-                                    face = "bold",
-                                    size = 15),
-        axis.title.y = element_text(hjust = 0.04,
-                                    colour = "dodgerblue3", 
-                                    face = "bold",
-                                    size = 15),
-        axis.text = element_text(size=13),
-        legend.position = c(0.9,0.2),
-        legend.background = element_rect(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())+
-  guides(color = "none", shape = guide_legend("Protection status")) +
+  theme(
+    # axis.title.x = element_text(hjust = 0.04,
+    #                             colour = "forestgreen", 
+    #                             face = "bold",
+    #                             size = 15),
+    # axis.title.y = element_text(hjust = 0.04,
+    #                             colour = "dodgerblue3", 
+    #                             face = "bold",
+    #                             size = 15),
+    axis.text = element_text(size=13),
+    legend.position = c(0.91,0.12),
+    legend.background = element_rect(colour="black", linewidth = 0.2),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(10,20,40,30))+
+  guides(color = "none", shape = guide_legend("Protection status")) 
   
   #add arrows in margin
-  annotation_custom( 
-    grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
-                           gp=grid::gpar(col="forestgreen", lwd=6)), 
-    xmin = -0.95, xmax = -0.25, ymin =-2.18, ymax = -2.18) +
-  annotation_custom( 
-    grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
-                           gp=grid::gpar(col="dodgerblue3", lwd=6)), 
-    xmin = -2.35, xmax = -2.35, ymin =-0.7, ymax = 0)
+  # annotation_custom( 
+  #   grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
+  #                          gp=grid::gpar(col="forestgreen", lwd=6)), 
+  #   xmin = -0.95, xmax = -0.25, ymin =-2.18, ymax = -2.18) +
+  # annotation_custom( 
+  #   grob = grid::linesGrob(arrow=grid::arrow(type="closed", length=unit(3,"mm")), 
+  #                          gp=grid::gpar(col="dodgerblue3", lwd=6)), 
+  #   xmin = -2.35, xmax = -2.35, ymin =-0.7, ymax = 0)
 
 
 
 NN_NS_plot
 
-plot_with_arrows <- ggplot_gtable(ggplot_build(NN_NS_plot))
-plot_with_arrows$layout$clip[plot_with_arrows$layout$name == "panel"] <- "off"
-grid::grid.draw(plot_with_arrows)
+# plot_with_arrows <- ggplot_gtable(ggplot_build(NN_NS_plot))
+# plot_with_arrows$layout$clip[plot_with_arrows$layout$name == "panel"] <- "off"
+# grid::grid.draw(plot_with_arrows)
 
-# Construct gradient for legend
+#### Construct gradient for legend ####
 png(filename = here::here("outputs", "figures","legend_gradient_NN.png"), 
     width=40, height = 3, units = "cm", res = 1000)
   cols = colorRampPalette(c("white", "forestgreen"))(500)
@@ -221,13 +226,13 @@ png(filename = here::here("outputs", "figures","legend_gradient_NN.png"),
   for (i in 1:length(cols)) {
     rect(i - 1, 0.5, i, 0.5 - i /length(cols), border = NA, col = cols[i])
   }
-  abline(h=0.5)
-  abline(v=length(cols))
-  abline(a=0.5, b=-1/length(cols))
+  # abline(h=0.5, lwd=2)
+  # abline(v=length(cols), lwd=2)
+  # abline(a=0.5, b=-1/length(cols), lwd=2)
 dev.off()
 
 png(filename = here::here("outputs", "figures","legend_gradient_NS.png"), 
-    width=3, height = 15, units = "cm", res = 500)
+    width=3, height = 40, units = "cm", res = 500)
   cols = colorRampPalette(c("white", "dodgerblue3"))(500)
   par(mar = rep(0, 4), xaxs = "i", yaxs = "i")
   plot(0, type = "n", bty = "n", ylim = c(0, length(cols)), xlim = c(-0.5, 0.5), axes = FALSE, 
@@ -235,12 +240,12 @@ png(filename = here::here("outputs", "figures","legend_gradient_NS.png"),
   for (i in 1:length(cols)) {
     rect(0.5 - i /length(cols), i - 1, 0.5, i, border = NA, col = cols[i])
   }
-  abline(h=0.5)
-  abline(v=length(cols))
-  abline(a=0.5, b=-1/length(cols))
+  # abline(h=length(cols))
+  # abline(v=0.5)
+  # abline(a=length(cols)/2, b=-length(cols))
 dev.off()
 
-##Add gradient
+###A Construct Figure 1a ####
 grad_NN <- cowplot::ggdraw() +
   cowplot::draw_image(here::here("outputs", "figures","legend_gradient_NN.png"))
 grad_NS <- cowplot::ggdraw() +
@@ -248,15 +253,37 @@ grad_NS <- cowplot::ggdraw() +
 
 fig_2a <- NN_NS_plot +
   annotation_custom( ggplotGrob(grad_NN),
-                     xmin=-3,
-                     xmax=1,
-                     ymin = -2.5,
-                     ymax = -2.2)
+                     xmin=-2.5,
+                     xmax=1.3,
+                     ymin = -2.4,
+                     ymax = -2.15) +
+  
+  annotation_custom( ggplotGrob(grad_NS),
+                     xmin=-2.6,
+                     xmax=-2.3,
+                     ymin = -2,
+                     ymax = 0.9) +
+  labs( x=  "Nature for Nature", y = "Nature for People")+
+  theme( axis.title.x = element_text(hjust = 0.95,
+                                     vjust = -3,
+                                     colour = "forestgreen",
+                                     face = "bold",
+                                     size = 14),
+         axis.title.y = element_text(hjust = 1,
+                                     vjust = 3,
+                                     colour = "dodgerblue3",
+                                     face = "bold",
+                                     size = 14)) 
+    
+  
 fig_2a
+ggsave(plot=fig_2a, filename=here::here("outputs", "figures", "fig2a_panel2.png"),
+       height = 8.5, width = 10)
+
 ## --------------- Figure 2b: Stack plot mpa proportion -------------
 mpa_proportion <- data.frame(rect= NA, tot=NA, quarter=NA, protection=NA, Freq=NA, pct=NA)
 quart = c("up_right", "up_left", "down_left", "down_right")
-names = c("4-bright", "3", "1-dark", "2")
+names = c("4-bright", "3-NSonly", "1-dark", "2-NNonly")
 for(i in c(1:4)){
   df <- cbind(c(names[i], NA,NA),
               rep(sum(NN_NS_with_product[,quart[i]], na.rm = T), 3),
@@ -280,40 +307,44 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
                    aes(x=quarter,
                        y=Freq, 
                        fill= protection)) +
-  geom_bar(position = position_fill(), stat = "identity") +
-  scale_fill_grey(start=0.8, end=0.2) +
+  geom_bar(position = position_fill(), stat = "identity", width=0.7) +
+  scale_fill_grey(start=1, end=0.5) +
   
   geom_text(aes( label = paste0(round(pct, 0), "%")),
             stat= "identity",
             position = position_fill(vjust = 0.5),
             size=5,
-            angle = 90,
+            angle = 0,
             color=rep(c("black", "black", "white"), 4)) +
   
   
   #Add rectangles
-  geom_bar(aes(x=rect,
-               color=rect),
+  geom_bar(aes(x=rect, color=rect),
+           width=0.7,
            stat = "identity",
-           alpha=0, linewidth=1.5,
+           alpha=0, linewidth=4,
            position = position_fill())+
   scale_colour_manual(values=c("grey10", "forestgreen", "dodgerblue3", "darkgoldenrod3" )) +
-  scale_x_discrete(labels=c("nn ns", "NN ns", "NS nn","NN NS"))+
-  geom_text(size = 5, aes(y=1.07, label = paste0("n=", tot)))+
+  scale_x_discrete(labels=c("<span style = 'color:grey10;'>nn np</span>",
+                            "<span style = 'color:forestgreen;'>**NN** np</span>",
+                            "<span style = 'color:dodgerblue3;'>nn **NP**</span>",
+                            "<span style = 'color:darkgoldenrod3;'>**NN** **NP**</span>"))+
+  geom_text(size = 5, fontface = "italic",
+            aes(y=1.07, label = paste0("n=", tot)))+
   
   #Define theme
   labs( x=  "", y = "")+
   theme_minimal()+
   theme(axis.text.y=element_blank(), 
-        axis.text.x = element_text(size=13, face = "bold", vjust =1.2, hjust = 1,
-                                   angle = 45, color="black"),
+        axis.text.x = ggtext::element_markdown(size=20,  vjust =0.9, hjust = 0.5,
+                                               angle = 0, color="black"),
         legend.position = "none",
         legend.background = element_rect(),
         legend.text = element_text(size = 11),
-        legend.title = element_text(size = 12),
+        # legend.title = element_text(size = 12),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        plot.margin = margin(0.5,0.1,0.5,1.5, unit = "cm"))+
+        plot.margin = margin(0.5,0.1,0.5,1, unit = "cm"))+
   guides(color = "none", fill = guide_legend("Protection status"))
 
 mpa_plot  
@@ -329,6 +360,17 @@ height_jitter = 2
 qt = 0.95
 
 set.seed(06)
+
+# #change projection
+# NN_NS_with_product_spatial <- sf::st_as_sf(NN_NS_with_product,
+#                                    coords=c("SiteLongitude", "SiteLatitude"),
+#                                    crs=4326)
+# NN_NS_with_product_spatial <- sf::st_transform(NN_NS_with_product_spatial,
+#                                        crs="+proj=cea +lon_0=160 +lat_ts=30 +x_0=160 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs")
+# 
+# NN_NS_with_product <- tidyr::extract(NN_NS_with_product_spatial, geometry,
+#                into=c("SiteLongitude", "SiteLatitude"),
+#                '\\((.*),(.*)\\)', conv = T)
 
 #plot map
 fig_2c <- ggplot() +
@@ -378,7 +420,7 @@ fig_2c <- ggplot() +
   # see MPAs
   scale_shape_manual(values=c(24,23,21))+
   
-  coord_sf(xlim = c(-180,180), ylim= c(-37, 32),expand = FALSE) +
+  coord_sf(ylim= c(-37,37),expand = FALSE) +
   theme_bw()+
   labs(x="Longitude", y= "Latitude") +
   theme(axis.title.x = element_text(face = "bold",
@@ -398,10 +440,15 @@ fig_2c <- ggplot() +
 
 fig_2c 
 
+
 #### ----------------- Panel -------------------
-arrange <- ggpubr::ggarrange(plot_with_arrows,
+fig_2a_png <- cowplot::ggdraw() +
+  cowplot::draw_image(here::here("outputs", "figures","fig2a_panel2.png"))
+
+
+arrange <- ggpubr::ggarrange(fig_2a,
                              mpa_plot, 
-                             widths = c(3,2),
+                             widths = c(5,3),
                              labels = c("A", "B"),
                              font.label = list(size=17),
                              ncol = 2)
@@ -418,17 +465,19 @@ png(filename = here::here("outputs", "figures","Panel_fig_2_quantile5.png"),
     width=40, height = 27, units = "cm", res = 1000)
 
 gridExtra::grid.arrange(
-  plot_with_arrows,
+  fig_2a_png,
   mpa_plot, 
   fig_2c,
   ncol=2,
-  layout_matrix = rbind(c(1,1,1,2,2),
-                        c(1,1,1,2,2),
-                        c(1,1,1,2,2),
-                        c(1,1,1,2,2),
-                        c(3,3,3,3,3),
-                        c(3,3,3,3,3),
-                        c(3,3,3,3,3)))
+  layout_matrix = rbind(c(1,1,1,1,2,2),
+                        c(1,1,1,1,2,2),
+                        c(1,1,1,1,2,2),
+                        c(1,1,1,1,2,2),
+                        c(1,1,1,1,2,2),
+                        c(1,1,1,1,2,2),
+                        c(3,3,3,3,3,3),
+                        c(3,3,3,3,3,3),
+                        c(3,3,3,3,3,3)))
 # Add labels 
 grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
                 just="left", gp=grid::gpar(fontsize=17, fontface="bold"))

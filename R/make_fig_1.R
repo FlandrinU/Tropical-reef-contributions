@@ -272,45 +272,44 @@ elbow_plot
 #                              "Variance explained by ACP_elbow rule.png"), elbow_plot, 
 #        width = 15, height =10 )
 
-##------------------------figure 1d: contributions ------------------------------
-var <- factoextra::get_pca_var(pca)
-contributions <- var$contrib
-for( i in 1:ncol(contributions)){ 
-  contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
+##------------------------figure 1c: contributions ------------------------------
+# var <- factoextra::get_pca_var(pca)
+# contributions <- var$contrib
+# for( i in 1:ncol(contributions)){ 
+#   contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
+# 
+# colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+# 
+# #divide into two plot
+# contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
+# contributions_NN <- contributions_NN[order(-contributions_NN[,1]), ]
+# row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
+# 
+# contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
+# contributions_NS <- contributions_NS[order(-contributions_NS[,1]), ]
+# row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
+# row.names(contributions_NS)[1] <- paste(
+#   c(rep(" ", 
+#         max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])+4),
+#     row.names(contributions_NS)[1]),
+#   collapse="") #change legend length to have same width in both plot
+# 
+# # plot panel
+# png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
+#     width=11, height = 20, units = "cm", res = 1000)
+# layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
+#               ncol = 1))
+# par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
+# corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+#                    col = c("forestgreen"), tl.col = "black", 
+#                    cl.pos = "n", tl.cex = 1.2,
+#                    tl.srt = 60, na.label.col = "transparent")
+# corrplot::corrplot(contributions_NS, is.corr=FALSE,
+#                    col = c("dodgerblue3"), tl.col = "black", 
+#                    cl.pos = "n", tl.pos = 'l', tl.cex = 1.2,  na.label.col = "transparent")
+# dev.off()
 
-colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
-
-#divide into two plot
-contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
-contributions_NN <- contributions_NN[order(-contributions_NN[,1]), ]
-row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
-
-contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
-contributions_NS <- contributions_NS[order(-contributions_NS[,1]), ]
-row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
-row.names(contributions_NS)[1] <- paste(
-  c(rep(" ", 
-        max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])+4),
-    row.names(contributions_NS)[1]),
-  collapse="") #change legend length to have same width in both plot
-
-# plot panel
-png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
-    width=11, height = 20, units = "cm", res = 1000)
-layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
-              ncol = 1))
-par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
-corrplot::corrplot(contributions_NN, is.corr=FALSE, 
-                   col = c("forestgreen"), tl.col = "black", 
-                   cl.pos = "n", tl.cex = 1.2,
-                   tl.srt = 60, na.label.col = "transparent")
-corrplot::corrplot(contributions_NS, is.corr=FALSE,
-                   col = c("dodgerblue3"), tl.col = "black", 
-                   cl.pos = "n", tl.pos = 'l', tl.cex = 1.2,  na.label.col = "transparent")
-dev.off()
-
-
-#-----other option------- from N Casajus
+#-----other option------- idea from N Casajus
 var <- factoextra::get_pca_var(pca)
 contributions <- var$contrib
 for( i in 1:ncol(contributions)){ 
@@ -352,12 +351,12 @@ row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
 
 # plot pannel
 png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
-    width=11, height = 20, units = "cm", res = 1000)
-par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
+    width=11, height = 21.5, units = "cm", res = 1000)
+par(mar = c(2,0,0,0), xaxs = "i", yaxs = "i")
 corrplot::corrplot(contributions_NN, is.corr=FALSE, 
                    col = c("forestgreen"), tl.col = "black", 
                    cl.pos = "n", 
-                   tl.cex = 1.1,
+                   tl.cex = 1,
                    tl.srt = 0, 
                    na.label.col = "transparent",
                    mar=c(2,0,2,0))
@@ -367,7 +366,13 @@ corrplot::corrplot(contributions_NS, is.corr=FALSE,
                    cl.pos = "n", tl.cex = 1.2, bg = "transparent",
                    tl.srt = 60, na.label.col = "transparent", 
                    add = TRUE)
-lines(x=c(0.5,9.5), y=rep(10.5, 2), lty = 1, lwd = 3)
+lines(x=c(-9,9.5), y=rep(10.5, 2), lty = 1, lwd = 2)
+text(5,30.7, label= "Dimensions", cex=1.2 , font=2 )
+for(i in c(1:ncol(contributions))){
+  text(x=-0.2+i, y= -0.5, label= paste(round(colSums(contributions)[i],0), "%"), 
+       cex=0.9, srt=60, font=1)}
+text(0,-0.6, label= "Variance explained:", cex=1 , font=3, pos=2 )
+
 dev.off()
 
 
