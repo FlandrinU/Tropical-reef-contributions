@@ -195,8 +195,8 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
     legend.background = element_rect(colour="black", linewidth = 0.2),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    plot.margin = margin(10,20,40,30))+
-  guides(color = "none", shape = guide_legend("Protection status")) 
+    plot.margin = margin(1.3,1,1.5,0.7, unit='cm'))+
+  guides(color = "none", shape ="none") #shape = guide_legend("Protection status"))
   
   #add arrows in margin
   # annotation_custom( 
@@ -218,7 +218,7 @@ NN_NS_plot
 
 #### Construct gradient for legend ####
 png(filename = here::here("outputs", "figures","legend_gradient_NN.png"), 
-    width=40, height = 3, units = "cm", res = 1000)
+    width=40, height = 2.3, units = "cm", res = 1000)
   cols = colorRampPalette(c("white", "forestgreen"))(500)
   par(mar = rep(0, 4), xaxs = "i", yaxs = "i")
   plot(0, type = "n", bty = "n", xlim = c(0, length(cols)), ylim = c(-0.5, 0.5), axes = FALSE, 
@@ -245,7 +245,7 @@ png(filename = here::here("outputs", "figures","legend_gradient_NS.png"),
   # abline(a=length(cols)/2, b=-length(cols))
 dev.off()
 
-###A Construct Figure 1a ####
+### Construct Figure 1a ####
 grad_NN <- cowplot::ggdraw() +
   cowplot::draw_image(here::here("outputs", "figures","legend_gradient_NN.png"))
 grad_NS <- cowplot::ggdraw() +
@@ -253,32 +253,32 @@ grad_NS <- cowplot::ggdraw() +
 
 fig_2a <- NN_NS_plot +
   annotation_custom( ggplotGrob(grad_NN),
-                     xmin=-2.5,
-                     xmax=1.3,
+                     xmin=-2.3,
+                     xmax=1,
                      ymin = -2.4,
                      ymax = -2.15) +
   
   annotation_custom( ggplotGrob(grad_NS),
-                     xmin=-2.6,
+                     xmin=-2.7,
                      xmax=-2.3,
                      ymin = -2,
-                     ymax = 0.9) +
-  labs( x=  "Nature for Nature", y = "Nature for People")+
+                     ymax = 1) +
+  labs( x=  "Nature for Nature", y = "Nature   \n for People")+
   theme( axis.title.x = element_text(hjust = 0.95,
                                      vjust = -3,
                                      colour = "forestgreen",
                                      face = "bold",
-                                     size = 14),
-         axis.title.y = element_text(hjust = 1,
-                                     vjust = 3,
+                                     size = 15),
+         axis.title.y = element_text(hjust = 0.95,
+                                     vjust = 3.5,
                                      colour = "dodgerblue3",
                                      face = "bold",
-                                     size = 14)) 
+                                     size = 15)) 
     
   
 fig_2a
 ggsave(plot=fig_2a, filename=here::here("outputs", "figures", "fig2a_panel2.png"),
-       height = 8.5, width = 10)
+       height = 8.5, width = 11)
 
 ## --------------- Figure 2b: Stack plot mpa proportion -------------
 mpa_proportion <- data.frame(rect= NA, tot=NA, quarter=NA, protection=NA, Freq=NA, pct=NA)
@@ -322,7 +322,7 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
   geom_bar(aes(x=rect, color=rect),
            width=0.7,
            stat = "identity",
-           alpha=0, linewidth=4,
+           alpha=0, linewidth=2,
            position = position_fill())+
   scale_colour_manual(values=c("grey10", "forestgreen", "dodgerblue3", "darkgoldenrod3" )) +
   scale_x_discrete(labels=c("<span style = 'color:grey10;'>nn np</span>",
@@ -336,7 +336,7 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
   labs( x=  "", y = "")+
   theme_minimal()+
   theme(axis.text.y=element_blank(), 
-        axis.text.x = ggtext::element_markdown(size=20,  vjust =0.9, hjust = 0.5,
+        axis.text.x = ggtext::element_markdown(size=17,  vjust =0.9, hjust = 0.5,
                                                angle = 0, color="black"),
         legend.position = "none",
         legend.background = element_rect(),
@@ -344,7 +344,7 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
         # legend.title = element_text(size = 12),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        plot.margin = margin(0.5,0.1,0.5,1, unit = "cm"))+
+        plot.margin = margin(0.2,0.4,0.5,0, unit = "cm"))+
   guides(color = "none", fill = guide_legend("Protection status"))
 
 mpa_plot  
@@ -446,7 +446,7 @@ fig_2a_png <- cowplot::ggdraw() +
   cowplot::draw_image(here::here("outputs", "figures","fig2a_panel2.png"))
 
 
-arrange <- ggpubr::ggarrange(fig_2a,
+arrange <- ggpubr::ggarrange(fig_2a_png,
                              mpa_plot, 
                              widths = c(5,3),
                              labels = c("A", "B"),
@@ -462,22 +462,19 @@ ggsave(plot=arrange, filename = here::here("outputs", "figures", "Panel_NNvsNS_a
 
 
 png(filename = here::here("outputs", "figures","Panel_fig_2_quantile5.png"), 
-    width=40, height = 27, units = "cm", res = 1000)
+    width=40, height = 30, units = "cm", res = 1000)
 
 gridExtra::grid.arrange(
   fig_2a_png,
   mpa_plot, 
   fig_2c,
   ncol=2,
-  layout_matrix = rbind(c(1,1,1,1,2,2),
-                        c(1,1,1,1,2,2),
-                        c(1,1,1,1,2,2),
-                        c(1,1,1,1,2,2),
-                        c(1,1,1,1,2,2),
-                        c(1,1,1,1,2,2),
-                        c(3,3,3,3,3,3),
-                        c(3,3,3,3,3,3),
-                        c(3,3,3,3,3,3)))
+  layout_matrix = rbind(c(1,1,1,1,1,2,2),
+                        c(1,1,1,1,1,2,2),
+                        c(1,1,1,1,1,2,2),
+                        c(1,1,1,1,1,2,2),
+                        c(3,3,3,3,3,3,3),
+                        c(3,3,3,3,3,3,3)))
 # Add labels 
 grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
                 just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
