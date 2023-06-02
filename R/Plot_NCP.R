@@ -103,7 +103,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
 ##-------------Correlations between NCPs-------------
   plot_correlation <- function(x,y,i){  
     ggplot() +
-      geom_point(aes(y = NCP_site[,y][[y]], x = x),
+      geom_point(aes(y = NCP_site_log_transformed[,y][[y]], x = x),
                  color = col[i], alpha = 0.6, size = 1) +
       theme_bw() +
       labs(x = x_title, y = y) +
@@ -114,7 +114,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
   
   ## With Biomass
-  x<- NCP_site$Biomass
+  x<- NCP_site_log_transformed$Biomass
   x_title = "total Biomass"
   col <- fishualize::fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   
@@ -137,7 +137,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
   
   ## With biodiversity
-  x<- NCP_site$Taxonomic_Richness
+  x<- NCP_site_log_transformed$Taxonomic_Richness
   x_title = "taxonomic richness"
   col <- fishualize::fish(n = ncol(NCP_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
   
@@ -162,7 +162,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   png(filename = here::here("outputs", "figures","corr_matrix.png"), 
       width= 40, height = 30, units = "cm", res = 1000)
   print({
-    M <- cor(NCP_site_clean_before_log)
+    M <- cor(dplyr::select(NCP_site_clean_before_log, -Biomass))
     # ## circle + black number
     corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
     corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
@@ -179,15 +179,24 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   png(filename = here::here("outputs", "figures","corr_matrix_log_transformed_NCP.png"), 
       width= 40, height = 30, units = "cm", res = 1000)
   print({
-    M <- cor(NCP_site_clean)
+    M <- cor(dplyr::select(NCP_site_clean, -Biomass))
     corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
     corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
-             diag = FALSE, tl.pos = 'n', cl.pos = 'n')
+             diag = FALSE, tl.pos = 'n', cl.pos = 'n', number.digits = 1)
   })
   dev.off() 
   
+  # Study correlogramm
+  pairwise_corr <- M[upper.tri(M)]
+  summary(pairwise_corr)
+      # Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+      # -0.69889 -0.08767  0.10600  0.12593  0.33824  0.97542 
+  hist(pairwise_corr)
+  length(which(pairwise_corr > 0.2)) #152
+  length(which(pairwise_corr < -0.2)) #54
+  length(which( pairwise_corr < 0.2 & -0.2 < pairwise_corr)) #200
 ##------------- Check spatial robustness with Mantel test ---------------
-  corr_matrix_all_data <- cor(NCP_site_clean)
+  corr_matrix_all_data <- cor(dplyr::select(NCP_site_clean, -Biomass))
   
   load(here::here("outputs","NCP_site_log_wo_australia.Rdata"))
   NCP_site_wo <- subset(NCP_site_condition, 
@@ -197,7 +206,8 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
                                        HDI, MarineEcosystemDependency,
                                        coral_imputation, gravtot2, mpa_name,
                                        mpa_enforcement, protection_status, 
-                                       mpa_iucn_cat))
+                                       mpa_iucn_cat,
+                                       Biomass))
   corr_matrix_wo_aust <- cor(NCP_site_wo)
   
   load(here::here("outputs","NCP_site_log_only_australia.Rdata"))
@@ -208,7 +218,8 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
                                        HDI, MarineEcosystemDependency,
                                        coral_imputation, gravtot2, mpa_name,
                                        mpa_enforcement, protection_status, 
-                                       mpa_iucn_cat))
+                                       mpa_iucn_cat,
+                                       Biomass))
   corr_matrix_only_aust <- cor(NCP_site_only)
   
   mantel_test_allVSaust <- vegan::mantel(corr_matrix_all_data, corr_matrix_only_aust)
@@ -223,7 +234,8 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
                                       HDI, MarineEcosystemDependency,
                                       coral_imputation, gravtot2, mpa_name,
                                       mpa_enforcement, protection_status, 
-                                      mpa_iucn_cat))
+                                      mpa_iucn_cat,
+                                      Biomass))
   corr_matrix_SST20 <- cor(NCP_site_SST20)
   mantel_test_SST20 <- vegan::mantel(corr_matrix_all_data, corr_matrix_SST20)
   
@@ -282,7 +294,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   
 ##-------------Links of socio-envir with biomass -------------
   socio_envir <- c("HDI", "MarineEcosystemDependency", "coral_imputation",
-                   "SiteLatitude", "mpa_iucn_cat")
+                   "SiteLatitude", "mpa_iucn_cat", "gravtot2")
   
   x <- as.list(NCP_site_clean[,"Biomass"])[["Biomass"]]
   x_title = "log(total Biomass)"
@@ -293,7 +305,7 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
     coord_flip() 
   })
   
-  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]]+
+  plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]]+ plots[[6]]+
     theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
     plot_annotation(tag_levels = "a") &
     theme(plot.tag = element_text(face = 'bold'))
@@ -406,14 +418,16 @@ plot_mpa <-function(NCP_site, xlim=c(-180,180), ylim = c(-36, 31)){
               aes(size=0.1)) +
       
       geom_point(size = 2, na.rm = T,
-                 colour= "black",
                  alpha = 1,
+                 colour = "black",
+                 stroke=0.1,
                  aes(x = SiteLongitude, y = SiteLatitude,
-                    shape = protection)) +
+                    shape = protection,
+                    fill=protection)) +
       
       coord_sf(xlim, ylim , expand = FALSE) +
       guides(alpha = "none", size = "none", colour = "none") +
-      scale_shape_manual(values=c(19,17,18))+
+      scale_shape_manual(values=c(21,24,23))+
     
       theme_minimal()+
       labs(title = paste0("MPA geographic distribution"),
@@ -442,4 +456,6 @@ ggpubr::ggarrange(mpa, # First row with world map
                                     ncol = 2, labels = c("B", "C")), # Second row with zooms
                   nrow = 2, labels = "A") 
 ggsave(plot = last_plot(), filename = here::here("outputs", "figures",
-                                                 "RLS sites with protection and zoom.png"))
+                                                 "RLS sites with protection and zoom.png"),
+       width = 13, height = 7)
+

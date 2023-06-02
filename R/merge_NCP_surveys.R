@@ -257,7 +257,8 @@ NCP_skewed_distribution <- c("Biomass","N_Recycling","P_Recycling","Productivity
                              "Elasmobranch_Diversity",
                              "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", "Monohydrocalcite",
                              "Amorphous_Carbonate", "Herbivores_Biomass", "Invertivores_Biomass", "Piscivores_Biomass",
-                             "Fishery_Biomass", "Mean_Trophic_Level")
+                             "Fishery_Biomass", "Mean_Trophic_Level",
+                             "gravtot2")
 
 
 ### Mean per site

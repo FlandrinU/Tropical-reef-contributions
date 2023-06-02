@@ -20,9 +20,12 @@ rm(list=ls())
 
 ##-------------loading data-------------
 load( file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
+load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
 
 ##-------------preping data-------------
-unique_points <- NN_NS_scores[which(duplicated(paste0(NN_NS_scores$SiteLongitude, NN_NS_scores$SiteLatitude)) == F),]
+all_data <- dplyr::left_join(NCP_site_log_transformed, NN_NS_scores)
+
+unique_points <- all_data[which(duplicated(paste0(all_data$SiteLongitude, all_data$SiteLatitude)) == F),]
 coord <- dplyr::select(unique_points, longitude = SiteLongitude, latitude = SiteLatitude)
 
 site_dist <- as.matrix( geodist::geodist(coord[,c("longitude", "latitude")]
@@ -53,9 +56,9 @@ correlog_plot <- function(score = "NN_score",
                           increment = 200, 
                           resamp= 99){
   cat("compute correlog ... \n")
-  spatial_cor <- ncf::correlog(x= NN_NS_scores$SiteLongitude, 
-                               y= NN_NS_scores$SiteLatitude, 
-                               z = NN_NS_scores[,score][[score]], increment = increment, 
+  spatial_cor <- ncf::correlog(x= all_data$SiteLongitude, 
+                               y= all_data$SiteLatitude, 
+                               z = all_data[,score][[score]], increment = increment, 
                                resamp= resamp, latlon = TRUE) #distance and increment are in km
   library(ggplot2)
   ggplot() +
@@ -116,6 +119,16 @@ spatial_cor_NS <- correlog_plot(score = "NS_score", increment = 200, resamp= 99)
 spatial_cor_NS
 ggsave(plot = spatial_cor_NS, width=6, height =6,
        filename = here::here("outputs", "figures","Spatial correlation per distance NS, increment 200.png"))
+
+#All contributions individually
+parallel::mclapply(colnames(all_data)[c(8:37)], mc.cores = 15, FUN=function(i){
+  spatial_cor_NN <- correlog_plot(score = i, increment = 200, resamp= 99)
+  ggsave(plot = spatial_cor_NN, width=6, height =6,
+         filename = here::here("outputs", "figures", "Spatial correlation contributions",
+                               paste0("Spatial correlation in ", i, ".png")))
+})
+
+
 
 ##-------------Variogram-------------
 dist_matrix <- geodist::geodist(x= coord[,c("longitude", "latitude")],

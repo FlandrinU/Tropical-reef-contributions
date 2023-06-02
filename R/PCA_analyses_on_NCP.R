@@ -40,17 +40,16 @@ source(here::here("R", "elbow.R"))
 
 ##-------------NCP in categories-------------
 ## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
-grp_NN_NS <- as.factor(c(N_recycling = "NN",
-                         P_recycling = "NN",
+grp_NN_NS <- as.factor(c(N_Recycling = "NN",
+                         P_Recycling = "NN",
                          Taxonomic_Richness = "NN",
                          Functional_Entropy = "NN", 
                          Phylogenetic_Entropy = "NN",
                          Functional_Distinctiveness = "NN",
-                         Evolutionary_distinctiveness = "NN",
-                         Low_TL_Biomass = "NN",
-                         Medium_TL_Biomass = "NN",
-                         High_TL_Biomass = "NN",
-                         # IUCN_Species = "NN",
+                         Evolutionary_Distinctiveness = "NN",
+                         Herbivores_Biomass = "NN",
+                         Invertivores_Biomass = "NN",
+                         Piscivores_Biomass = "NN",
                          Endemism = "NN",
                          Elasmobranch_Diversity = "NN",
                          Low_Mg_Calcite = "NN",
@@ -58,8 +57,8 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Aragonite = "NN",
                          Monohydrocalcite = "NN",
                          Amorphous_Carbonate = "NN",
-                         Trophic_web_robustness = "NN",
-                         mean_Trophic_Level = "NN",
+                         Trophic_Web_Robustness = "NN",
+                         Mean_Trophic_Level = "NN",
                          
                          Productivity = "NS",
                          Selenium = "NS",
@@ -73,17 +72,16 @@ grp_NN_NS <- as.factor(c(N_recycling = "NN",
                          Public_Interest = "NS")) # /!\ the order matter
 
 
-grp_ipbes <- as.factor(c(N_recycling = "regulating",
-                         P_recycling = "regulating",
+grp_ipbes <- as.factor(c(N_Recycling = "regulating",
+                         P_Recycling = "regulating",
                          Taxonomic_Richness = "nature",
                          Functional_Entropy = "regulating", 
                          Phylogenetic_Entropy = "regulating",
                          Functional_Distinctiveness = "nature",
-                         Evolutionary_distinctiveness = "nature",
-                         Low_TL_Biomass = "regulating",
-                         Medium_TL_Biomass = "regulating",
-                         High_TL_Biomass = "regulating",
-                         # IUCN_Species = "nature",
+                         Evolutionary_Distinctiveness = "nature",
+                         Herbivores_Biomass = "regulating",
+                         Invertivores_Biomass = "regulating",
+                         Piscivores_Biomass = "regulating",
                          Endemism = "nature",
                          Elasmobranch_Diversity = "nature",
                          Low_Mg_Calcite = "regulating",
@@ -91,8 +89,8 @@ grp_ipbes <- as.factor(c(N_recycling = "regulating",
                          Aragonite = "regulating",
                          Monohydrocalcite = "regulating",
                          Amorphous_Carbonate = "regulating",
-                         Trophic_web_robustness = "nature",
-                         mean_Trophic_Level = "nature",
+                         Trophic_Web_Robustness = "nature",
+                         Mean_Trophic_Level = "nature",
                          
                          Productivity = "material",
                          Selenium = "material",
@@ -123,27 +121,16 @@ grp_ipbes <- as.factor(c(N_recycling = "regulating",
 plot_PCA_NCP <- function(NCP_site_log_transformed){
   library(ggplot2)
   NCP_site_selected <- subset(NCP_site_log_transformed, 
-                              select = -c(Biomass, SiteCode, SurveyDate,
+                              select = -c(SiteCode, SurveyDate,
                                           SiteCountry, SiteEcoregion, SurveyDepth, 
                                           SiteMeanSST, SiteLatitude, SiteLongitude,
                                           HDI, MarineEcosystemDependency,
                                           coral_imputation, gravtot2, mpa_name,
                                           mpa_enforcement, protection_status, 
-                                          mpa_iucn_cat))
+                                          mpa_iucn_cat,
+                                          Biomass))
   
-  # non_correlated_NCP_site_for_pca <- subset(NCP_site_clean, 
-  #                             select = c(
-  #                              #independents NCP
-  #                              Productivity, funct_distinctiveness, Vitamin_A_C, ED_Mean, aragonite, monohydrocalcite,
-  #                              Btot, # correlated with biomass: Btot, recycling_N, recycling_P, amorphous_carbonate, low_mg_calcite, 
-  #                              # high_mg_calcite, biom_lowTL, biom_mediumTL, biom_highTL, fishery_biomass
-  #                              iucn_species, # iucn_species, elasmobranch_diversity
-  #                              taxo_richness, # taxo_richness, phylo_entropy, aesthe_survey
-  #                              funct_entropy,
-  #                              Omega_3_C, # Omega_3_C, Selenium_C
-  #                              Iron_C # Iron_C, Calcium_C, Zinc_C
-  #                            ))
-  
+
   NCP_site_for_pca <- scale(NCP_site_selected)
   pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=9) 
   
@@ -447,7 +434,7 @@ plot_PCA_NCP <- function(NCP_site_log_transformed){
       seed = T)+
     
     xlim(c(-7,8)) +
-    ylim(c(-6,6)) +
+    ylim(c(-6,6.5)) +
     labs(fill="log(Biomass)",
          title = "Nature to Nature contributions") +
     guides(color = "none",

@@ -125,7 +125,7 @@ plot_1a <- factoextra::fviz_pca_biplot(
   #   fontface = "bold", direction = "both", seed = 1968)+
 
   xlim(c(-7,8)) +
-  ylim(c(-6,6)) +
+  ylim(c(-6,6.5)) +
   labs(fill="log(Biomass)",
        title = "Nature to Nature") +
   xlab("")+
@@ -177,7 +177,7 @@ plot_1b <- factoextra::fviz_pca_biplot(
 
   
   xlim(c(-7,8)) +
-  ylim(c(-6,6)) +
+  ylim(c(-6,6.5)) +
   labs(title = "Nature to People",
        fill = "log(Biomass)") +
   guides(color = "none",
