@@ -22,7 +22,7 @@ devtools::load_all(here::here())
 #world shapefile
 # Behrmann projection - Pacific-centered ----
 behrmann <- "+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs"
-world <- robinmap::robinmap(center = 160, crs = behrmann)
+world <- robinmap::robinmap(center = 150, crs = behrmann)
 sf::st_write(obj=world, here::here("data", "ShapeFiles coast", "shapefile_coast_pacific_centered.shp"))
 
 #data
