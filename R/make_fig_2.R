@@ -70,7 +70,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   
   #up right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_right == 1),
-             size = 3,  
+             size = 4,  
              stroke=0,
              aes(fill= rank_u_r, shape = protection)) +
   scale_fill_gradient(name="up_right",
@@ -81,7 +81,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   
   #up left quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, up_left == 1),
-             size = 3, 
+             size = 4, 
              stroke = 0,
              aes(fill= rank_u_l, shape = protection)) +
   scale_fill_gradient(name="up_left",
@@ -92,7 +92,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   
   #down right quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, down_right == 1),
-             size = 3, 
+             size = 4, 
              stroke=0,
              aes(fill= rank_d_r, shape = protection)) +
   scale_fill_gradient(name="down_right",
@@ -104,7 +104,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
   
   #down left quarter
   geom_point(data= dplyr::filter(NN_NS_with_product, down_left == 1),
-             size = 3,
+             size = 4,
              stroke=0,
              aes(fill= rank_d_l, shape = protection)) +
   scale_fill_gradient(name="down_left",
@@ -126,7 +126,7 @@ NN_NS_plot <- ggplot(NN_NS_with_product,
             quantile(NN_NS_with_product$rank_u_l, probs=c(0.95), na.rm=T))
     ), ],
     aes(y= NS_score, x = NN_score, shape = protection),
-    size = 3,  
+    size = 4,  
     stroke = 0.5)+
 
   
@@ -243,16 +243,16 @@ fig_2a <- NN_NS_plot +
                      ymin = -2,
                      ymax = 1) +
   labs( x=  "Nature for Nature", y = "Nature   \n for People")+
-  theme( axis.title.x = element_text(hjust = 0.95,
+  theme( axis.title.x = element_text(hjust = 0.97,
                                      vjust = -3,
                                      colour = "forestgreen",
                                      face = "bold",
-                                     size = 15),
+                                     size = 16),
          axis.title.y = element_text(hjust = 0.95,
                                      vjust = 3.5,
                                      colour = "dodgerblue3",
                                      face = "bold",
-                                     size = 15)) 
+                                     size = 16)) 
     
   
 fig_2a
@@ -463,7 +463,7 @@ NN_NS_with_product <- tidyr::extract(NN_NS_with_product_spatial, geometry,
 #plot map
 fig_2c <- ggplot() +
   geom_sf(data = coast_pacific_centered, color = NA, fill = "grey70") +
-  
+
   #down left quarter
   geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
              position = position_jitter(width =width_jitter, height =height_jitter),
@@ -561,8 +561,8 @@ panel <- gridExtra::grid.arrange(
 legend_plot <- ggplot(NN_NS_with_product, 
                       aes( y= NS_score, x = NN_score) ) +
   
-  geom_point(size = 3,  
-             stroke=1,
+  geom_point(size = 6,  
+             stroke=0.2,
              aes(fill= protection, shape = protection)) +
   scale_fill_grey(start=1, end=0.5) +
   scale_shape_manual(values=c(24,23,21))+

@@ -32,7 +32,7 @@ _targets/
 *.jpg
 
 # large files
-data/ShapeFiles Coast/
+data/ShapeFiles coast/
 biodiversity/data/Code&Data_Siquiera2020/
 
 #Report

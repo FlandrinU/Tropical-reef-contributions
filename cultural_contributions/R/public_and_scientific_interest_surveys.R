@@ -13,52 +13,48 @@
 rm(list=ls())
 
 ##-------------loading data------------
+# cultural_contrib <- read.csv(here::here("cultural_contributions", "data", 
+#                       "cultural_contributions.csv"), sep = ";", dec= ",")
 cultural_contrib <- read.csv(here::here("cultural_contributions", "data", 
-                      "cultural_contributions.csv"), sep = ";", dec= ",")
+                                        "05_Human_Interest_final_table.csv"), 
+                             sep = ";", dec= ",")
 load(here::here("biodiversity", "outputs", "occurrence_matrix_sp_survey_01.Rdata"))
 load( here::here("data", "data_species.Rdata"))
 
 ##-------------resume data at species scale------------
 cultural <- cultural_contrib |>
-  dplyr::mutate(public_interest = (Wiki_views + Flickr)/2,
-                academic_knowledge = (NCBI + Sci_litt)/2 ,
-                species_corrected = gsub(" ", "_", Scientific)) 
+  dplyr::rename(public_interest = public,
+                academic_knowledge = acad,
+                species_corrected = fb_sci_name) |> 
+  dplyr::right_join(
+    dplyr::select(data_species, species, species_corrected, spec_code))
 
-##-------------deal with names ------------
-for( i in 1:nrow(cultural)){
-  if(cultural$species_corrected[i] %in% data_species$species){
-    cultural$species_corrected[i] <- data_species$species_corrected[
-      which(data_species$species == cultural$species_corrected[i])]
-  }
-}
-
-data_species <- tibble::column_to_rownames(data_species, var = "species")
-colnames(surveys_sp_occ) <- data_species[colnames(surveys_sp_occ), "species_corrected"] # corrected names in surveys_sp_occ
-
-#check uncommon species
-colnames(surveys_sp_occ)[which(is.element(colnames(surveys_sp_occ),cultural$species_corrected) == F)] # Cirrhilabrus_laboutei is lacking
-
+## check list of species
+uncommon_species <- cultural$species_corrected[ which(is.na(cultural$rls_sci_name))] #15 species are lacking in interest estimation
+for( i in uncommon_species){
+  cat(i, ": " )
+  cat(table(surveys_sp_occ[,i]), "\n")
+}   # quite rare species
+##
 
 ##-------------aggregates cultural scores at survey scale------------
-
-cultural <- tibble::column_to_rownames(cultural, var ="species_corrected")
+cultural <- tibble::column_to_rownames(cultural, var ="species")
 cultural_survey <- lapply( rownames(surveys_sp_occ), function(id){
   cat(id, "\n")
   sp <- names(surveys_sp_occ[id, which(surveys_sp_occ[id,] >0)])
   if( length(sp) > 0){
     mean_academic_knowledge <- mean(cultural[sp, "academic_knowledge"], na.rm = T)
     mean_public_interest <- mean(cultural[sp, "public_interest"], na.rm = T)
-    mean_wiki_verna <- mean(cultural[sp, "Wiki_verna"], na.rm = T)
-    
+
     academic_knowledge <- quantile(cultural[sp, "academic_knowledge"], 0.75, na.rm = T)
     public_interest <- quantile(cultural[sp, "public_interest"], 0.75, na.rm = T)
-    wiki_verna <- quantile(cultural[sp, "Wiki_verna"], 0.75, na.rm = T)
-    
-    cult <- as.numeric(c(id, academic_knowledge, public_interest, wiki_verna, 
-      mean_academic_knowledge, mean_public_interest, mean_wiki_verna))
-  }else{cult <- c(id, NA, NA, NA,  NA, NA, NA)}
-  names(cult) <- c("SurveyID", "academic_knowledge", "public_interest", "wiki_verna", 
-                   "mean_academic_knowledge", "mean_public_interest", "mean_wiki_verna")
+
+    cult <- as.numeric(c(id, academic_knowledge, public_interest,
+                         mean_academic_knowledge, mean_public_interest))
+  }else{cult <- c(id, NA, NA, NA, NA)}
+  
+  names(cult) <- c("SurveyID", "academic_knowledge", "public_interest", 
+                   "mean_academic_knowledge", "mean_public_interest")
   cult
 })
 
@@ -77,7 +73,7 @@ plot(cultural_contribution_surveys$mean_public_interest ~ cultural_contribution_
 rownames(cultural_contribution_surveys) <- cultural_contribution_surveys$SurveyID
 pca <- FactoMineR::PCA(questionr::na.rm(cultural_contribution_surveys[,-1]), 
                        scale.unit = T, graph=T, ncp=10)
-factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 80))
+factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 100))
 var <- factoextra::get_pca_var(pca)
 corrplot::corrplot(var$contrib, is.corr=FALSE)  
 factoextra::fviz_pca_var(pca, col.var = "cos2",

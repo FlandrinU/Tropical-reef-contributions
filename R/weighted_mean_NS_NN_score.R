@@ -216,6 +216,27 @@ NN_NS_scores <- cbind(NCP_site_log_transformed[ , c("SiteCode", "SiteLongitude",
 save(NN_NS_scores, file = here::here("outputs", "NN_NS_score_wheighted_mean.Rdata"))
 
 
+
+### Save the final dataframe with all variables ###
+sites_all_variables <- cbind(NCP_site_log_transformed,
+                             data.frame(NN_score = EDS_NN, NP_score = EDS_NS) ) |> 
+  dplyr::rename_with(.cols = c("Biomass","N_Recycling","P_Recycling","Productivity",
+                          "Functional_Distinctiveness","Omega_3","Calcium","Vitamin_A",
+                          "Phylogenetic_Entropy","Evolutionary_Distinctiveness",
+                          "Elasmobranch_Diversity",
+                          "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", "Monohydrocalcite",
+                          "Amorphous_Carbonate", "Herbivores_Biomass", "Invertivores_Biomass", "Piscivores_Biomass",
+                          "Fishery_Biomass", "Mean_Trophic_Level",
+                          "gravtot2"),
+                .fn = ~paste0("log(", .x, ")")) #informs which variables are log-transformed
+
+
+write.csv(sites_all_variables, row.names = FALSE,
+          file = here::here("outputs", "tropical_reef_contributions_final_table.csv"))
+###
+
+
+
 ##-------------plot NN and NS scores-------------
 library(ggplot2)
 library(patchwork)

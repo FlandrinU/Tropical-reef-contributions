@@ -21,6 +21,7 @@ rm(list=ls())
 ##-------------loading data-------------
 load(here::here("data","metadata_surveys.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
+eez <- sf::st_read(here::here("data", "ShapeFiles coast", "eez_v11.shp"))
 
 load(here::here("outputs","all_NCP_site.Rdata"))
 load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
@@ -51,6 +52,7 @@ NCP_site_clean <- subset(NCP_site_log_transformed,
                                      mpa_enforcement, protection_status, 
                                      mpa_iucn_cat))
 
+library(ggplot2)
 
 ##-------------Histograms of NCPs-------------
 #### NCPs distribution
@@ -195,6 +197,37 @@ ggsave(filename = here::here("outputs", "figures","NCP_log_transformed_distribut
   length(which(pairwise_corr > 0.2)) #152
   length(which(pairwise_corr < -0.2)) #54
   length(which( pairwise_corr < 0.2 & -0.2 < pairwise_corr)) #200
+  length(which( pairwise_corr < 0.5 & -0.5 < pairwise_corr)) #200
+  
+  RdBu = c("#67001F", "#B2182B", 
+           "#D6604D", "#F4A582", "#FDDBC7", "#FFFFFF", "#D1E5F0", 
+           "#92C5DE", "#4393C3", "#2166AC", "#053061")
+  
+  plot_histogram <- function(data = as.data.frame(pairwise_corr), 
+                             x=pairwise_corr,
+                             col= RdBu,
+                             title=""){
+    ggplot(data, aes(x)) +
+      geom_histogram( bins = 30, color="grey60", aes(fill = after_stat(x)), 
+                      linewidth=0.2)+
+      scale_fill_gradientn(colors = colorRampPalette(col, bias = 1.3)(30))+
+    
+      labs(title = title, x = "Pairwise correlation", fill= "Pearson \ncorrelation")+
+      geom_vline(xintercept = 0.2, linetype = 3, col= "black")+
+      geom_vline(xintercept = -0.2, linetype = 3, col= "black")+
+      theme_bw()+
+      theme(legend.position = "right",    
+            panel.grid.major = element_blank())
+  } #end of plot_histogram function
+  
+  histo_r_corr <- plot_histogram(data = as.data.frame(pairwise_corr), 
+                                 x=pairwise_corr,
+                                 col= RdBu,
+                                 title="")
+  ggsave(filename = here::here("outputs", "figures","hist_pearson_correlation_NCP.png"), 
+         histo_r_corr, width = 8, height =6 )
+  
+  
 ##------------- Check spatial robustness with Mantel test ---------------
   corr_matrix_all_data <- cor(dplyr::select(NCP_site_clean, -Biomass))
   
@@ -459,3 +492,36 @@ ggsave(plot = last_plot(), filename = here::here("outputs", "figures",
                                                  "RLS sites with protection and zoom.png"),
        width = 13, height = 7)
 
+
+
+
+##-------------Number of sites per EEZ-------------
+sf_use_s2(FALSE)
+sites_rls <- sf::st_as_sf(NN_NS_with_product,
+                          coords=c("SiteLongitude", "SiteLatitude"),
+                          crs=4326)
+eez$count_pt <- lengths(sf::st_intersects(eez, sites_rls))
+
+sampling_effort <- ggplot() +
+  geom_sf(data = eez, color = "grey30", aes(fill=count_pt) ) +
+  scale_fill_gradient(name = "count", trans = "log10",
+                      na.value = "grey70", breaks = c(1,10,100,500)) +
+  geom_sf(data = coast, color = NA, fill = "grey90") +
+  coord_sf(ylim= c(-45,45),expand = FALSE) +
+  theme_bw()+
+  labs(x="Longitude", y= "Latitude", title = "Number of site by EEZ") +
+  theme(axis.title.x = element_text(face = "bold",
+                                    size = 13),
+        axis.title.y = element_text(face = "bold",
+                                    size = 13),
+        axis.text = element_text(size=13),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "grey98"),
+        plot.title = element_text(size=15, face="bold")
+  )
+
+# sampling_effort
+ggsave(plot = sampling_effort, filename = here::here("outputs", "figures",
+                                                 "Number of RLS sites per EEZ.png"),
+       width = 13, height = 5)
