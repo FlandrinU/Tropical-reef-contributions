@@ -1,59 +1,66 @@
-#-----------------Loading packages-------------------
-pkgs <- c("here", "dplyr", "stringr", "rfishprod", "stats", "googledrive", "tidyverse",
-          "devtools", "robinmap")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-devtools::install_github("renatoamorais/rfishprod")
-remotes::install_github("FRBCesab/robinmap")
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+#' Run the Entire Project
+#'
+#' This script runs the entire project and produces all figures present in the
+#' Flandrin, Mouillot _et al._ .
+#'
+#' @author Ulysse Flandrin, \email{ulysse.flandrin@@gmail.com}
+#'
+#' @date 2023/06/13
+#' 
+#' @note
+#' **WARNING:** Running this script calls all the scripts and takes time so if 
+#' you want to work on one or a few scripts, you should run lines 17-42 of this 
+#' script and then go to the other one.
 
-#-----------------renv---------------------
+
+## Clean environment ----
+
+rm(list = ls())
+
+
+#-----------------Install required dependencies---------------------
+
 if (!("remotes" %in% utils::installed.packages())) 
   install.packages("remotes")
 renv::install("r-lib/devtools") #to install packages from github
 renv::install() #install all packages noted in file DESCRIPTION
 renv::snapshot()
 
+
 ## Load packages & functions + Setup project ----
 
 devtools::load_all(here::here())
 
-#-----------------Loading all data---------------------
-#world shapefile
-# Behrmann projection - Pacific-centered ----
-behrmann <- "+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs"
+
+
+#-----------------Preping data---------------------
+
+## save a world coastline shapefile
+behrmann <- "+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs" # Behrmann projection - Pacific-centered ----
 world <- robinmap::robinmap(center = 150, crs = behrmann)
 sf::st_write(obj=world, here::here("data", "ShapeFiles coast", "shapefile_coast_pacific_centered.shp"))
 
-#data
-path = (here::here("data"))
-setwd(path)
-files <- list.files(path, pattern = ".RData|Rdata")
-data_list <- lapply(files, load, .GlobalEnv)
+## Extract, filter and clean  data to run analysis
+source(here::here("analyses", "preping_data_rls.R"))
 
 
-#-----------------Loading all functions---------------------
-path = (here::here("analyses"))
-setwd(path)
-sapply(list.files(path), source)
+#-----------------Assess all reef contributions---------------------
 
-#----------------Run project------------------------
-setwd(here::here())
+## Assess the recycling of N and P from tropical fishes in each communities
+source(here::here("recycling", "analyses", "recycling_analysis.R"))
 
+## Assess the productivity in each community
+source(here::here("productivity", "analyses", "productivity_analyses.R"))
 
-#----------------Loading results------------------------
+## Assess the nutrient concentration and the fishery biomass in each community
+source(here::here("nutrients", "analyses", "nutrients_analyses.R"))
 
-path = (here::here("outputs"))
-setwd(path)
-files <- list.files(path, pattern = ".Rdata|RData")
-data_list <- lapply(files, load, .GlobalEnv)
+## Assess the  in each community
+source(here::here("", "analyses", "productivity_analyses.R"))
 
-#----------------Analyse results------------------------
-path = (here::here("analyses"))
-setwd(path)
-files.source <- list.files(path)
-sapply(files.source, source)
+## Assess the  in each community
+source(here::here("", "analyses", "productivity_analyses.R"))
 
-
-
+## Assess the  in each community
+source(here::here("", "analyses", "productivity_analyses.R"))
 

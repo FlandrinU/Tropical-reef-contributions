@@ -1,5 +1,12 @@
-### filtering to keep only RLS data for tropical sites and detectable fishes ######
-
+################################################################################
+#' 
+#' Filtering to keep only RLS data for tropical sites and detectable fishes
+#' Functions used in the scripts of the script `analysis/preping_data_rls.R`
+#'
+#' @author Sebastien Villéger
+#' 
+#' 
+################################################################################
 ## preparing environment ######
 
 # cleaning memory

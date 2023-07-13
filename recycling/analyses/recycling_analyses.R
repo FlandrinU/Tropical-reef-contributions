@@ -1,31 +1,33 @@
+#################################################################################
+#'
+#'This script runs all scripts of `recycling/R/` to obtain N and P recycling 
+#' flows per species and per communities from RLS data and the rfishflux package
+#' 
+#'
+#'@author Ulysse Flandrin, \email{ulysse.flandrin@@gmail.com}
+#'
+#'
+#' @date 2022/10/01 first created
+################################################################################
+
 #-----------------cleaning memory-------------------
 rm(list=ls())
-
-#-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse", "brms", "readr", "picante", "tidybayes", 
-          "ggridges", "patchwork", "ggfortify", "corrmorant", "stats")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
-
-#-----------------set directory---------------------
-path <- here::here() #should arrive into the R_NCPs file
-setwd(path)
+cat("Run recycling analysis... \n")
 
 #-----------------run recycling analyses---------------------
-##fishflux data of every row of rls surveys
+## fishflux data of every row of rls surveys
 source(here::here("recycling", "R", "0g_run_fishflux.R"))   # /!\ long time to run (around 40')
 
-##agregate flux estimations at the species and surveys scale
+## agregate flux estimations at the species and surveys scale
 source(here::here("recycling", "R", "1b_surveys_fluxes.R")) 
 
-##filter surveys with 80% of species computed by fishflux
+## filter surveys with 80% of species computed by fishflux
 source(here::here("recycling", "R", "1d_surveys_merging_filtering.R")) 
 
-##summarize species fluxes
+## summarize species fluxes
 source(here::here("recycling", "R", "2_species_fluxes.R")) 
 
-##agregate surveys data at the site scale
+## agregate surveys data at the site scale
 source(here::here("recycling", "R", "5_sites_fluxes.R")) 
 
 

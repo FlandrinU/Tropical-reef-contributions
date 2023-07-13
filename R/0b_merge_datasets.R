@@ -1,5 +1,12 @@
-#### exploring RLS data, recoding some variables, merging datasets ######
-
+################################################################################
+#' 
+#' Exploring RLS data, recoding some variables, merging datasets
+#' Functions used in the scripts of the script `analysis/preping_data_rls.R`
+#'
+#' @author Sebastien Villéger
+#' 
+#' 
+################################################################################
 ## preparing environment ######
 
 # cleaning memory

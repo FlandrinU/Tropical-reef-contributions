@@ -1,3 +1,15 @@
+################################################################################
+#' 
+#' Organize data, rename variables, ... and save all necessary information
+#' into 3 files : - `data/metadata_surveys.Rdata`
+#'                - `data/data_species.Rdata`
+#'                - `data/data_surveys.Rdata`
+#'                
+#' Functions used in the scripts of the script `analysis/preping_data_rls.R`
+#'
+#' @author Sebastien Villéger
+#' 
+################################################################################
 ## cleaning memory
 rm(list=ls())
 

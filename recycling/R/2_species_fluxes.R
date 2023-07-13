@@ -1,3 +1,13 @@
+#################################################################################
+#'
+#'This script averages the nutrients flows of each individuals for each species
+#' 
+#'
+#'@author Sebastien Villéger
+#'
+#'
+################################################################################
+
 ## cleaning memory
 rm(list=ls())
 

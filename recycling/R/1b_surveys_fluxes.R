@@ -1,3 +1,14 @@
+#################################################################################
+#'
+#' This script summarize nutrients flows of each individuals at the survey 
+#'  scale (nutrient flows in each surveys)
+#' 
+#'
+#'@author Sebastien Villéger
+#'
+#'
+################################################################################
+
 ## cleaning memory
 rm(list=ls())
 
@@ -7,35 +18,35 @@ load(here::here("data", "data_species.Rdata"))
 load(here::here("data", "data_surveys.Rdata"))
 
 # details about species: length-weight, age, nutrient contents, diet cat
-species_par <- read_csv(here::here("data", "parameters_sp_sst.csv")) %>%
-  select(family, species, lwa_m, lwb_m, k_m, linf_m, sst, Qc_m, Qn_m, Qp_m, diet_cat) 
+species_par <- readr::read_csv(here::here("data", "parameters_sp_sst.csv")) |>
+  dplyr::select(family, species, lwa_m, lwb_m, k_m, linf_m, sst, Qc_m, Qn_m, Qp_m, diet_cat) 
 
 
 
 # fluxes from fishes
-data_fishflux <- read_csv(here::here("recycling", "outputs", "cnpflux_sp_size_sst.csv")) %>% unique()
+data_fishflux <- readr::read_csv(here::here("recycling", "outputs", "cnpflux_sp_size_sst.csv")) |> unique()
 head(data_fishflux)
 names(data_fishflux)
 
 # merging datasets and computing fluxes for each species*size_class given abundance and sst
-data_surveys_fluxes<- left_join(data_surveys, 
+data_surveys_fluxes<- dplyr::left_join(data_surveys, 
                                 select(metadata_surveys, SurveyID, sst = SiteMeanSST ),
-                                by="SurveyID") %>%
-  mutate(sst = round(sst)) %>%
-  left_join(data_fishflux) %>%
-  left_join(unique(species_par))  %>%
-  mutate(fishflux = as.factor(case_when(is.na(Gc_median) ~ FALSE, 
+                                by="SurveyID") |>
+  dplyr::mutate(sst = round(sst)) |>
+  dplyr::left_join(data_fishflux) |>
+  dplyr::left_join(unique(species_par))  |>
+  dplyr::mutate(fishflux = as.factor(case_when(is.na(Gc_median) ~ FALSE, 
                                         Gc_median >= 0 ~ TRUE) )
-  ) %>%
-  mutate(storage_C = Gc_median * number,
-         storage_N = Gn_median * number,
-         storage_P = Gp_median * number,
-         excretion_N = Fn_median * number,
-         excretion_P = Fp_median * number,
-         egestion_N = Wn_median * number,
-         egestion_P = Wp_median * number,
-         egestion_C = Wc_median * number,
-         biomass_estimated = lwa_m * (size_class^lwb_m) * number)
+  ) |>
+  dplyr::mutate(storage_C = Gc_median * number,
+                storage_N = Gn_median * number,
+                storage_P = Gp_median * number,
+                excretion_N = Fn_median * number,
+                excretion_P = Fp_median * number,
+                egestion_N = Wn_median * number,
+                egestion_P = Wp_median * number,
+                egestion_C = Wc_median * number,
+                biomass_estimated = lwa_m * (size_class^lwb_m) * number)
 
 head(data_surveys_fluxes)
 # summary(data_surveys_fluxes)
@@ -57,13 +68,13 @@ surveys_species_fluxes<-list()
 for (k in fluxes_var ) {
   
   # merging size_classes per species in each survey
-  mat_k<-data_surveys_fluxes %>% 
-    select(SurveyID, species, !!k ) %>%
-    rename( flux_k = !!k ) %>%
-    group_by(SurveyID, species) %>%
-    summarize( sum_flux_k=sum(flux_k) ) %>%
-    pivot_wider(names_from = species, values_from = sum_flux_k, values_fill = 0) %>%
-    column_to_rownames(var="SurveyID") %>%
+  mat_k<-data_surveys_fluxes |> 
+    dplyr::select(SurveyID, species, !!k ) |>
+    dplyr::rename( flux_k = !!k ) |>
+    dplyr::group_by(SurveyID, species) |>
+    dplyr::summarize( sum_flux_k=sum(flux_k) ) |>
+    tidyr::pivot_wider(names_from = species, values_from = sum_flux_k, values_fill = 0) |>
+    tibble::column_to_rownames(var="SurveyID") |>
     as.matrix()  
   
   # storing
@@ -74,8 +85,8 @@ for (k in fluxes_var ) {
 # lapply(surveys_species_fluxes, dim)
 
 # total of fluxes per survey ----
-surveys_fluxes<-unlist( sapply(surveys_species_fluxes, rowSums) ) %>% 
-  as.data.frame() %>%
+surveys_fluxes<-unlist( sapply(surveys_species_fluxes, rowSums) ) |> 
+  as.data.frame() |>
   rownames_to_column("SurveyID")
 head(surveys_fluxes)
 dim(surveys_fluxes)
@@ -85,42 +96,42 @@ dim(surveys_fluxes)
 mC<-12
 mN<-14
 mP<-31
-median_ratio <- data_surveys_fluxes %>%
-  uncount(number) %>%
-  group_by(SurveyID) %>%
-  summarise(egestion_CN = median( (egestion_C/mC) / (egestion_N/mN) ),
+median_ratio <- data_surveys_fluxes |>
+  tidyr::uncount(number) |>
+  dplyr::group_by(SurveyID) |>
+  dplyr::summarise(egestion_CN = median( (egestion_C/mC) / (egestion_N/mN) ),
             egestion_CP = median( (egestion_C/mC)/ (egestion_P/mP) ),
             egestion_NP = median( (egestion_N/mN) / (egestion_P/mP) ),
             excretion_NP = median( (excretion_N/mN) / (excretion_P/mP) )
             )
 
 # merging and ratio of quality of excretion and of egestion
-surveys_fluxes <- surveys_fluxes %>%
-  left_join(median_ratio) %>%
-  mutate(excrNP_egesNP= excretion_NP / egestion_NP)
+surveys_fluxes <- surveys_fluxes |>
+  dplyr::left_join(median_ratio) |>
+  dplyr::mutate(excrNP_egesNP= excretion_NP / egestion_NP)
 
 
 ## computing recycling as sum of excretion plus egestion
-surveys_fluxes <- surveys_fluxes %>%
-  mutate(recycling_C = egestion_C) %>%
-  mutate(recycling_N = excretion_N + egestion_N) %>%
-  mutate(recycling_P = excretion_P + egestion_P)
+surveys_fluxes <- surveys_fluxes |>
+  dplyr::mutate(recycling_C = egestion_C) |>
+  dplyr::mutate(recycling_N = excretion_N + egestion_N) |>
+  dplyr::mutate(recycling_P = excretion_P + egestion_P)
   
 surveys_species_fluxes[["recycling_N"]] <- surveys_species_fluxes[["excretion_N"]] + surveys_species_fluxes[["egestion_N"]]
 surveys_species_fluxes[["recycling_P"]] <- surveys_species_fluxes[["excretion_P"]] + surveys_species_fluxes[["egestion_P"]]
 
 
 ## computing contribution of excretion to recycling of N and P
-surveys_fluxes <- surveys_fluxes %>%
-  mutate(pexcr_recycling_N = excretion_N / recycling_N) %>%
-  mutate(pexcr_recycling_P = excretion_P / recycling_P)
+surveys_fluxes <- surveys_fluxes |>
+  dplyr::mutate(pexcr_recycling_N = excretion_N / recycling_N) |>
+  dplyr::mutate(pexcr_recycling_P = excretion_P / recycling_P)
   
 
 ## computing ratio between recycling and storing
-surveys_fluxes <- surveys_fluxes %>%
-  mutate( recyc_stor_C = recycling_C / storage_C ) %>%
-  mutate( recyc_stor_N = recycling_N / storage_N ) %>%
-  mutate( recyc_stor_P = recycling_P / storage_P )
+surveys_fluxes <- surveys_fluxes |>
+  dplyr::mutate( recyc_stor_C = recycling_C / storage_C ) |>
+  dplyr::mutate( recyc_stor_N = recycling_N / storage_N ) |>
+  dplyr::mutate( recyc_stor_P = recycling_P / storage_P )
   
 
 # summary

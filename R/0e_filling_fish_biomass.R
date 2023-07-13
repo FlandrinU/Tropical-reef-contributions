@@ -1,5 +1,12 @@
-### filling missing value for fish biomass in surveys ######
-
+################################################################################
+#' 
+#' Filling missing value for fish biomass in surveys
+#' Functions used in the scripts of the script `analysis/preping_data_rls.R`
+#'
+#' @author Sebastien Villéger
+#' 
+#' 
+################################################################################
 ## preparing environment ######
 
 #Fixing error in curl package for internet conexion

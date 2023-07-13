@@ -1,5 +1,12 @@
-### filtering to keep only RLS data for detectable fishes ######
-
+################################################################################
+#' 
+#' Filtering to keep only RLS data for detectable fishes
+#' Functions used in the scripts of the script `analysis/preping_data_rls.R`
+#'
+#' @author Sebastien Villéger
+#' 
+#' 
+################################################################################
 ## preparing environment ######
 
 # cleaning memory

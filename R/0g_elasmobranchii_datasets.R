@@ -1,15 +1,14 @@
-################################################################################
-##
-## Extract elasmobanchii observations from raw rls data and keep only surveys of
-## metadata_surveys.Rdata
-##
-## 0g_elasmobranchii_datasets.R
-##
-## 09/11/2022
-##
-## Ulysse Flandrin
-##
-################################################################################
+################################################################################################
+#' Elasmobranch informations
+#'
+#'This script Extract elasmobanchii observations from raw rls data and keep only 
+#' surveys of metadata_surveys.Rdata
+#'
+#'@author Ulysse Flandrin, \email{ulysse.flandrin@@gmail.com}
+#'
+#'
+#' @date 2022/11/09 first created
+################################################################################################
 
 ## cleaning memory
 rm(list=ls())

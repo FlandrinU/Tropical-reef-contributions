@@ -1,3 +1,14 @@
+################################################################################
+#' 
+#' Extract the RLS data of the period 2006-2019 gathered for the REEF 
+#'  FUTURE project (this needs permission access from S. Villéger)
+#' Functions used in the scripts of the script `analysis/preping_data_rls.R`
+#' 
+#'
+#' @author Sebastien Villéger
+#'
+#' 
+################################################################################
 ## cleaning memory
 rm(list=ls())
 
