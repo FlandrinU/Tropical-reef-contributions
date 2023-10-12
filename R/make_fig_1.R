@@ -12,7 +12,8 @@
 
 #-----------------Loading packages-------------------
 pkgs <- c("here", "tidyverse","FactoMineR", "corrplot",
-          "factoextra", "ggplot2", "harrypotter", "grid", "gridExtra")
+          "factoextra", "ggplot2", "harrypotter", "grid", "gridExtra",
+          "magick")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -72,6 +73,8 @@ pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=9)
 
 
 #-----------------------------figure 1a: NN biplot ----------------------------
+#eigenvalues
+eig <- as.data.frame(factoextra::get_eig(pca))
 #label position
 data <- data.frame(obsnames=row.names(pca$ind$coord), pca$ind$coord)
 datapc <- data.frame(varnames=rownames(pca$var$coord), pca$var$coord)
@@ -126,9 +129,9 @@ plot_1a <- factoextra::fviz_pca_biplot(
 
   xlim(c(-7,8)) +
   ylim(c(-6,6.5)) +
-  labs(fill="log(Biomass)",
-       title = "Nature for Nature") +
-  xlab("")+
+  labs(title = "Nature for Nature",
+       x = "",
+       y = paste0("PC2 (", round(eig$variance.percent[2], 1), "%)")) +
   theme( legend.position = "none",
          axis.text = element_text(size = 12),
          axis.title = element_text(size = 14),
@@ -179,7 +182,9 @@ plot_1b <- factoextra::fviz_pca_biplot(
   xlim(c(-7,8)) +
   ylim(c(-6,6.5)) +
   labs(title = "Nature for People",
-       fill = "log(Biomass)") +
+       fill = "log(Biomass)",
+       x = paste0("PC1 (", round(eig$variance.percent[1], 1), "%)"),
+       y = paste0("PC2 (", round(eig$variance.percent[2], 1), "%)")) +
   guides(color = "none",
          fill = guide_colourbar(title.position="top", title.hjust = 0.5)) +
   theme( legend.position =c(0.15,0.13),
@@ -225,7 +230,7 @@ elbow_plot <- ggplot(variance_explained,
   
   #cumulative curve
   stat_summary(fun = "mean", geom = "line", size = 0.5, alpha = 0.8) +
-  stat_summary(fun = "mean", size = 0.1) +
+  stat_summary(fun = "mean", linewidth = 0.1) +
   scale_y_continuous(labels = c("", "25", "50", "75", "100%"))+
   
   # elbow point
@@ -273,43 +278,6 @@ elbow_plot
 #        width = 15, height =10 )
 
 ##------------------------figure 1c: contributions ------------------------------
-# var <- factoextra::get_pca_var(pca)
-# contributions <- var$contrib
-# for( i in 1:ncol(contributions)){ 
-#   contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
-# 
-# colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
-# 
-# #divide into two plot
-# contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
-# contributions_NN <- contributions_NN[order(-contributions_NN[,1]), ]
-# row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
-# 
-# contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
-# contributions_NS <- contributions_NS[order(-contributions_NS[,1]), ]
-# row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
-# row.names(contributions_NS)[1] <- paste(
-#   c(rep(" ", 
-#         max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])+4),
-#     row.names(contributions_NS)[1]),
-#   collapse="") #change legend length to have same width in both plot
-# 
-# # plot panel
-# png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
-#     width=11, height = 20, units = "cm", res = 1000)
-# layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
-#               ncol = 1))
-# par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
-# corrplot::corrplot(contributions_NN, is.corr=FALSE, 
-#                    col = c("forestgreen"), tl.col = "black", 
-#                    cl.pos = "n", tl.cex = 1.2,
-#                    tl.srt = 60, na.label.col = "transparent")
-# corrplot::corrplot(contributions_NS, is.corr=FALSE,
-#                    col = c("dodgerblue3"), tl.col = "black", 
-#                    cl.pos = "n", tl.pos = 'l', tl.cex = 1.2,  na.label.col = "transparent")
-# dev.off()
-
-#-----other option------- idea from N Casajus
 var <- factoextra::get_pca_var(pca)
 contributions <- var$contrib
 for( i in 1:ncol(contributions)){ 
@@ -367,7 +335,7 @@ corrplot::corrplot(contributions_NS, is.corr=FALSE,
                    tl.srt = 60, na.label.col = "transparent", 
                    add = TRUE)
 lines(x=c(-9,9.5), y=rep(10.5, 2), lty = 1, lwd = 2)
-text(5,30.7, label= "Dimensions", cex=1.2 , font=2 )
+text(5,30.7, label= "Dimensions (PC)", cex=1.2 , font=2 )
 for(i in c(1:ncol(contributions))){
   text(x=-0.2+i, y= -0.5, label= paste(round(colSums(contributions)[i],0), "%"), 
        cex=0.9, srt=60, font=1)}
@@ -387,6 +355,7 @@ plot_merged <- plot_1a +
 plot_merged
 
 
+library(magick)
 corrplot_fig1c <- cowplot::ggdraw() + 
   cowplot::draw_image(here::here("outputs","figures",
                                  "contribution_in_total_variance_NN_NS.png"))+
@@ -416,7 +385,7 @@ png(filename = here::here("outputs", "figures","Panel_fig_1.png"),
                           c(2,2,2,3,3),
                           c(2,2,2,3,3),
                           c(2,2,2,3,3)))
-    # Add labels 
+    # Add labels A, B and C
     grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
                     just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
     grid::grid.text("B", x=unit(0.01, "npc"), y=unit(0.48, "npc"), 

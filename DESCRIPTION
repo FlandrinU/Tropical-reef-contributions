@@ -51,6 +51,7 @@ Imports:
     harrypotter,
     here,
     lsr,
+    magick,
     mFD,
     NetIndices,
     ncf,
