@@ -24,9 +24,6 @@ source(here::here("recycling", "R", "1b_surveys_fluxes.R"))
 ## filter surveys with 80% of species computed by fishflux
 source(here::here("recycling", "R", "1d_surveys_merging_filtering.R")) 
 
-## summarize species fluxes
-source(here::here("recycling", "R", "2_species_fluxes.R")) 
-
 ## agregate surveys data at the site scale
 source(here::here("recycling", "R", "5_sites_fluxes.R")) 
 
