@@ -33,23 +33,23 @@ site_dist <- as.matrix( geodist::geodist(coord[,c("longitude", "latitude")]
 site_dist_inv <- 1/site_dist
 diag(site_dist_inv) <- 0
 
-## -------------Moran index-------------
-ape::Moran.I(unique_points$NN_score, site_dist_inv)
-
-listw <- spdep::mat2listw(site_dist_inv, style = "M")
-spdep::moran.test(x= unique_points$NN_score, listw = listw, randomisation = T )
-
-#check Spatial autocorrelation 
-coords<-as.matrix(cbind(NN_NS_scores[,"SiteLongitude"],NN_NS_scores[,"SiteLatitude"])) 
-nb <- spdep::knn2nb(spdep::knearneigh(coords, 1, longlat = TRUE)) 
-lstw <- spdep::nb2listw((spdep::knn2nb(spdep::knearneigh(coords, k=1, longlat = TRUE))))
-spdep::moran.test(NN_NS_scores$NN_score, lstw) # there is SAC for model residuals
-
-#check Spatial autocorrelation 
-lstw <- spdep::nb2listw((spdep::knn2nb(spdep::knearneigh(coords, k=2, longlat = TRUE))))
-spdep::moran.test(NN_NS_scores$NN_score, lstw) # there is SAC 
-spdep::moran.mc(NN_NS_scores$NN_score, lstw,nsim=999)
-spdep::moran.plot(NN_NS_scores$NN_score, lstw)
+# ## -------------Moran index-------------
+# ape::Moran.I(unique_points$NN_score, site_dist_inv)
+# 
+# listw <- spdep::mat2listw(site_dist_inv, style = "M")
+# spdep::moran.test(x= unique_points$NN_score, listw = listw, randomisation = T )
+# 
+# #check Spatial autocorrelation 
+# coords<-as.matrix(cbind(NN_NS_scores[,"SiteLongitude"],NN_NS_scores[,"SiteLatitude"])) 
+# nb <- spdep::knn2nb(spdep::knearneigh(coords, 1, longlat = TRUE)) 
+# lstw <- spdep::nb2listw((spdep::knn2nb(spdep::knearneigh(coords, k=1, longlat = TRUE))))
+# spdep::moran.test(NN_NS_scores$NN_score, lstw) # there is SAC for model residuals
+# 
+# #check Spatial autocorrelation 
+# lstw <- spdep::nb2listw((spdep::knn2nb(spdep::knearneigh(coords, k=2, longlat = TRUE))))
+# spdep::moran.test(NN_NS_scores$NN_score, lstw) # there is SAC 
+# spdep::moran.mc(NN_NS_scores$NN_score, lstw,nsim=999)
+# spdep::moran.plot(NN_NS_scores$NN_score, lstw)
 
 ## -------------Moran index per distance class-------------
 correlog_plot <- function(score = "NN_score",
@@ -86,47 +86,44 @@ correlog_plot <- function(score = "NN_score",
 }
 
 #NN score
-spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 500, resamp= 30)
-spatial_cor_NN
-ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
-                                                    "Spatial correlation per distance NN, increment 500.png"))
+# spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 500, resamp= 30)
+# spatial_cor_NN
+# ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
+#                                                     "Spatial correlation per distance NN, increment 500.png"))
+# 
+# spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 200, resamp= 99)
+# ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
+#                                                     "Spatial correlation per distance NN, increment 200.png"))
 
-spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 100, resamp= 99)
-ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
-                                                    "Spatial correlation per distance NN, increment 100.png"))
-
-spatial_cor_NN_200 <- correlog_plot(score = "NN_score",title = "Nature for Nature", increment = 200, resamp= 99)
-spatial_cor_NN_200
-ggsave(plot = spatial_cor_NN_200, width=6, height =6,
+spatial_cor_NN_100 <- correlog_plot(score = "NN_score",title = "Nature for Nature", increment = 100, resamp= 99)
+spatial_cor_NN_100
+ggsave(plot = spatial_cor_NN_100, width=6, height =6,
        filename = here::here("outputs", "figures",
-                             "Spatial correlation per distance NN, increment 200.png"))
-
-
-spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 5000, resamp= 30)
-ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
-                                                    "Spatial correlation per distance NN, increment 5000.png"))
+                             "Spatial correlation per distance NN, increment 100.png"))
 
 #NS score
-spatial_cor_NS <- correlog_plot(score = "NS_score",title = "NS", increment = 50, resamp= 99)
-spatial_cor_NS
-ggsave(plot = spatial_cor_NS, filename = here::here("outputs", "figures",
-                                                    "Spatial correlation per distance NS, increment 500.png"))
+# spatial_cor_NS <- correlog_plot(score = "NS_score",title = "NS", increment = 50, resamp= 99)
+# spatial_cor_NS
+# ggsave(plot = spatial_cor_NS, filename = here::here("outputs", "figures",
+#                                                     "Spatial correlation per distance NS, increment 500.png"))
+# 
+# spatial_cor_NS <- correlog_plot(score = "NS_score",title = "NS", increment = 200, resamp= 30)
+# spatial_cor_NS
+# ggsave(plot = spatial_cor_NS, filename = here::here("outputs", "figures",
+#                                                     "Spatial correlation per distance NS, increment 200.png"))
 
-spatial_cor_NS <- correlog_plot(score = "NS_score",title = "NS", increment = 100, resamp= 30)
-spatial_cor_NS
-ggsave(plot = spatial_cor_NS, filename = here::here("outputs", "figures",
-                                                    "Spatial correlation per distance NS, increment 100.png"))
+spatial_cor_NS_100 <- correlog_plot(score = "NS_score",title = "Nature for People", increment = 100, resamp= 99)
+spatial_cor_NS_100
+ggsave(plot = spatial_cor_NS_100, width=6, height =6,
+       filename = here::here("outputs", "figures","Spatial correlation per distance NS, increment 100.png"))
 
-spatial_cor_NS_200 <- correlog_plot(score = "NS_score",title = "Nature for People", increment = 200, resamp= 99)
-spatial_cor_NS_200
-ggsave(plot = spatial_cor_NS_200, width=6, height =6,
-       filename = here::here("outputs", "figures","Spatial correlation per distance NS, increment 200.png"))
 
 #panel
 ggpubr::ggarrange(spatial_cor_NN_200, spatial_cor_NS_200,
                   ncol = 2, labels = c("A", "B")) 
 ggsave(plot = last_plot(), width=11, height =6,
        filename = here::here("outputs", "figures", "Spatial correlation per distance _ PANEL NN and NP.png"))
+
 
 #All contributions individually
 parallel::mclapply(colnames(all_data)[c(8:37)], mc.cores = 15, FUN=function(i){
