@@ -1,7 +1,7 @@
 #' Run the Entire Project
 #'
 #' This script runs the entire project and produces all figures present in the
-#' Flandrin, Mouillot _et al._ .
+#' Flandrin U _et al._ 2023.
 #'
 #' @author Ulysse Flandrin, \email{ulysse.flandrin@@gmail.com}
 #'

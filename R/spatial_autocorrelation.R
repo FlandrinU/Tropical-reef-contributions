@@ -53,6 +53,7 @@ spdep::moran.plot(NN_NS_scores$NN_score, lstw)
 
 ## -------------Moran index per distance class-------------
 correlog_plot <- function(score = "NN_score",
+                          title = "Nature for Nature scores",
                           increment = 200, 
                           resamp= 99){
   cat("compute correlog ... \n")
@@ -69,56 +70,63 @@ correlog_plot <- function(score = "NN_score",
                     x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]))+
     
     geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$p <= 0.01 &
-                                                      spatial_cor$mean.of.class < 15000) ] ,
+                                                        spatial_cor$mean.of.class < 15000) ] ,
                    x = spatial_cor$mean.of.class[ which(spatial_cor$p <= 0.01 &
-                                                        spatial_cor$mean.of.class < 15000) ]),
+                                                          spatial_cor$mean.of.class < 15000) ]),
                alpha = 0.8, size = 1, col ="red") +
     geom_vline(xintercept = spatial_cor[["x.intercept"]], linetype="dashed", 
                color = "black", linewidth=1)+
-
+    
     xlab("Distance class (in km)") + ylab("spatial correlation (Moran I)")+
-    labs(title = paste("Spatial correlation of", score),
-         subtitle = paste("Increment = ", increment, "km, ", "resample = ", resamp,
+    labs(title =  title,
+         subtitle = paste("Increment = ", increment, "km, ", "permutations = ", resamp,
                           ", x intercept = ", round(spatial_cor[["x.intercept"]],1), "km"))+
     # ylim(-0.7,0.9)+
     theme_bw()
 }
 
 #NN score
-spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 500, resamp= 30)
+spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 500, resamp= 30)
 spatial_cor_NN
 ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
-        "Spatial correlation per distance NN, increment 500.png"))
+                                                    "Spatial correlation per distance NN, increment 500.png"))
 
-spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 100, resamp= 99)
+spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 100, resamp= 99)
 ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
-        "Spatial correlation per distance NN, increment 100.png"))
+                                                    "Spatial correlation per distance NN, increment 100.png"))
 
-spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 200, resamp= 99)
-ggsave(plot = spatial_cor_NN, width=6, height =6,
+spatial_cor_NN_200 <- correlog_plot(score = "NN_score",title = "Nature for Nature", increment = 200, resamp= 99)
+spatial_cor_NN_200
+ggsave(plot = spatial_cor_NN_200, width=6, height =6,
        filename = here::here("outputs", "figures",
-        "Spatial correlation per distance NN, increment 200.png"))
+                             "Spatial correlation per distance NN, increment 200.png"))
 
 
-spatial_cor_NN <- correlog_plot(score = "NN_score", increment = 5000, resamp= 30)
+spatial_cor_NN <- correlog_plot(score = "NN_score",title = "NN", increment = 5000, resamp= 30)
 ggsave(plot = spatial_cor_NN, filename = here::here("outputs", "figures",
-         "Spatial correlation per distance NN, increment 5000.png"))
+                                                    "Spatial correlation per distance NN, increment 5000.png"))
 
 #NS score
-spatial_cor_NS <- correlog_plot(score = "NS_score", increment = 500, resamp= 30)
+spatial_cor_NS <- correlog_plot(score = "NS_score",title = "NS", increment = 50, resamp= 99)
 spatial_cor_NS
 ggsave(plot = spatial_cor_NS, filename = here::here("outputs", "figures",
-          "Spatial correlation per distance NS, increment 500.png"))
+                                                    "Spatial correlation per distance NS, increment 500.png"))
 
-spatial_cor_NS <- correlog_plot(score = "NS_score", increment = 100, resamp= 30)
+spatial_cor_NS <- correlog_plot(score = "NS_score",title = "NS", increment = 100, resamp= 30)
 spatial_cor_NS
 ggsave(plot = spatial_cor_NS, filename = here::here("outputs", "figures",
-            "Spatial correlation per distance NS, increment 100.png"))
+                                                    "Spatial correlation per distance NS, increment 100.png"))
 
-spatial_cor_NS <- correlog_plot(score = "NS_score", increment = 200, resamp= 99)
-spatial_cor_NS
-ggsave(plot = spatial_cor_NS, width=6, height =6,
+spatial_cor_NS_200 <- correlog_plot(score = "NS_score",title = "Nature for People", increment = 200, resamp= 99)
+spatial_cor_NS_200
+ggsave(plot = spatial_cor_NS_200, width=6, height =6,
        filename = here::here("outputs", "figures","Spatial correlation per distance NS, increment 200.png"))
+
+#panel
+ggpubr::ggarrange(spatial_cor_NN_200, spatial_cor_NS_200,
+                  ncol = 2, labels = c("A", "B")) 
+ggsave(plot = last_plot(), width=11, height =6,
+       filename = here::here("outputs", "figures", "Spatial correlation per distance _ PANEL NN and NP.png"))
 
 #All contributions individually
 parallel::mclapply(colnames(all_data)[c(8:37)], mc.cores = 15, FUN=function(i){
@@ -132,7 +140,7 @@ parallel::mclapply(colnames(all_data)[c(8:37)], mc.cores = 15, FUN=function(i){
 
 ##-------------Variogram-------------
 dist_matrix <- geodist::geodist(x= coord[,c("longitude", "latitude")],
-                              measure = "geodesic") #distance in meters
+                                measure = "geodesic") #distance in meters
 range(dist_matrix) #max ~20 000 km => OK
 
 site_dist <- dist_matrix[lower.tri(dist_matrix, diag = FALSE)]
@@ -144,7 +152,7 @@ variogram <- ggplot(data= vario) +
   geom_smooth(aes(y = variog, x = dist))+
   theme_bw()
 ggsave(plot = variogram, filename = here::here("outputs", "figures",
-           "Spatial correlation variogram.png"))
+                                               "Spatial correlation variogram.png"))
 
 
 # ##-------------check  very distant points >18 000 km -------------

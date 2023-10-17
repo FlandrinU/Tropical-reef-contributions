@@ -58,11 +58,11 @@ carbonates <- dplyr::select(caco3_per_day, SurveyID, low_mg_calcite, high_mg_cal
 
 troph_ind <- dplyr::select(as.data.frame(trophic_indicators_survey), SurveyID, 
                            b_power_law, weighted_mTL) |> 
-             dplyr::rename(robustness = b_power_law, mean_TL = weighted_mTL) |>
-             dplyr::mutate(across(.cols = c("SurveyID"),.fns = as.character, .names = "{.col}" )) #3627 surveys
+  dplyr::rename(robustness = b_power_law, mean_TL = weighted_mTL) |>
+  dplyr::mutate(across(.cols = c("SurveyID"),.fns = as.character, .names = "{.col}" )) #3627 surveys
 
 cultural <- dplyr::select(cultural_contribution_surveys, 
-              SurveyID, public_interest)
+                          SurveyID, public_interest)
 
 coral_cover <- dplyr::select(benthic_imputed, SurveyID, coral_imputation) |>
   dplyr::mutate( SurveyID = as.character(SurveyID))
@@ -92,7 +92,7 @@ NCP <- metadata_surveys |>
                 Taxonomic_Richness = taxo_richness,
                 Functional_Entropy = funct_entropy, 
                 Phylogenetic_Entropy = phylo_entropy_Mean,
-                Functional_Distinctiveness = funct_distinctiveness,
+                Traits_Distinctiveness = funct_distinctiveness,
                 Evolutionary_Distinctiveness = ED_Mean,
                 Herbivores_Biomass = biom_lowTL,
                 Invertivores_Biomass = biom_mediumTL,
@@ -119,20 +119,91 @@ NCP <- metadata_surveys |>
                 Aesthetic = aesthe_survey,
                 Public_Interest = public_interest
                 # Academic_Knowledge = academic_knowledge
-                )
-  
+  )
 
+
+# ## total nutrients in sites
+# NCP <- NCP |> dplyr::mutate(Selenium = Selenium*Fishery_Biomass,
+#                             Zinc = Zinc*Fishery_Biomass,
+#                             Omega_3 = Omega_3*Fishery_Biomass,
+#                             Calcium = Calcium*Fishery_Biomass,
+#                             Iron = Iron*Fishery_Biomass,
+#                             Vitamin_A = Vitamin_A*Fishery_Biomass)
 
 #### No filter
 NCP_surveys <- questionr::na.rm(NCP) #remains 1830 surveys --> no filter on metadata
 
 NCP_surveys <- NCP_surveys |>
   dplyr::left_join( dplyr::select( metadata_surveys,
-                             SurveyID, SurveyDate, SiteEcoregion, 
-                             HDI, MarineEcosystemDependency, gravtot2,
-                             mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat) )
-  
+                                   SurveyID, SurveyDate, SiteEcoregion, 
+                                   HDI, MarineEcosystemDependency, gravtot2,
+                                   mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat) )
 save(NCP_surveys, file = here::here("outputs", "all_NCP_surveys.Rdata"))
+
+##### log right skewed distribution ###
+### NCP distribution
+plot_distribution <- function(ncp, data){
+  col <- fishualize::fish(n = ncol(data), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+  names(col) <- colnames(data)
+  
+  ggplot(data) +
+    aes(x = data[,ncp]) +
+    geom_histogram(bins = 40L,
+                   fill = col[ncp][[1]],
+                   col = "black") +
+    labs(title = ncp) +
+    xlab("") + ylab("") +
+    theme_minimal() +
+    theme( legend.position = "none")
+}
+library(ggplot2)
+library(patchwork)
+plots <- lapply(colnames(NCP_surveys)[-c(1:8)], FUN = plot_distribution, data = NCP_surveys )
+all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
+  plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
+  plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
+  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
+  plots[[28]] + plots[[29]] + plots[[30]] +
+  theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
+  plot_annotation(tag_levels = "a") &
+  theme(plot.tag = element_text(face = 'bold'))
+all_plot
+
+median <-  robustbase::colMedians(as.matrix(dplyr::select(NCP_surveys, Biomass:Public_Interest)))
+max <- apply(dplyr::select(NCP_surveys, Biomass:Public_Interest),2,max)
+magnitude <- max/median
+which(magnitude > 10)
+
+## NCPs distribution with right skewed distribution: more than one order of magnitude between median and max
+# NCP_skewed_distribution <- c("Biomass","N_Recycling","P_Recycling","Productivity",
+#                              "Functional_Distinctiveness","Omega_3","Calcium","Vitamin_A",
+#                              "Phylogenetic_Entropy","Evolutionary_Distinctiveness",
+#                              "Elasmobranch_Diversity",
+#                              "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite",
+#                              "Monohydrocalcite", "Amorphous_Carbonate", 
+#                              "Herbivores_Biomass", "Invertivores_Biomass", 
+#                              "Piscivores_Biomass", "Fishery_Biomass",
+#                              "Mean_Trophic_Level",
+#                              "gravtot2")
+NCP_skewed_distribution <- c("Biomass","N_Recycling","P_Recycling",
+                             "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite",
+                             "Monohydrocalcite", "Amorphous_Carbonate", 
+                             "Herbivores_Biomass", "Invertivores_Biomass", 
+                             "Piscivores_Biomass", "Fishery_Biomass",
+                             "gravtot2")
+# "Selenium", "Zinc", "Omega_3", "Calcium", "Iron", "Vitamin_A") #####################################################"
+
+NCP_survey_log_transformed <- NCP_surveys |>
+  dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>      
+  dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
+                       .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid negative values
+
+save(NCP_survey_log_transformed, file = here::here("outputs", "all_NCP_survey_log_transformed.Rdata"))
+
+
+
+
 
 ### Sensitivity test: remove 5% outliers
 # NCP_surveys <- questionr::na.rm(NCP) 
@@ -190,14 +261,14 @@ NCP_surveys_coral_0_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1720
 
 #### tropical reef with more than 5% coral cover
 ID_wo_5_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.05) |>
- dplyr::mutate(SurveyID = as.character(SurveyID))
+  dplyr::mutate(SurveyID = as.character(SurveyID))
 NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_5_coral$SurveyID)
 NCP_surveys_coral_5_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1510
 
 
 #### tropical reef with more than 10% coral cover
 ID_wo_10_coral <- dplyr::filter(benthic_imputed, coral_imputation >0.1) |>
- dplyr::mutate(SurveyID = as.character(SurveyID))
+  dplyr::mutate(SurveyID = as.character(SurveyID))
 NCP_wo_no_coral <- dplyr::filter(NCP, SurveyID %in% ID_wo_10_coral$SurveyID)
 NCP_surveys_coral_10_imputed <- questionr::na.rm(NCP_wo_no_coral) #remains 1346
 
@@ -222,50 +293,14 @@ NCP_surveys_only_australia <- questionr::na.rm(NCP_only_aust) #remains 1084
 # NCP_surveys <- questionr::na.rm(NCP_wo_aust_spain) #remains 672
 
 
-### NCP distribution
-plot_distribution <- function(ncp, data){
-  col <- fishualize::fish(n = ncol(data), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
-  names(col) <- colnames(data)
-  
-  ggplot(data) +
-    aes(x = data[,ncp]) +
-    geom_histogram(bins = 40L,
-                   fill = col[ncp][[1]],
-                   col = "black") +
-    labs(title = ncp) +
-    xlab("") + ylab("") +
-    theme_minimal() +
-    theme( legend.position = "none")
-}
-library(ggplot2)
-library(patchwork)
-plots <- lapply(colnames(NCP_surveys)[-c(1:8)], FUN = plot_distribution, data = NCP_surveys )
-all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[6]] + plots[[7]] +
-  plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
-  plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
-  plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] +
-  theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-  plot_annotation(tag_levels = "a") &
-  theme(plot.tag = element_text(face = 'bold'))
-all_plot
 
-## NCPs distribution with right skewed distribution
-NCP_skewed_distribution <- c("Biomass","N_Recycling","P_Recycling","Productivity",
-                             "Functional_Distinctiveness","Omega_3","Calcium","Vitamin_A",
-                             "Phylogenetic_Entropy","Evolutionary_Distinctiveness",
-                             "Elasmobranch_Diversity",
-                             "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", "Monohydrocalcite",
-                             "Amorphous_Carbonate", "Herbivores_Biomass", "Invertivores_Biomass", "Piscivores_Biomass",
-                             "Fishery_Biomass", "Mean_Trophic_Level",
-                             "gravtot2")
 
 
 ### Mean per site
 mean_per_site <- function(var_survey = NCP_surveys){
   var_survey |> dplyr::group_by( SiteCode, SiteCountry) |>
     dplyr::summarise(across(.cols = c("SiteLatitude":"Public_Interest"),
-                     .fns = mean, .names = "{.col}"))
+                            .fns = mean, .names = "{.col}"))
 }
 
 
@@ -273,10 +308,10 @@ NCP_site <- mean_per_site(NCP_surveys)
 summary(NCP_site) # 1237 sites
 NCP_site <- NCP_site |>
   dplyr::left_join( 
-      dplyr::distinct(metadata_surveys,
-                          SiteCode, SurveyDate, SiteEcoregion,
-                          HDI, MarineEcosystemDependency, gravtot2,
-                          mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat))
+    dplyr::distinct(metadata_surveys,
+                    SiteCode, SurveyDate, SiteEcoregion,
+                    HDI, MarineEcosystemDependency, gravtot2,
+                    mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat))
 save(NCP_site, file = here::here("outputs", "all_NCP_site.Rdata"))
 
 
@@ -292,14 +327,14 @@ save(NCP_site_log_transformed, file = here::here("outputs", "all_NCP_site_log_tr
 
 #save with different filter
 for(condition in c("coral_reef", "coral_0_imputed", "wo_australia", "coral_5_imputed",  "coral_10_imputed",
-"only_australia", "SST20", "random")){
+                   "only_australia", "SST20", "random")){
   NCP_surveys_condition <- get(paste0("NCP_surveys_", condition))
   NCP_site_condition <- mean_per_site(NCP_surveys_condition)
   NCP_site_condition <- NCP_site_condition |>
     dplyr::left_join( dplyr::distinct( metadata_surveys,
-                                     SiteCode, SurveyDate, SiteEcoregion,
-                                     HDI, MarineEcosystemDependency, gravtot2,
-                                     mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat),
+                                       SiteCode, SurveyDate, SiteEcoregion,
+                                       HDI, MarineEcosystemDependency, gravtot2,
+                                       mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat),
                       multiple = "all") |>
     dplyr::mutate(across(.cols = all_of(NCP_skewed_distribution),
                          .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed

@@ -12,8 +12,7 @@
 
 #-----------------Loading packages-------------------
 pkgs <- c("here", "tidyverse","FactoMineR", "corrplot",
-          "factoextra", "ggplot2", "harrypotter", "grid", "gridExtra",
-          "magick")
+          "factoextra", "ggplot2", "harrypotter", "grid", "gridExtra")
 nip <- pkgs[!(pkgs %in% installed.packages())]
 nip <- lapply(nip, install.packages, dependencies = TRUE)
 ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -22,8 +21,14 @@ rm(list=ls())
 
 ##-------------loading data-------------
 load(here::here("outputs","all_NCP_site_log_transformed.Rdata"))
+# load(here::here("outputs","NCP_site_log_SST20.Rdata"))
+# NCP_site_log_transformed <- NCP_site_condition
 
 source(here::here("R", "elbow.R"))
+
+# "#B35806" "#E08214" "#FDB863" "#FEE0B6" "#D8DAEB" "#B2ABD2" "#8073AC" "#542788"
+color_grad = c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE090", "#D8DAEB", "#B2ABD2", "#8073AC", "#542788")
+# color_grad = c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE090", "#D8DAEB")
 
 ##-------------NCP in categories-------------
 ## Classify variables in Nature for Nature (NN) and Nature for Society (NS)
@@ -32,7 +37,7 @@ grp_NN_NS <- as.factor(c(N_Recycling = "NN",
                          Taxonomic_Richness = "NN",
                          Functional_Entropy = "NN", 
                          Phylogenetic_Entropy = "NN",
-                         Functional_Distinctiveness = "NN",
+                         Traits_Distinctiveness = "NN",
                          Evolutionary_Distinctiveness = "NN",
                          Herbivores_Biomass = "NN",
                          Invertivores_Biomass = "NN",
@@ -58,23 +63,45 @@ grp_NN_NS <- as.factor(c(N_Recycling = "NN",
                          Aesthetic = "NS",
                          Public_Interest = "NS")) # /!\ the order matter
 ##-------------computing PCA-------------
-NCP_site_selected <- subset(NCP_site_log_transformed, 
-                            select = -c(Biomass, SiteCode, SurveyDate,
-                                        SiteCountry, SiteEcoregion, SurveyDepth, 
-                                        SiteMeanSST, SiteLatitude, SiteLongitude,
-                                        HDI, MarineEcosystemDependency,
-                                        coral_imputation, gravtot2, mpa_name,
-                                        mpa_enforcement, protection_status, 
-                                        mpa_iucn_cat))
+NCP_site_log_transformed <- dplyr::arrange(NCP_site_log_transformed, Biomass) 
+
+NCP_site_selected <- NCP_site_log_transformed |> 
+  subset(select = -c(Biomass, SiteCode, SurveyDate,
+                     SiteCountry, SiteEcoregion, SurveyDepth, 
+                     SiteMeanSST, SiteLatitude, SiteLongitude,
+                     HDI, MarineEcosystemDependency,
+                     coral_imputation, gravtot2, mpa_name,
+                     mpa_enforcement, protection_status, 
+                     mpa_iucn_cat))
 
 
 NCP_site_for_pca <- scale(NCP_site_selected)
-pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=9) 
+
+colnames(NCP_site_for_pca)
+w <- c(1/7, 1/7, 1/5, 
+       1/5, 1/5, 1/5,
+       1/5, 1/5, 1/5,
+       1/5, 1/5, 1/5,
+       1/7, 1/7, 1/7,
+       1/7, 1/7, 1/2,
+       1/2, 1/2, 1/6,
+       1/6, 1/6, 1/6,
+       1/6, 1/6, 1/2,
+       1/2, 1/2)
+names(w) <- colnames(NCP_site_for_pca)
+w #the same weight for each
+
+pca <- FactoMineR::PCA(NCP_site_for_pca, col.w = w,
+                       scale.unit = FALSE, graph=F, ncp=9)
+
+# Without weight
+# pca <- FactoMineR::PCA(NCP_site_for_pca, scale.unit = FALSE, graph=F, ncp=9) 
 
 
 #-----------------------------figure 1a: NN biplot ----------------------------
 #eigenvalues
 eig <- as.data.frame(factoextra::get_eig(pca))
+
 #label position
 data <- data.frame(obsnames=row.names(pca$ind$coord), pca$ind$coord)
 datapc <- data.frame(varnames=rownames(pca$var$coord), pca$var$coord)
@@ -99,9 +126,11 @@ plot_1a <- factoextra::fviz_pca_biplot(
   geom.var = c("arrow"),
   fill.ind = NCP_site_log_transformed$Biomass,
   col.ind =  NCP_site_log_transformed$Biomass,
-  alpha.ind = 0.7,
-  gradient.cols = rev(
-    RColorBrewer::brewer.pal(10,name="RdYlBu")),
+  alpha.ind = 0.6,
+  gradient.cols =
+    # RColorBrewer::brewer.pal(10,name="PuOr"),
+    rev(color_grad),
+  # harrypotter::hp(n=9,option="RonWeasley",begin = 0.3, direction = -1),
   repel = TRUE,
   ggtheme = theme_bw(base_line_size = 0)) +
   
@@ -126,12 +155,12 @@ plot_1a <- factoextra::fviz_pca_biplot(
   #   aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
   #   alpha = 1, size=4, label.size = NA,  force_pull = 3, color = "forestgreen",
   #   fontface = "bold", direction = "both", seed = 1968)+
-
-  xlim(c(-7,8)) +
-  ylim(c(-6,6.5)) +
+  
+  xlim(c(-4.5,4.5)) +
+  ylim(c(-3.2,4.3)) +
   labs(title = "Nature for Nature",
        x = "",
-       y = paste0("PC2 (", round(eig$variance.percent[2], 1), "%)")) +
+       y = paste0("PC2 (", round(eig$variance.percent[2], 1), "%)")) + 
   theme( legend.position = "none",
          axis.text = element_text(size = 12),
          axis.title = element_text(size = 14),
@@ -141,7 +170,6 @@ plot_1a <- factoextra::fviz_pca_biplot(
                                    margin=margin(t = 20, b = -20),
                                    hjust = 0.01))
 print(plot_1a)
-
 
 #-----------------------------figure 1b: NS biplot ----------------------------
 
@@ -156,8 +184,12 @@ plot_1b <- factoextra::fviz_pca_biplot(
   geom.var = c("arrow"),
   fill.ind = NCP_site_log_transformed$Biomass,
   col.ind = NCP_site_log_transformed$Biomass,
-  alpha.ind = 0.7,
-  gradient.cols = rev(RColorBrewer::brewer.pal(10,name="RdYlBu")),
+  gradient.cols = 
+    rev(color_grad),
+  # harrypotter::hp(n=9,option="RonWeasley",begin = 0.3, direction = -1),
+  #RColorBrewer::brewer.pal(10,name="PuOr"), #rev(color_grad), 
+  # scico::scico(9,palette = "lajolla", begin = 0.2, direction = -1),
+  alpha.ind = 0.6,
   repel = TRUE,
   ggtheme = theme_bw(base_line_size = 0)) +
   
@@ -177,12 +209,12 @@ plot_1b <- factoextra::fviz_pca_biplot(
   #   aes(x= v1*1.02, y= v2*1.02, label= gsub("_"," ", varnames)),
   #   alpha = 0.2, size=4, label.size = NA, fill = "dodgerblue3", force_pull = 3,
   #   fontface = "bold", direction = "both", seed = 1968)+
-
   
-  xlim(c(-7,8)) +
-  ylim(c(-6,6.5)) +
+  
+  xlim(c(-4.5,4.5)) +
+  ylim(c(-3.2,4.3)) +
   labs(title = "Nature for People",
-       fill = "log(Biomass)",
+       fill = "log(total biomass)",
        x = paste0("PC1 (", round(eig$variance.percent[1], 1), "%)"),
        y = paste0("PC2 (", round(eig$variance.percent[2], 1), "%)")) +
   guides(color = "none",
@@ -224,12 +256,13 @@ elbow_plot <- ggplot(variance_explained,
   #barchart of eigenvalues
   geom_bar(data = as.data.frame(eig)[c(1:ndim),], 
            aes(x= c(1:ndim), y = variance.percent), 
+           width = 0.8,
            stat= "identity",
            col = "grey50",
            fill = "grey50")+
   
   #cumulative curve
-  stat_summary(fun = "mean", geom = "line", size = 0.5, alpha = 0.8) +
+  stat_summary(fun = "mean", geom = "line", linewidth = 0.5, alpha = 0.8) +
   stat_summary(fun = "mean", linewidth = 0.1) +
   scale_y_continuous(labels = c("", "25", "50", "75", "100%"))+
   
@@ -248,7 +281,7 @@ elbow_plot <- ggplot(variance_explained,
   #                               "Variance explained = ", round(elbow_point[2],1) , " %"),
   #                y = elbow_point[2]-5, x = elbow_point[1]+1), size = 4,
   #            color = "black", hjust = 0)
-
+  
   # labs(x = "Number of dimensions") + 
   # labs(y = "Variance explained (in %)") +
   labs(x = "", y = "") +
@@ -268,7 +301,7 @@ elbow_plot <- ggplot(variance_explained,
         legend.position = "none") +
   coord_cartesian(expand = FALSE, xlim = c(0, ndim), ylim = c(0, 100))+
   harrypotter::scale_colour_hp_d(option = "DracoMalfoy", alpha = 0.8)
-    
+
 
 
 elbow_plot
@@ -278,16 +311,55 @@ elbow_plot
 #        width = 15, height =10 )
 
 ##------------------------figure 1c: contributions ------------------------------
+# var <- factoextra::get_pca_var(pca)
+# contributions <- var$contrib
+# for( i in 1:ncol(contributions)){ 
+#   contributions[,i] <- contributions[,i] * variance_explained$contribution_coefficient[i]}
+# 
+# colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
+# 
+# #divide into two plot
+# contributions_NN <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NN" ] ,] 
+# contributions_NN <- contributions_NN[order(-contributions_NN[,1]), ]
+# row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
+# 
+# contributions_NS <- contributions[ names(grp_NN_NS)[ grp_NN_NS=="NS" ] ,] 
+# contributions_NS <- contributions_NS[order(-contributions_NS[,1]), ]
+# row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
+# row.names(contributions_NS)[1] <- paste(
+#   c(rep(" ", 
+#         max(nchar(row.names(contributions_NN))) - nchar(row.names(contributions_NS)[1])+4),
+#     row.names(contributions_NS)[1]),
+#   collapse="") #change legend length to have same width in both plot
+# 
+# # plot panel
+# png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
+#     width=11, height = 20, units = "cm", res = 1000)
+# layout(matrix(c(rep(1, nrow(contributions_NN)+2), rep(2, nrow(contributions_NS))), #change proportion of both plot with +2
+#               ncol = 1))
+# par(mar = c(0,0,0,0), xaxs = "i", yaxs = "i")
+# corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+#                    col = c("forestgreen"), tl.col = "black", 
+#                    cl.pos = "n", tl.cex = 1.2,
+#                    tl.srt = 60, na.label.col = "transparent")
+# corrplot::corrplot(contributions_NS, is.corr=FALSE,
+#                    col = c("dodgerblue3"), tl.col = "black", 
+#                    cl.pos = "n", tl.pos = 'l', tl.cex = 1.2,  na.label.col = "transparent")
+# dev.off()
+
+#-----other option------- idea from N Casajus
 var <- factoextra::get_pca_var(pca)
 contributions <- var$contrib
 for( i in 1:ncol(contributions)){ 
   contributions[,i] <- contributions[,i] * 
     variance_explained$contribution_coefficient[i]
-  }
-
+}
+colSums(contributions)
+rowSums(contributions)
 # colnames(contributions) <- paste0(colnames(contributions),": ", round(colSums(contributions),0), "%")
 colnames(contributions) <- c(1:ncol(contributions))
 
+#Order contributions according to the first dimension
 contributions <- cbind(contributions, category = grp_NN_NS[rownames(contributions)])
 contributions <- contributions[order( contributions[,"category"], -contributions[,1]),]
 contributions <- contributions[, colnames(contributions) !="category"]
@@ -298,11 +370,16 @@ contributions <- contributions[, colnames(contributions) !="category"]
 # 
 # rownames(contributions)[order(-contributions[,1])]
 
+#set color background
+color <- var$coord
+color_bg <- color[rownames(contributions),]
+color_bg <- ifelse(color_bg>0, "white", "grey90")
+
 
 
 #divide into two plot
 contributions_NN <- contributions
-contributions_NN[names(grp_NN_NS)[ grp_NN_NS!="NN" ],] <- NA
+contributions_NN[names(grp_NN_NS)[ grp_NN_NS!="NN" ],] <- 0
 row.names(contributions_NN) <- gsub("_", " ",  row.names(contributions_NN))
 # row.names(contributions_NN)[c(
 #   which(row.names(contributions_NN)=="N Recycling"),
@@ -317,11 +394,13 @@ contributions_NS <- contributions
 contributions_NS[names(grp_NN_NS)[ grp_NN_NS!="NS" ],] <- NA
 row.names(contributions_NS) <- gsub("_", " ",  row.names(contributions_NS))
 
+
 # plot pannel
 png(filename = here::here("outputs", "figures","contribution_in_total_variance_NN_NS.png"), 
     width=11, height = 21.5, units = "cm", res = 1000)
 par(mar = c(2,0,0,0), xaxs = "i", yaxs = "i")
 corrplot::corrplot(contributions_NN, is.corr=FALSE, 
+                   bg = color_bg,
                    col = c("forestgreen"), tl.col = "black", 
                    cl.pos = "n", 
                    tl.cex = 1,
@@ -335,7 +414,7 @@ corrplot::corrplot(contributions_NS, is.corr=FALSE,
                    tl.srt = 60, na.label.col = "transparent", 
                    add = TRUE)
 lines(x=c(-9,9.5), y=rep(10.5, 2), lty = 1, lwd = 2)
-text(5,30.7, label= "Dimensions (PC)", cex=1.2 , font=2 )
+text(5,30.7, label= "Dimensions (PC)", cex=1.2 , font=2 ) 
 for(i in c(1:ncol(contributions))){
   text(x=-0.2+i, y= -0.5, label= paste(round(colSums(contributions)[i],0), "%"), 
        cex=0.9, srt=60, font=1)}
@@ -348,19 +427,18 @@ dev.off()
 #merge 1a and 1c
 plot_merged <- plot_1a +
   annotation_custom( ggplotGrob(elbow_plot),
-                     xmin = -7.5,
-                     xmax = -1.2,
-                     ymin = -6.5,
-                     ymax = -0.3)
+                     xmin = -4.6,
+                     xmax = -1,
+                     ymin = -3.5,
+                     ymax = 0)
 plot_merged
 
 
-library(magick)
 corrplot_fig1c <- cowplot::ggdraw() + 
   cowplot::draw_image(here::here("outputs","figures",
                                  "contribution_in_total_variance_NN_NS.png"))+
   theme(plot.margin =unit(c(0,0,0,-0.5), 'cm'))
-         
+
 
 # fig1 <- gridExtra::grid.arrange(
 #   plot_1a, plot_1b, elbow_plot, corrplot_fig1c, 
@@ -376,23 +454,23 @@ corrplot_fig1c <- cowplot::ggdraw() +
 
 png(filename = here::here("outputs", "figures","Panel_fig_1.png"), 
     width=40, height = 27, units = "cm", res = 1000)
-  gridExtra::grid.arrange(
-    plot_merged, plot_1b, corrplot_fig1c, 
-    ncol=2,
-    layout_matrix = rbind(c(1,1,1,3,3),
-                          c(1,1,1,3,3),
-                          c(1,1,1,3,3),
-                          c(2,2,2,3,3),
-                          c(2,2,2,3,3),
-                          c(2,2,2,3,3)))
-    # Add labels A, B and C
-    grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
-                    just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
-    grid::grid.text("B", x=unit(0.01, "npc"), y=unit(0.48, "npc"), 
-                    just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
-    grid::grid.text("C", x=unit(0.65, "npc"), y=unit(0.98, "npc"), 
-                    just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
-    
+gridExtra::grid.arrange(
+  plot_merged, plot_1b, corrplot_fig1c, 
+  ncol=2,
+  layout_matrix = rbind(c(1,1,1,3,3),
+                        c(1,1,1,3,3),
+                        c(1,1,1,3,3),
+                        c(2,2,2,3,3),
+                        c(2,2,2,3,3),
+                        c(2,2,2,3,3)))
+# Add labels A, B and C
+grid::grid.text("A", x=unit(0.01, "npc"), y=unit(0.98, "npc"), 
+                just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
+grid::grid.text("B", x=unit(0.01, "npc"), y=unit(0.48, "npc"), 
+                just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
+grid::grid.text("C", x=unit(0.65, "npc"), y=unit(0.98, "npc"), 
+                just="left", gp=grid::gpar(fontsize=17, fontface="bold"))
+
 dev.off()
 
 
