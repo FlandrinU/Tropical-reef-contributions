@@ -6,7 +6,7 @@
 .Rapp.history
 
 # Session Data files ----
-.RData
+#.RData
 .Ruserdata
 
 # RStudio files ----
@@ -28,13 +28,9 @@ renv/
 _targets/
 
 # Outputs
-*.png
-*.jpg
+#*.png
+#*.jpg
 
 # large files
-data/ShapeFiles coast/
-biodiversity/data/Code&Data_Siquiera2020/
-
-#Report
-NCP_covariations_analyses.html
-tests_filter_sites/
+#data/ShapeFiles coast/
+#biodiversity/data/Code&Data_Siquiera2020/
