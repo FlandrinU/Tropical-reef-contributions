@@ -1,8 +1,9 @@
 ################################################################################
 ##
-## Give aesthetic scores of each RLS surveys
+## Give aesthetic scores of each RLS surveys, and others cultural contributions
+##  (public interest and academic knowledge)
 ##
-## aesthetic_analyses.R
+## cultural_analyses.R
 ##
 ## 25/10/2022
 ##
@@ -28,10 +29,8 @@ survey_aesth_all <- read.csv(here::here("cultural_contributions", "data", "surve
 #-----------------run aesthetic analyses---------------------
 survey_aesth_all$SurveyID <- as.character(survey_aesth_all$SurveyID)
 
-# #filter 0.01 outliers
-# survey_aesth <- survey_aesth_all %>%
-#   filter(aesthe_survey < quantile(survey_aesth_all$aesthe_survey,0.999))
-
 #save
 save(survey_aesth_all, file = here::here("cultural_contributions", "outputs", "survey_aesth.Rdata"))
 
+#-----------------run public interest and academic knowledge analyses---------------------
+source(here::here("cultural_contributions", "R", "public_and_scientific_interest_surveys.R"))

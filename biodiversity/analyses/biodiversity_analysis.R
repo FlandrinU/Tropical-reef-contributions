@@ -28,4 +28,6 @@ source(here::here("biodiversity", "R", "phylogenetic_diversity.R")) #long time t
 ## Diversity of elasmobranchii and iucn species
 source(here::here("biodiversity", "R", "iucn_and_elasmobranch_indices.R"))
 
+## Assess mean endemism
+source(here::here("biodiversity", "R", "endemism_survey_index.R"))
 
