@@ -19,12 +19,12 @@ cat("Run recycling analysis... \n")
 source(here::here("recycling", "R", "0g_run_fishflux.R"))   # /!\ long time to run (around 40')
 
 ## agregate flux estimations at the species and surveys scale
-source(here::here("recycling", "R", "1b_surveys_fluxes.R")) 
+source(here::here("recycling", "R", "1b_surveys_fluxes.R")) #OK
 
 ## filter surveys with 80% of species computed by fishflux
-source(here::here("recycling", "R", "1d_surveys_merging_filtering.R")) 
+source(here::here("recycling", "R", "1d_surveys_merging_filtering.R")) #OK
 
 ## agregate surveys data at the site scale
-source(here::here("recycling", "R", "5_sites_fluxes.R")) 
+source(here::here("recycling", "R", "5_sites_fluxes.R")) #OK
 
 

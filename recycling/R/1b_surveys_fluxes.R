@@ -30,12 +30,12 @@ names(data_fishflux)
 
 # merging datasets and computing fluxes for each species*size_class given abundance and sst
 data_surveys_fluxes<- dplyr::left_join(data_surveys, 
-                                select(metadata_surveys, SurveyID, sst = SiteMeanSST ),
+                                dplyr::select(metadata_surveys, SurveyID, sst = SiteMeanSST ),
                                 by="SurveyID") |>
   dplyr::mutate(sst = round(sst)) |>
   dplyr::left_join(data_fishflux) |>
   dplyr::left_join(unique(species_par))  |>
-  dplyr::mutate(fishflux = as.factor(case_when(is.na(Gc_median) ~ FALSE, 
+  dplyr::mutate(fishflux = as.factor(dplyr::case_when(is.na(Gc_median) ~ FALSE, 
                                         Gc_median >= 0 ~ TRUE) )
   ) |>
   dplyr::mutate(storage_C = Gc_median * number,
@@ -87,7 +87,7 @@ for (k in fluxes_var ) {
 # total of fluxes per survey ----
 surveys_fluxes<-unlist( sapply(surveys_species_fluxes, rowSums) ) |> 
   as.data.frame() |>
-  rownames_to_column("SurveyID")
+  tibble::rownames_to_column("SurveyID")
 head(surveys_fluxes)
 dim(surveys_fluxes)
 

@@ -50,10 +50,10 @@ source(here::here("analyses", "preping_data_rls.R"))
 source(here::here("recycling", "analyses", "recycling_analysis.R"))
 
 ## Assess the biodiversity metrics in each community
-source(here::here("biodiversity", "analyses", "productivity_analyses.R"))
+source(here::here("biodiversity", "analyses", "biodiversity_analyses.R"))
 
 ## Assess the productivity in each community
-source(here::here("productivity", "analyses", "productivity_analyses.R"))
+source(here::here("productivity", "analyses", "productivity_analyses.R")) #OK
 
 ## Assess the nutrient concentration and the fishery biomass in each community
 source(here::here("nutrients", "analyses", "nutrients_analyses.R"))

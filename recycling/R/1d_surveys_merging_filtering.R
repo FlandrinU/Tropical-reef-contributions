@@ -11,6 +11,7 @@
 
 ## cleaning memory
 rm(list=ls())
+library(ggplot2)
 
 # data
 load(here::here("recycling", "outputs", "surveys_fluxes.Rdata"))
@@ -19,13 +20,13 @@ load(here::here("data","metadata_surveys.Rdata"))
 
 # merging survey metadata with biodiversity and nutrient fluxes
 surveys_merged <- metadata_surveys |> 
-  left_join( surveys_fluxes , by="SurveyID")
+  dplyr::left_join( surveys_fluxes , by="SurveyID")
   
 summary(surveys_merged)
 
 # keeping only key variables about nutrient recycling and storing
 task3_allsurveys_keyvariables <- surveys_merged |>
-  select(SurveyID, SurveyDate, SurveyDepth, 
+  dplyr::select(SurveyID, SurveyDate, SurveyDepth, 
          SiteCode,SiteLatitude, SiteLongitude, SiteCountry, SiteEcoregion, SiteMeanSST,
          Ntot, Btot, Ntot_fishflux,Btot_fishflux, p_abund_nutflux, p_biom_nutflux,
          recycling_N, recycling_P,
@@ -47,7 +48,7 @@ for (k in 1:length(var_plot) ) {
   var_k<-var_plot[k]
   
   plot_k<- surveys_merged |>
-    mutate(type="survey") |>
+    dplyr::mutate(type="survey") |>
     ggplot( aes(x = .data[[var_k]], y = type, fill = factor(stat(quantile))) ) +
     ggridges::stat_density_ridges( geom = "density_ridges_gradient", calc_ecdf = TRUE,
                          quantiles = c(0.01, 0.25, 0.5, 0.75, 0.99), quantile_lines = TRUE) +
@@ -74,28 +75,28 @@ ggsave(here::here("recycling", "figures", "histogram_surveys_abundbiom_raw.png")
 # without outliers 0.1%
 
 task3_data <- surveys_merged |>
-  filter(Btot < 500000) |>
-  filter(Ntot < 10000) |>
-  filter (p_biom_nutflux > 0.8 ) |>
-  filter (p_abund_nutflux > 0.8 ) 
+  dplyr::filter(Btot < 500000) |>
+  dplyr::filter(Ntot < 10000) |>
+  dplyr::filter (p_biom_nutflux > 0.8 ) |>
+  dplyr::filter (p_abund_nutflux > 0.8 ) 
 
 nrow(task3_data) # 2 402 surveys
-n_distinct(task3_data$SiteCode ) # 1 505 sites
+dplyr::n_distinct(task3_data$SiteCode ) # 1 505 sites
 
 # #Removing outliers, N and P recycling values superior to 99.9% of values
 # task3_data_without_outliers <-  task3_data |>
-#   filter( recycling_N < quantile(task3_data$recycling_N, 0.999) ) |>
-#   filter( recycling_P < quantile(task3_data$recycling_P, 0.999) )
+#   dplyr::filter( recycling_N < quantile(task3_data$recycling_N, 0.999) ) |>
+#   dplyr::filter( recycling_P < quantile(task3_data$recycling_P, 0.999) )
 
 
 # log-transforming abundance and biomass
 task3_data_surveys <- task3_data |>
-  mutate(log10_biomass=log10(Btot_fishflux) ) |>
-  mutate(log10_density=log10(Ntot_fishflux) )
+  dplyr::mutate(log10_biomass=log10(Btot_fishflux) ) |>
+  dplyr::mutate(log10_density=log10(Ntot_fishflux) )
 
 summary(task3_data_surveys)
 
-n_distinct(task3_data_surveys$SurveyID ) # 2399 unique surveys
+dplyr::n_distinct(task3_data_surveys$SurveyID ) # 2399 unique surveys
 
 save(task3_data_surveys, file=here::here("recycling", "outputs", "flux_final_data_surveys.Rdata")  )
 

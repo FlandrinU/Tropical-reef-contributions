@@ -19,11 +19,6 @@ rm(list=ls())
 load(here::here("data","data_species.Rdata"))
 load(here::here("data","data_surveys.Rdata"))
 
-# #phylogeny of ray-finned fishes
-# trees <- ape::read.tree(file = here::here("biodiversity", "data","Code&Data_Siquiera2020",
-#                                           "TACT", "Reef_fish_all_combined.trees")) 
-# tree <- trees[[1]]; rm(trees)
-
 # -------------------occurrence and biomass of species in each survey as a classical matrix -------------------
 surveys_sp_biom <- data_surveys |> 
   dplyr::select(SurveyID, species, biomass) |>
@@ -34,11 +29,6 @@ surveys_sp_biom <- data_surveys |>
   as.matrix()
 
 dim(surveys_sp_biom) # OK
-
-# # #Change species names:  Abudefduf_luridus should be Similiparma_lurida and
-# # #                       Rhinesomus_triqueter should be Lactophrys_triqueter
-# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Abudefduf_luridus")] <- "Similiparma_lurida"
-# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Rhinesomus_triqueter")] <- "Lactophrys_triqueter"
 
 
 # occurrence of species in surveys ----
@@ -87,36 +77,7 @@ save(surveys_nb_sp_per_family, file=here::here("biodiversity", "outputs", "occur
 save(surveys_family_pbiom, file=here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 
 
-# #-------------------same process but only with species known in our phylogeny-------------------
-# # #Change species names:  Abudefduf_luridus should be Similiparma_lurida and
-# # #                       Rhinesomus_triqueter should be Lactophrys_triqueter
-# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Abudefduf_luridus")] <- "Similiparma_lurida"
-# colnames(surveys_sp_biom)[which(colnames(surveys_sp_biom) == "Rhinesomus_triqueter")] <- "Lactophrys_triqueter"
-# 
-# colnames(surveys_sp_biom)[which( colnames(surveys_sp_biom) %in% tree[["tip.label"]] ==F)]
-# # 10 species missing in the phylogeny:
-# #[1] "Pareques_acuminatus"   "Odontoscion_dentex"    "Equetus_punctatus"     "Mugil_cephalus"        "Crenimugil_crenilabis"
-# #[6] "Bothus_mancus"   "Odontoscion_xanthops"  "Pareques_viola"        "Mugil_galapagensis"    "Neomyxus_leuciscus" 
-# 
-# surveys_sp_biom <- surveys_sp_biom[, colnames(surveys_sp_biom) %in% tree[["tip.label"]] ]
-# dim(surveys_sp_biom)      
-# 
-# surveys_sp_occ <- surveys_sp_biom
-# surveys_sp_occ[surveys_sp_occ!=0] <- 1
-# 
-# surveys_sp_pbiom<-surveys_sp_biom/apply(surveys_sp_biom,1,sum)
-# 
-# save(surveys_sp_occ, file=here::here("biodiversity", "outputs", "occurrence_matrix_spinphylogeny_survey_01.Rdata"))
-# save(surveys_sp_pbiom, file=here::here("biodiversity", "outputs", "occurrence_matrix_spinphylogeny_survey_relative_biomass.Rdata"))
-
-
 ### -------------------taxonomic diversity in surveys -------------------####
-# data_species$species_corrected[which(data_species$species_corrected =="Pycnochromis_dimidiatus")] <- "Chromis_dimidiata"  #old name in the phylogeny
-# #Select species in the phylogeny
-# data_species <- data_species |>  dplyr::filter(species_corrected %in% tree[["tip.label"]] )
-# data_surveys <- data_surveys |>  dplyr::filter(species %in% data_species$species ) #loss of 115 rls observation
-
-
 # taxo richness and Shannon-like entropy (eq number of species, exp(H))
 surveys_biodiversity <- data.frame(
   taxo_richness = apply(surveys_sp_occ, 1,  sum),
@@ -129,7 +90,6 @@ surveys_biodiversity <- data.frame(
 
 # dataframe with species as row names and traits as variables
 sp_traits <- data_species
-# sp_traits$species_corrected[which(sp_traits$species == "Kyphosus_analogus")] <- "Kyphosus_analogus"  # old name issue
 row.names(sp_traits) <- sp_traits$species
 sp_traits <- sp_traits[,c("Size", "Diet", "Position", "Activity")]
 
@@ -236,15 +196,6 @@ surveys_biodiversity <- surveys_biodiversity |>
   dplyr::left_join(surveys_biomTL)
 summary(surveys_biodiversity)
 
-# # filtering 0.1% outliers
-# surveys_biodiversity_without_outliers <- surveys_biodiversity |>
-#   dplyr::filter(taxo_richness < quantile(surveys_biodiversity$taxo_richness,0.999)) |> 
-#   dplyr::filter(funct_distinctiveness < quantile(surveys_biodiversity$funct_distinctiveness,0.999)) |> 
-#   # dplyr::filter(taxo_entropy < quantile(surveys_biodiversity$taxo_entropy,0.999)) |> 
-#   # dplyr::filter(funct_richness < quantile(surveys_biodiversity$funct_richness,0.999)) |> 
-#   dplyr::filter(biom_lowTL < quantile(surveys_biodiversity$biom_lowTL ,0.999)) |>
-#   dplyr::filter(biom_mediumTL < quantile(surveys_biodiversity$biom_mediumTL ,0.999)) |>
-#   dplyr::filter(biom_highTL < quantile(surveys_biodiversity$biom_highTL ,0.999))
 
 ## saving as Rdata ##
 save(surveys_biodiversity, file=here::here("biodiversity","outputs", "surveys_biodiversity.Rdata") )

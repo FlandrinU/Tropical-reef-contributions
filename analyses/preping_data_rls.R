@@ -16,13 +16,13 @@ rm(list=ls())
 
 ##merge rls data
 cat("Merge and filter data... \n")
-source(here::here("R", "0b_merge_datasets.R"))
+source(here::here("R", "0b_merge_datasets.R")) #OK
 
 ##keep only tropical actinopterygians
-source(here::here("R", "0c_filtering_tropical_fish.R"))
+source(here::here("R", "0c_filtering_tropical_fish.R")) #OK
 
 ##remove small fishes and outlier sizes
-source(here::here("R", "0d_filtering_size.R"))
+source(here::here("R", "0d_filtering_size.R")) #OK
 
 ##fill NAs in biomass estimation 
 cat("Fill biomass estimation with fishflux package... \n")

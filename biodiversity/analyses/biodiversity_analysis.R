@@ -1,23 +1,31 @@
+#################################################################################
+#'
+#'This script runs all scripts of `biodiversity/R/` to obtain the biodiversity
+#' metrics (taxonomy, fonctional, phylogenetic, endemism) at the survey scale 
+#' 
+#'
+#'@author Ulysse Falndrin, \email{ulysse.flandrin@@gmail.com}
+#'
+#'
+################################################################################
+
 #-----------------cleaning memory-------------------
 rm(list=ls())
+cat("Run biodiversity analysis... \n")
 
-#-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse", "mFD", "picante", "ape", "worrms", "taxize",
-          "phyloregion", "parallel", "FactoMineR", "tibble", "questionr",
-          "factoextra", "rredlist", "forcats", "entropart")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# #-----------------Loading packages-------------------
+# pkgs <- c("here", "tidyverse", "mFD", "picante", "ape", "worrms", "taxize",
+#           "phyloregion", "parallel", "FactoMineR", "tibble", "questionr",
+#           "factoextra", "rredlist", "forcats", "entropart")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
-#-----------------set directory---------------------
-path <- here::here() 
-setwd(path)
-
-#-----------------run bidodiversity analyses---------------------
+#-----------------run biodiversity analyses---------------------
 
 ##Extract occurrence matrix, Assess taxonomic richness and entropy, functional richness
 ## and entropy, and trophic and size structure
-source(here::here("biodiversity", "R", "occ_matrix_sprichness_FD.R"))
+source(here::here("biodiversity", "R", "occ_matrix_sprichness_FD.R")) #OK
 
 
 ## Assess phylogenetic diversty

@@ -58,21 +58,13 @@ save(RLS_prod_indiv, file = here::here("productivity","outputs", "RLS_prod_indiv
 print("Aggregating productivity prediction at transect level")
 RLS_prod_transect = calc_prod_transect(RLS_prod_indiv,metadata_surveys)
 
-# #Removing outliers, Biomass and productivity values superior to 99.9% of values
-# RLS_prod_transect = RLS_prod_transect  |> filter(Biom < quantile(RLS_prod_transect$Biom,0.999))  |>  
-#                                           filter(Productivity < quantile(RLS_prod_transect$Productivity,0.999))
-
-save(RLS_prod_transect, file = "productivity/outputs/RLS_prod_transect.Rdata")
+save(RLS_prod_transect, file = here::here("productivity/outputs/RLS_prod_transect.Rdata"))
 
 #--------- site level ---------#
 print("Aggregating productivity prediction at site level")
 RLS_prod_site = calc_prod_site(RLS_prod_indiv,metadata_surveys)
 
-# #Removing outliers, Biomass and productivity values superior to 99.9% of values
-# RLS_prod_site = RLS_prod_site |> filter(Biom < quantile(RLS_prod_site$Biom,0.999)) |> 
-#   filter(Productivity < quantile(RLS_prod_site$Productivity,0.999))
-
-save(RLS_prod_site, file = "productivity/outputs/RLS_prod_site.Rdata")
+save(RLS_prod_site, file = here::here("productivity/outputs/RLS_prod_site.Rdata"))
 
 
 
@@ -87,7 +79,7 @@ productivity_sp <- RLS_prod_indiv |>
   dplyr::ungroup() |> 
   dplyr::select(Species, mean_size, mean_Kmax, mean_productivity)
 
-save(productivity_sp, file = "productivity/outputs/RLS_prod_species.Rdata")
+save(productivity_sp, file = here::here("productivity/outputs/RLS_prod_species.Rdata"))
 
 
 #--------- assess sensitivity ---------#
@@ -101,7 +93,7 @@ RLS_prod_sensitivity_transect = RLS_prod_sensitivity_transect |>
   dplyr::filter(Biom < quantile(Biom,0.99)) |> 
   dplyr::filter(Productivity < quantile(Productivity,0.99))
 
-save(RLS_prod_sensitivity_transect, file = "productivity/outputs/RLS_prod_sensitivity_transect.Rdata")
+save(RLS_prod_sensitivity_transect, file = here::here("productivity/outputs/RLS_prod_sensitivity_transect.Rdata"))
 
 
 RLS_prod_sensitivity_site = calc_prod_site(RLS_prod_sensitivity, metadata_surveys)
@@ -110,10 +102,11 @@ RLS_prod_sensitivity_site = RLS_prod_sensitivity_site |>
   dplyr::filter(Biom < quantile(Biom,0.99)) |> 
   dplyr::filter(Productivity < quantile(Productivity,0.99))
 
-save(RLS_prod_sensitivity_site, file = "productivity/outputs/RLS_prod_sensitivity_site.Rdata")
+save(RLS_prod_sensitivity_site, file = here::here("productivity/outputs/RLS_prod_sensitivity_site.Rdata"))
 
 
 summary(RLS_prod_transect)
 range(RLS_prod_transect$Productivity)
+
 
 
