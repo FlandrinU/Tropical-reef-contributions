@@ -1,15 +1,20 @@
-################################################################################
-###                     Cross validation Niche Model                         ###
-###                           Ulysse Flandrin                                ###
-###                             24/03/22                                     ###
+#################################################################################
+#'
+#'This script makes cross validations of the niche model. 
+#' 
+#'
+#'@author Ulysse Flandrin, \email{ulysse.flandrin@@gmail.com}
+#'
+#' @date 2023/03/03
+#'
 ################################################################################
 
-###--------------------- Library ---------------------
-pkgs <- c("GenSA", "gtools", "parallel", "PresenceAbsence" )
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
-
+# ###--------------------- Library ---------------------
+# pkgs <- c("GenSA", "gtools", "parallel", "PresenceAbsence" )
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# 
 
 ###--------------------- functions --------------------- 
 source(here::here('trophic_web', 'R', 'Model_GenSA.R'))
@@ -32,14 +37,14 @@ boycei<-function(interval,obs,fit){
   return(fi)
 }
 
-#### Calculating Boyce index as in Hirzel et al. 2006
-#### fit: vector containing the suitability values of the study area (or extent used for the validation)
-#### obs: vector containing the suitability values of the validation points
-#### nclass : number of classes or vector with classes threshold. 
-####          If nclass=0, Boyce index is calculated with a moving window (see next parameters)
-#### windows.w : width of the moving window (by default 1/10 of the suitability range)
-#### res : resolution of the moving window (by default 100 focals)
-#### PEplot : if True, plot the predicted to expected ratio along the suitability class
+####' Calculating Boyce index as in Hirzel et al. 2006
+####' fit: vector containing the suitability values of the study area (or extent used for the validation)
+####' obs: vector containing the suitability values of the validation points
+####' nclass : number of classes or vector with classes threshold. 
+####'          If nclass=0, Boyce index is calculated with a moving window (see next parameters)
+####' windows.w : width of the moving window (by default 1/10 of the suitability range)
+####' res : resolution of the moving window (by default 100 focals)
+####' PEplot : if True, plot the predicted to expected ratio along the suitability class
 
 boyce<-function(fit,obs,nclass=0,window.w="default",res=100,PEplot=T){
   if(window.w=="default"){window.w<-(max(fit)-min(fit))/10}
@@ -68,6 +73,7 @@ boyce<-function(fit,obs,nclass=0,window.w="default",res=100,PEplot=T){
   return(results)
 }
 
+
 ###---------------------  Data treatment --------------------- 
 #interaction data from barnes et al. 2008
 barnes_data <- read.csv(here::here("trophic_web", "data","size_barnes2008_FF.csv"), stringsAsFactors = T)
@@ -75,14 +81,6 @@ barnes_data <- read.csv(here::here("trophic_web", "data","size_barnes2008_FF.csv
 ### preping interaction data ###
 MPred <- log10(barnes_data$standardised_predator_length)
 MPrey <- log10(barnes_data$si_prey_length)
-
-# data description #
-levels(barnes_data$predator)
-summary(barnes_data$predator_length)
-levels(barnes_data$prey)
-summary(barnes_data$prey_length)
-length( table(paste(barnes_data$predator, barnes_data$prey)) )
-#
 
 # filter data: remove duplicates
 interaction <- paste(barnes_data$predator, barnes_data$prey,
@@ -119,17 +117,6 @@ for (pred in levels(final_barnes_data$predator)) {
 
 MPred <- log10(final_barnes_data$standardised_predator_length)
 MPrey <- log10(final_barnes_data$si_prey_length)
-
-
-# description of new data #
-table(paste(final_barnes_data$predator, final_barnes_data$prey))
-plot((MPrey~MPred))
-lm_M <- lm(MPrey~MPred)
-plot(lm_M,2)
-plot(lm_M,3)
-plot(lm_M,1)
-summary(lm_M)
-#
 
 
 ###--------------------- Simulation loop ---------------------
@@ -183,6 +170,7 @@ accuracy_model <- do.call(rbind,accuracy_model)
 save(file= here::here("trophic_web", "outputs", "accuracy_model_boyce_index.Rdata"),accuracy_model)
 
 summary(accuracy_model$Boyce)
+
 
 ###---------------------  Model evaluation ---------------------
 #### Test on some species ###

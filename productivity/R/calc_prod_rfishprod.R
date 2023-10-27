@@ -28,17 +28,11 @@ calc_prod_rfishprod <- function(data_final){
     dplyr::mutate(Size = ifelse(Size >= MaxSizeTL,MaxSizeTL,Size))
   
   
-  # Check dataset repdata #
-  # (repdata <- rfishprod:::repdata)
-  # 
-  # # Getting levels ready #
-  # repdata <- rfishprod::tidytrait (repdata, db)
-  # data_final_prod = repdata
   
   datagr <- rfishprod::predKmax(data_final_prod,
                                 # dataset = db, 
                                 fmod = fmod,
-                                niter = 100,     #number of xgboost models run for the bootstrap procedure -> 1000 iterations recommended
+                                niter = 100,     #number of xgboost models run for the bootstrap procedure
                                 return = 'pred')
   
   datagr <- datagr$pred

@@ -23,7 +23,7 @@ load(here::here("data","data_surveys_elasmobranchii.Rdata"))
 load(here::here("biodiversity", "data","iucn_category_all_species_NLoiseau.Rdata"))
 
 #IUCN key
-IUCN_KEY <- "78d79dce9a7f762ddc88584f7b2b75e81170e9e6869d9dce3b1fe8fbb3b7f8f6"
+IUCN_KEY <- "78d79dce9a7f762ddc88584f7b2b75e81170e9e6869d9dce3b1fe8fbb3b7f8f6" #Paste your IUCN key
 
 ## -------------IUCN index-------------
 
@@ -35,13 +35,14 @@ names <- questionr::na.rm(all_sp$species_corrected) # 3 elasmobranch species ide
 
 ## IUCN redlist data
 iucn_name <- gsub("_", " ", names)
-iucn_data_raw <- mclapply(iucn_name, mc.cores = 8,
-                          function(i){rredlist ::rl_search(name = i,  key= IUCN_KEY)}) #long time to run
+iucn_data_raw <- parallel::mclapply(iucn_name, mc.cores = parallel::detectCores()-5,
+                          function(i){rredlist ::rl_search(name = i,  key= IUCN_KEY)}) #/!\ long time to run
 iucn_data <- do.call(rbind, lapply(iucn_data_raw, "[[", "result"))
 
 table(iucn_data$category) # 3 CR, 35 DD, 10 EN, 819 LC, 18 NT, 34 VU
 
 save(iucn_data, file = here::here("biodiversity", "outputs", "iucn_data_all_species.Rdata"))
+# load(file = here::here("biodiversity", "outputs", "iucn_data_all_species.Rdata"))
 
 #keep the iucn category
 iucn_category <- iucn_data |>
@@ -67,7 +68,7 @@ for(i in which(is.na(iucn_category$category))){
 }
 
 table(iucn_category$category, useNA = "always") 
-# 3 CR, 35 DD,  10 EN, 818 LC,  5 No Status, 137 Non Threatened, 18 NT, 15 Threatened, 34 VU, 9 NA
+# 3 CR, 34 DD,  10 EN, 755 LC,  6 No Status, 202 Non Threatened, 18 NT, 17 Threatened, 32 VU, 7 NA
 
 
 
@@ -76,9 +77,6 @@ all_surveys_iucn <- rbind( dplyr::select(data_surveys, SurveyID, species, size_c
                            dplyr::select(data_surveys_elasmo, SurveyID, species, size_class, number, biomass)) |>
   dplyr::left_join(iucn_category) 
   
-table(all_surveys_iucn$category, useNA = "always") 
-    #   CR     DD     EN     LC     NT     VU   <NA>   No status  Non Threatened  Threatened
-    #   54   1286    457 167274  1958   2094    172     456         29561           506
 
 #remove species without iucn category
 all_surveys_iucn <- all_surveys_iucn |>

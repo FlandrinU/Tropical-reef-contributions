@@ -10,11 +10,11 @@
 ##
 ################################################################################
 
-#-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse", "rfishbase", "dplyr", "DHARMa")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# #-----------------Loading packages-------------------
+# pkgs <- c("here", "tidyverse", "rfishbase", "dplyr", "DHARMa")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 rm(list=ls())
 
@@ -29,18 +29,18 @@ species_ecology <- rfishbase::ecology( server = "fishbase")
 
 #filter data
 info_species <- species_traits |>
-  dplyr::select(SpecCode, Species, DemersPelag) |>
+  dplyr::select(SpecCode, DemersPelag) |>
   dplyr::left_join( dplyr::select(species_ecology,SpecCode, FoodTroph)) |>
   dplyr::filter(SpecCode %in% data_species$spec_code)
 
 unfound_sp <- data_species$species[which(
-  data_species$spec_code %in% setdiff(data_species$spec_code, info_species$SpecCode))]
-#  Kyphosus_analogus should be Kyphosus vaigiensis
+  data_species$spec_code %in% setdiff(data_species$spec_code, info_species$SpecCode))] #OK
+
 
 #merge all data traits
 info_species <- info_species |>
   dplyr::rename( spec_code = SpecCode, trophic_level = FoodTroph,
-               water_column = DemersPelag, species_fishbase_name = Species) |>
+               water_column = DemersPelag) |>
   dplyr::right_join(data_species)
 
 
@@ -71,25 +71,6 @@ ggsave(here::here("trophic_web", "outputs", "log_linear_relationship_commonlengt
 data_species_trophic_web <- info_species |>
   dplyr::mutate( common_length = Size^reg[["coefficients"]][[2]]) #common_length = max_length^0.901
  
-
-##-------------Complete data from the median of the gender-------------
-# names_na_length <- rownames(data_species_trophic_web[which(
-#   is.na(data_species_trophic_web$common_length)),])
-# species_length <- list()
-# 
-# for(i in 1:length(names_na_length)){
-#   cat("i : ",i,"\n")
-#   gender_length <- data_species_trophic_web[grep(do.call(rbind,strsplit(names_na_length,"_"))[i,1],
-#                                      rownames(data_species_trophic_web)),"common_length"]
-#   species_length[[i]] <- median(gender_length,na.rm=TRUE)
-# } 
-# 
-# names(species_length) <- names_na_length
-# species_length <- do.call(rbind,species_length)
-# 
-# data_species_trophic_web[rownames(species_length),"common_length"]  <- species_length[,1]
-# data_species_trophic_web <- data_species_trophic_web[-which(is.na(data_species_trophic_web[,"common_length"])),]
-
 
 
 ##-------------save final data-------------

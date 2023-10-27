@@ -1,7 +1,7 @@
 ################################################################################
 ##
 ## Construction of the metaweb, with size based probability of interaction,
-##  corrected i=with trophic guild, and water position 
+##  corrected with trophic guild, and water position 
 ##
 ## metaweb_construction.R
 ##
@@ -11,11 +11,11 @@
 ##
 ################################################################################
 
-#-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse", "GenSA", "gtools", "parallel", "car")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# #-----------------Loading packages-------------------
+# pkgs <- c("here", "tidyverse", "GenSA", "gtools", "parallel", "car")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 rm(list=ls())
 
@@ -71,7 +71,8 @@ for (i in 1:nrow(barnes_data)){
 unique_barnes_data <- barnes_data[ind,]
 
 
-# filter data: reduce bias of over represented couples
+# filter data: reduce bias of over represented couples: we limited to 50 the 
+ # number of observation per couple of species
 final_barnes_data <- unique_barnes_data
 
 for (pred in levels(final_barnes_data$predator)) {
@@ -116,7 +117,7 @@ par_hi <- c(a0 = 10, a1 = 10, b0 = 10, b1 = 10)
 data <- data.frame(MPrey = MPrey, MPred = MPred)
 
 ### Maximum likelihood estimation
-estim.pars = GenSA(par = pars, fn = model, lower = par_lo, upper= par_hi, 
+estim.pars = GenSA::GenSA(par = pars, fn = model, lower = par_lo, upper= par_hi, 
                    control = list(verbose =TRUE, max.time = 1000, smooth=FALSE),
                    data = data) #Search for parameters maximizing the posteriori probability of these observed interactions
 
@@ -154,9 +155,8 @@ save(initial_metaweb, file = here::here("trophic_web", "outputs", "initial_metaw
 
 
 
-##------------- Metaweb correction -------------
-
-## Diet corrections
+##------------- Metaweb corrections -------------
+## Diet corrections: herbivores and invertivores species can't eat other species 
 diet_corrected_MW <- initial_metaweb
 
 sp_herb <- data_species_trophic_web$species[
@@ -181,7 +181,7 @@ for(invertivores in sp_invertivores){
 diag(diet_corrected_MW) <- 0 
 
 
-## Small fish correction
+## Small fish correction: no predation inferred for very small species
 small_corrected_MW <- diet_corrected_MW
 small_species <- data_species_trophic_web$species[which(data_species_trophic_web$common_length<10)]
 small_corrected_MW[, small_species] <- 0

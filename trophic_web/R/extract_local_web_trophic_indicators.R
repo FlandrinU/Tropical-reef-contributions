@@ -1,6 +1,7 @@
 ################################################################################
 ##
-## Extract trophic web of each surveys from the global metaweb and assess trophic indicators
+## Extract local trophic web of each surveys from the global metaweb and assess 
+##  trophic indicators
 ##
 ## extract_local_web_trophic_indicators.R
 ##
@@ -10,12 +11,12 @@
 ##
 ################################################################################
 
-#-----------------Loading packages-------------------
-pkgs <- c("here", "parallel", "igraph", "NetIndices", "ggplot2", "tibble", "dplyr",
-          "gtools")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# #-----------------Loading packages-------------------
+# pkgs <- c("here", "parallel", "igraph", "NetIndices", "ggplot2", "tibble", "dplyr",
+#           "gtools")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 rm(list=ls())
 
@@ -26,16 +27,6 @@ load(file = here::here("trophic_web","outputs", "final_metaweb.Rdata"))
 load(file=here::here("biodiversity", "outputs", "occurrence_matrix_sp_survey_01.Rdata"))
 # relative biomass matrix
 load(file=here::here("biodiversity", "outputs", "occurrence_matrix_sp_survey_relative_biomass.Rdata"))
-
-
-# ## Presence/absence at the survey scale
-# PA_matrix_site <- as.data.frame(surveys_sp_occ) |>
-#   tibble::rownames_to_column(var= "SurveyID") |>
-#   dplyr::left_join( dplyr::select(metadata_surveys, SiteCode, SurveyID)) |>
-#   dplyr::select(-SurveyID) |>
-#   dplyr::group_by( SiteCode) |>
-#   dplyr::summarise(across(.cols = everything(), .fns = max, .names = "{.col}")) |>
-#   tibble::column_to_rownames(var= "SiteCode")
 
 ## Add producers in PA matrix: they are omnipresent
 PA_matrix_survey <- cbind(as.data.frame(surveys_sp_occ),
@@ -186,7 +177,7 @@ Calc_indic_igraph<- function(web=mat){
 trophic_indicators <- get_indic_cells(P_A_data= PA_matrix_survey ,
                                       biomass_data = surveys_sp_pbiom,
                                       Lniche= final_metaweb,
-                                      mc.cores=15, bin_threshold=0.6) 
+                                      mc.cores=parallel::detectCores()-5, bin_threshold=0.6) 
 
 trophic_indicators_survey <- do.call(rbind, trophic_indicators)
 trophic_indicators_survey <- as.data.frame(cbind(SurveyID = rownames(PA_matrix_survey), 
@@ -195,25 +186,3 @@ trophic_indicators_survey <- as.data.frame(cbind(SurveyID = rownames(PA_matrix_s
 
 save(trophic_indicators_survey, 
      file= here::here("trophic_web", "outputs", "trophic_indicators_survey.Rdata"))
-
-
-
-
-
-##------------- Analyse of trophic indicators -------------
-load(file= here::here("trophic_web", "outputs", "trophic_indicators_survey.Rdata"))
-
-TI_pca <- dplyr::select(trophic_indicators_survey, -c(SurveyID, Shortest_path_2,
-          Shortest_path_3, Shortest_path_4, Shortest_path_5)) |>
-  questionr::na.rm()
-
-pca <- FactoMineR::PCA(TI_pca, scale.unit = TRUE, graph=F, ncp=10) 
-plot(pca)
-factoextra::fviz_pca_var(pca, col.var = "cos2",
-                         gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-                         repel = TRUE )
-
-factoextra::fviz_pca_var(pca, col.var = "cos2",
-                         axes = c(3,4),
-                         gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-                         repel = TRUE )

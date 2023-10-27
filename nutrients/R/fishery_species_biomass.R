@@ -1,8 +1,8 @@
 #################################################################################
 #'
 #'This script determines the total biomass of fishery species in each transect,
-#' using the list of families which are fished in the world (Cinner et al. 2016)
-#' 
+#' using the list of families which are fished in the world 
+#' (expert opinion, Cinner et al. 2016)
 #'
 #'@author Ulysse Flandrin, \email{ulysse.flandrin@@gmail.com}
 #'
@@ -21,7 +21,7 @@ data_surveys_fishery <- data_surveys |>
   dplyr::rename(max_size = Size)
 table(data_surveys_fishery$family)
 
-#all species targeted in the family:
+#families in which all species are targeted in the family:
 all_sp <- c("Acanthuridae", "Caesionidae", "Carangidae", "Ephippidae", "Haemulidae", "Kyphosidae",
             "Labridae", "Lethrinidae", "Lutjanidae", "Mullidae", "Nemipteridae", "Scaridae",
             "Scombridae", "Serranidae", "Siganidae", "Sparidae", "Sphyraenidae")
@@ -50,17 +50,6 @@ surveys_fishery_biom <- as.data.frame(rowSums(surveys_fishery_sp_biom))
 surveys_fishery_biom <- tibble::rownames_to_column(surveys_fishery_biom)
 colnames(surveys_fishery_biom) <- c("SurveyID", "fishery_biomass")
 
-# #remove 0.1% outliers
-# surveys_fishery_biom <- surveys_fishery_biom |>
-#   filter(fishery_biomass < quantile(surveys_fishery_biom$fishery_biomass,0.999))
-  
+
 # -------------------save data -------------------
 save(surveys_fishery_biom, file = here::here("nutrients", "outputs", "fishery_tot_biomass.Rdata"))
-
-###look co-variations with total biomass
-biomass <- dplyr::left_join(task3_data_surveys,surveys_fishery_biom)
-
-png(filename = here::here("nutrients", "figures","relationship_fished_and_total_biomass.png"),
-    width = 12, height = 11, units = "cm", res=300)
-  plot(biomass$fishery_biomass ~ biomass$Btot)
-dev.off()

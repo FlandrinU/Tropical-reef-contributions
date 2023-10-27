@@ -13,11 +13,10 @@
 rm(list=ls())
 
 ##-------------loading data------------
-# cultural_contrib <- read.csv(here::here("cultural_contributions", "data", 
-#                       "cultural_contributions.csv"), sep = ";", dec= ",")
 cultural_contrib <- read.csv(here::here("cultural_contributions", "data", 
                                         "05_Human_Interest_final_table.csv"), 
                              sep = ";", dec= ",")
+
 load(here::here("biodiversity", "outputs", "occurrence_matrix_sp_survey_01.Rdata"))
 load( here::here("data", "data_species.Rdata"))
 
@@ -30,10 +29,10 @@ cultural <- cultural_contrib |>
     dplyr::select(data_species, species, species_corrected, spec_code))
 
 ## check list of species
-uncommon_species <- cultural$species_corrected[ which(is.na(cultural$rls_sci_name))] #15 species are lacking in interest estimation
+uncommon_species <- cultural$species[ which(is.na(cultural$rls_sci_name))] #15 species are lacking in interest estimation
 for( i in uncommon_species){
   cat(i, ": " )
-  cat(table(surveys_sp_occ[,i]), "\n")
+  cat(table(surveys_sp_occ[,i])[2], "\n")
 }   # quite rare species
 ##
 
@@ -62,24 +61,6 @@ cultural_contribution_surveys <- data.frame(do.call(rbind, cultural_survey)) |>
   dplyr::mutate( across(everything(), ~as.numeric(.))) |>
   dplyr::mutate(SurveyID = as.character(SurveyID))
 
+##-------------save data------------
 save(cultural_contribution_surveys, file = here::here("cultural_contributions",
                     "outputs", "cultural_contributions_surveys.Rdata"))
-
-##-------------plot data------------
-plot(cultural_contribution_surveys$academic_knowledge ~ cultural_contribution_surveys$public_interest)
-plot(cultural_contribution_surveys$mean_public_interest ~ cultural_contribution_surveys$public_interest)
-
-##study correlations
-rownames(cultural_contribution_surveys) <- cultural_contribution_surveys$SurveyID
-pca <- FactoMineR::PCA(questionr::na.rm(cultural_contribution_surveys[,-1]), 
-                       scale.unit = T, graph=T, ncp=10)
-factoextra::fviz_eig(pca, addlabels = TRUE, ylim = c(0, 100))
-var <- factoextra::get_pca_var(pca)
-corrplot::corrplot(var$contrib, is.corr=FALSE)  
-factoextra::fviz_pca_var(pca, col.var = "cos2",
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE )
-site_coord_in_pca <- as.data.frame(pca$ind$coord) 
-plotly::plot_ly(site_coord_in_pca, 
-        x= ~Dim.1, y= ~Dim.2, z= ~Dim.3,
-        size = 10)

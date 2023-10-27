@@ -28,12 +28,6 @@ calc_prod_transect <- function(data_with_prod,transect_info){
                   Prod = sum(Prod)/500,
                   Productivity = (Prod/Biom)*100) |>
     dplyr::ungroup() |>
-    # #Mean for each site
-    # group_by(SiteCode) |>
-    # mutate(Biom = mean(Biom),
-    #        Prod = mean(Prod),
-    #        Productivity = mean(Productivity)) |>
-    # ungroup() |>
     #joinin with transect data
     dplyr::select(SurveyID, Biom, Prod, Productivity) |>
     dplyr::distinct(SurveyID, .keep_all = T) |>

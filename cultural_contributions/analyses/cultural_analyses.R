@@ -10,23 +10,20 @@
 ## Ulysse Flandrin
 ##
 ################################################################################
-#-----------------cleaning memory-------------------
+
 rm(list=ls())
 
-#-----------------Loading packages-------------------
-pkgs <- c("here", "tidyverse", "stats")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# #-----------------Loading packages-------------------
+# pkgs <- c("here", "tidyverse", "stats")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
-#-----------------set directory---------------------
-path <- here::here()
-setwd(path)
 
 #-----------------load data---------------------
 survey_aesth_all <- read.csv(here::here("cultural_contributions", "data", "survey_aesth.csv"))
 
-#-----------------run aesthetic analyses---------------------
+#----------------- aesthetic score---------------------
 survey_aesth_all$SurveyID <- as.character(survey_aesth_all$SurveyID)
 
 #save

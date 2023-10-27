@@ -72,7 +72,7 @@ kmax <- readr::read_csv( here::here("data_raw", "source", "kmax_combined.csv") )
 fishtree <- fishtree::fishtree_complete_phylogeny(kmax$species)
 # just use one tree
 set.seed(1)
-tree <- fishtree::fishtree[[sample(1:100, 1)]]
+tree <- fishtree[[sample(1:100, 1)]]
 # correlation matrix
 A <- ape::vcv(tree, cor = TRUE)
 
@@ -95,7 +95,7 @@ brms::hypothesis(fit_kmax, hyp, class = NULL)
 
 # extrapolate
 draws <- tidybayes::spread_draws(fit_kmax, r_species[species,Intercept]) |>
-  mean_qi() 
+  tidybayes::mean_qi() 
 
 rsp <- draws$r_species
 names(rsp) <- draws$species
@@ -105,10 +105,10 @@ hist(draws$r_species)
 load( here::here("data_raw",  "source", "fishtree_glob.RData") )
 # just use one tree
 set.seed(2)
-treeglob <- fishtree::fishtree[[sample(1:100, 1)]]
+treeglob <- fishtree[[sample(1:100, 1)]]
 
 rphy_pred <- picante::phyEstimate(treeglob, rsp) |>
-  rownames_to_column("species") |>
+  tibble::rownames_to_column("species") |>
   dplyr::mutate(r_phylo = estimate) |>
   dplyr::select(species, r_phylo)
   
@@ -122,7 +122,7 @@ rphy <- dplyr::bind_rows(rphy, rphy_pred)
 tidy_bayes::get_variables(fit_kmax)
 
 vars <- fit_kmax |>
-  tidy_bayes::spread_draws(b_Intercept, b_loglinf_m, b_sst)
+  tidybayes::spread_draws(b_Intercept, b_loglinf_m, b_sst)
 
 kpred <- lapply(1:nrow(sp_par), function(i){
   data <-
@@ -147,11 +147,11 @@ kpred <- lapply(1:nrow(sp_par), function(i){
 sp_par <- dplyr::left_join(sp_par, kpred)
 
 # Add values for AE
-ae <- read_csv(here::here("data_raw", "source", "ae_dietcat.csv")) |>
+ae <- readr::read_csv(here::here("data_raw", "source", "ae_dietcat.csv")) |>
   dplyr::mutate(diet_cat = as.character(diet_cat)) |>
-  dplyr::mutate(an_sd = case_when(an_sd>0.2 ~ 0.2, TRUE ~ an_sd),
-         ap_sd = case_when(ap_sd>0.2 ~ 0.2, TRUE ~ ap_sd),
-         ac_sd = case_when(ac_sd>0.2 ~ 0.2, TRUE ~ ac_sd)) |>
+  dplyr::mutate(an_sd = dplyr::case_when(an_sd>0.2 ~ 0.2, TRUE ~ an_sd),
+         ap_sd = dplyr::case_when(ap_sd>0.2 ~ 0.2, TRUE ~ ap_sd),
+         ac_sd = dplyr::case_when(ac_sd>0.2 ~ 0.2, TRUE ~ ac_sd)) |>
   dplyr::mutate(diet_cat = as.character(diet_cat))
 
 # mean for missing diet category
@@ -168,8 +168,8 @@ sp_par <- dplyr::left_join(
   unique()
 
 nrow(sp_par)
-write_csv(sp_par, file=here::here("data","parameters_sp_sst.csv")  )
-write_csv(sp_par, file=here::here("recycling", "outputs", "parameters_sp_sst.csv")  )
+readr::write_csv(sp_par, file=here::here("data","parameters_sp_sst.csv")  )
+readr::write_csv(sp_par, file=here::here("recycling", "outputs", "parameters_sp_sst.csv")  )
 
 
 ##### 2) Run fishflux #####
@@ -200,4 +200,4 @@ cnpflux <- parallel::mclapply(1:nrow(data), function(x){
 cnpflux <- dplyr::select(cnpflux, - Qc_m, - TL)
 
 # saving
-write_csv(cnpflux, here::here("recycling","outputs", "cnpflux_sp_size_sst.csv"))
+readr::write_csv(cnpflux, here::here("recycling","outputs", "cnpflux_sp_size_sst.csv"))

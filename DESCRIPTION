@@ -1,6 +1,6 @@
-Package: Tropical reefs services
+Package: Tropical reefs contributions
 Type: Package
-Title: R_NCP
+Title: Research compendium of Flandrin et al. 2023
 Version: 1.0
 Authors@R: c(
     person(given   = "Ulysse",
@@ -8,8 +8,9 @@ Authors@R: c(
            role    = c("aut", "cre", "cph"),
            email   = "ulysse.flandrin@gmail.com",
            comment = c(ORCID = "")))
-Description: co-variation between Natrure Contributuions to People and 
-	to Nature in tropical reef
+Description: Research compendium to reproduce analyses and figures of the 
+    article 'A global synthesis of fish’s contributions to nature and people on 
+    tropical reefs' by Flandrin et al. 
 URL: https://github.com/FlandrinU/Tropical-reefs-services
 BugReports: https://github.com/FlandrinUTropical-reefs-services/issues
 License: GPL (>= 2)

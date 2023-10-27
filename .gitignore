@@ -2,12 +2,13 @@
 .DS_Store
 
 # History files ----
-.Rhistory
+*.Rhistory
 .Rapp.history
 
 # Session Data files ----
 #.RData
 .Ruserdata
+.GITHUB_PAT.txt
 
 # RStudio files ----
 .Rproj.user/
@@ -29,7 +30,3 @@ _targets/
 # Outputs
 #*.png
 #*.jpg
-
-# large files
-#data/ShapeFiles coast/
-#biodiversity/data/Code&Data_Siquiera2020/

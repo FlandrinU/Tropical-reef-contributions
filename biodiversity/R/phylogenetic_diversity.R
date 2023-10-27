@@ -76,17 +76,16 @@ for (i in 1:100) {
 #Occurrence matrix in RLS surveys
 occ_matrix <- as.matrix(phylo_100[[1]][["comm"]])
 
+
 ##-------------Compute phylogenetic indices-------------
 
 ## Evolutionary distinctivness: ED  Isaac et al. method
 #by species
-ED_species_raw<-parallel::mclapply(phylo_100, mc.cores=20, function(x) {
+ED_species_raw<-parallel::mclapply(phylo_100, mc.cores=parallel::detectCores()-5, function(x) {
   picante::evol.distinct(x$phy, type = c("fair.proportion"), scale = FALSE, use.branch.lengths = TRUE)})
 
 ED_species <- as.data.frame(do.call(cbind, lapply(ED_species_raw,function(y){y[,2]})))
 rownames(ED_species) <- phylo_100[[1]]$phy$tip.label
-
-# save(ED_species, file = here::here("biodiversity", "outputs", "evolutionary_distinctivness_species_100trees.Rdata"))
 
 ED_species_summary <- t(apply(ED_species, 1, summary))
 ED_species_summary <- cbind( ED_species_summary, sd = apply(ED_species, 1, sd))
@@ -96,7 +95,7 @@ save(ED_species_summary, file = here::here("biodiversity", "outputs", "evolution
 
 #by surveys
 mean_ED_sp <- apply(ED_species, 1, mean)
-ED_surveys_raw <- parallel::mclapply(1:nrow(occ_matrix), mc.cores=15 ,function(i){
+ED_surveys_raw <- parallel::mclapply(1:nrow(occ_matrix), mc.cores=parallel::detectCores()-5 ,function(i){
   if(sum(occ_matrix[i,])==0){
     rep(0,6)
   }else{
@@ -128,21 +127,22 @@ Mean_PD <- apply(PD_surveys_100,1,mean)
 taxo_richness <- apply(occ_matrix, 1, sum)
 residuals_PD_richness <- residuals(lm(Mean_PD ~ taxo_richness)) # Approach using residuals
 
-#SES.PD
-SES_PD_raw <- parallel::mclapply(phylo_100, mc.cores= 20, function (x){
-  phyloregion::PD_ses(sparse_occ_matrix, x$phy, model = c("tipshuffle"), reps= 1000)$zscore #Change reps for a quickier analyse
-}) # Approach using SES.PD based on a null model shuffling tip labels                        
+# #SES.PD
+# SES_PD_raw <- parallel::mclapply(phylo_100, mc.cores= parallel::detectCores()-5, function (x){
+#   phyloregion::PD_ses(sparse_occ_matrix, x$phy, model = c("tipshuffle"), reps= 1000)$zscore #Change reps for a quickier analyse
+# }) # Approach using SES.PD based on a null model shuffling tip labels                        
+# 
+# SES_PD_surveys_100 <- do.call(cbind, SES_PD_raw)
+# SES_PD_surveys_summary <- t(apply(SES_PD_surveys_100, 1, summary))
+# colnames(SES_PD_surveys_summary) <- paste0("SES_PD_", colnames(SES_PD_surveys_summary))
+# 
 
-SES_PD_surveys_100 <- do.call(cbind, SES_PD_raw)
-SES_PD_surveys_summary <- t(apply(SES_PD_surveys_100, 1, summary))
-colnames(SES_PD_surveys_summary) <- paste0("SES_PD_", colnames(SES_PD_surveys_summary))
-
-
-PD_surveys <- cbind( PD_surveys_summary, residuals_PD_richness = residuals_PD_richness, SES_PD_surveys_summary)
+PD_surveys <- cbind( PD_surveys_summary, residuals_PD_richness = residuals_PD_richness)#, SES_PD_surveys_summary)
 save(PD_surveys, file = here::here("biodiversity", "outputs", "phylogenetic_diversity_surveys.Rdata"))
 
+
 ## PE: Phylogenetic endemism (pkg Pyloregion)
-PE_surveys_raw <- parallel::mclapply(phylo_100, mc.cores=15, function(x) {
+PE_surveys_raw <- parallel::mclapply(phylo_100, mc.cores=parallel::detectCores()-5, function(x) {
   phyloregion::phylo_endemism(sparse_occ_matrix, x$phy, weighted = TRUE)
   })
 
@@ -157,11 +157,11 @@ save(PE_surveys_summary, file = here::here("biodiversity", "outputs", "phylogene
 library('entropart')
 phylo_entropy_raw <- lapply( phylo_100[1:10], function(x) {
   cat("Start computation for one tree... \n")
-  list <- parallel::mclapply(rownames(surveys_sp_pbiom), mc.cores = 21, function(survey){
+  list <- parallel::mclapply(rownames(surveys_sp_pbiom), mc.cores = parallel::detectCores()-5, function(survey){
     community_biom <- surveys_sp_pbiom[survey,]
     phylo_entropy <- entropart::PhyloEntropy(Ps=community_biom,
                                              q = 1,
-                                             Tree = x[["phy"]], #must be written x[[1]][["phy"]] without lapply
+                                             Tree = x[["phy"]], 
                                              Normalize = T) #phylogenetic entropy of order 1 of relative biomass vector.
     phylo_entropy[["Total"]]
   })
@@ -188,15 +188,6 @@ phylo_indices_surveys_all <- cbind(ED_surveys, PD_surveys, PE_surveys_summary, p
 phylo_indices_surveys_all <- as.data.frame(phylo_indices_surveys_all)
 phylo_indices_surveys_all <- tibble::rownames_to_column(phylo_indices_surveys_all,var="SurveyID")
 
-# # filtering 0.1% outliers
-# phylo_indices_surveys <- phylo_indices_surveys_all %>%
-#   filter(ED_Mean < quantile(phylo_indices_surveys_all$ED_Mean,0.999)) %>% 
-#   #filter(residuals_PD_richness < quantile(phylo_indices_surveys_all$residuals_PD_richness,0.999)) %>% 
-#   #filter(SES_PD_Mean < quantile(phylo_indices_surveys_all$SES_PD_Mean,0.999)) %>% 
-#   #filter(PE_Mean < quantile(phylo_indices_surveys_all$PE_Mean,0.999)) %>%
-#   filter(phylo_entropy < quantile(phylo_indices_surveys_all$phylo_entropy, 0.999)) 
-# 
 
 save(phylo_indices_surveys_all, file = here::here("biodiversity", "outputs", "phylogenetic_indices_surveys.Rdata"))
-# save(phylo_indices_surveys, file = here::here("biodiversity", "outputs", "phylogenetic_indices_surveys_without_outliers.Rdata"))
 

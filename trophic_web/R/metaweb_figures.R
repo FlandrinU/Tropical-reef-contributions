@@ -3,13 +3,13 @@
 ###                            Ulysse Flandrin                               ###
 ###                               14/02/23                                   ###
 ################################################################################
-
-### Loading of library
-pkgs <- c("here", "parallel", "igraph", "NetIndices", "ggplot2", "ggsignif",
-          "igraph", "graphlayouts", "ggraph")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
-ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# 
+# ### Loading of library
+# pkgs <- c("here", "parallel", "igraph", "NetIndices", "ggplot2", "ggsignif",
+#           "igraph", "graphlayouts", "ggraph")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 rm(list=ls())
 
@@ -228,7 +228,7 @@ for (i in c(1:3)){
           legend.box.background =element_rect(fill="white", colour="black", size=0.5))
   
   ggsave(P, width = 20, height = 15,
-         filename=here::here("trophic_web", "outputs", paste0("Trophic_web_", i, ".png")))
+         filename=here::here("trophic_web", "outputs", "metaweb",  paste0("Trophic_web_", i, ".png")))
   
   
   P_tree <- ggraph::ggraph(graph, layout = layout.matrix)+
@@ -238,7 +238,7 @@ for (i in c(1:3)){
     ggraph::theme_graph()+
     theme()
   ggsave(P_tree, width = 20, height = 15,
-         filename=here::here("trophic_web", "outputs", paste0("Trophic_web_tree_", i, ".png")))
+         filename=here::here("trophic_web", "outputs", "metaweb", paste0("Trophic_web_tree_", i, ".png")))
 
 } # end for(i in 1:3) about metaweb 
 
