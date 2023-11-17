@@ -335,10 +335,10 @@ mantel_data <- dplyr::left_join(reshape2::melt(corr_matrix_wo_aust),
 
 plot_mantel <- ggplot(mantel_data, aes(x=wo_aust, y=only_aust, colour = all_data)) +
   geom_point()+theme_bw()+
-  scale_colour_gradientn(name  ="correlation with \n all data",
+  scale_colour_gradientn(name  ="Correlation with \n all data",
                          colours = RColorBrewer::brewer.pal(n = 8, name = "RdBu"))+
-  xlab("Correlations without australia")+
-  ylab("Correlations in australia only") +
+  xlab("Correlations without Australia")+
+  ylab("Correlations in Australia only") +
   guides(colour = guide_colourbar(title.position="top")) +
   theme(legend.position = "right",
         legend.key.size = unit(0.5, 'cm'),

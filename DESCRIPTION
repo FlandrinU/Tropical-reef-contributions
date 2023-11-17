@@ -83,7 +83,7 @@ Imports:
     vegan
     
 Remotes: 
-	nschiett/fishflux,
+    nschiett/fishflux,
     r-link/corrmorant,
     renatoamorais/rfishprod,
     FRBCesab/robinmap

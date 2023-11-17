@@ -97,7 +97,7 @@ Contrib <- metadata_surveys |>
                 Taxonomic_Richness = taxo_richness,
                 Functional_Entropy = funct_entropy, 
                 Phylogenetic_Entropy = phylo_entropy_Mean,
-                Traits_Distinctiveness = funct_distinctiveness,
+                Trait_Distinctiveness = funct_distinctiveness,
                 Evolutionary_Distinctiveness = ED_Mean,
                 Herbivores_Biomass = biom_lowTL,
                 Invertivores_Biomass = biom_mediumTL,

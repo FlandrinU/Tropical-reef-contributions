@@ -55,7 +55,7 @@ grp_NN_NP <- as.factor(c(N_Recycling = "NN",
                          Taxonomic_Richness = "NN",
                          Functional_Entropy = "NN", 
                          Phylogenetic_Entropy = "NN",
-                         Traits_Distinctiveness = "NN",
+                         Trait_Distinctiveness = "NN",
                          Evolutionary_Distinctiveness = "NN",
                          Herbivores_Biomass = "NN",
                          Invertivores_Biomass = "NN",
@@ -93,7 +93,7 @@ Contrib_log_transformed <- subset(Contrib_site_log_transformed,
                                           mpa_iucn_cat))
 
 
-#-------------Compute weighted mean of Contrib (Kark 2002): NN and NS scores-------------
+#-------------Compute weighted mean of Contributions: NN and NS scores-------------
 Contrib_log_scale_clean <- scale(Contrib_log_transformed)
 
 #### Nature to Nature (NN) score ####

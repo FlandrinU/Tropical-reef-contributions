@@ -40,17 +40,38 @@ RLS_clean <- surveys |>
   dplyr::left_join(metadata)
 
 #add new variables
-RLS_clean$Mmax = RLS_clean$lwa*RLS_clean$MaxLength*RLS_clean$lwb
+RLS_clean$Mmax = RLS_clean$lwa*RLS_clean$MaxLength^RLS_clean$lwb
 RLS_clean$logMmax  = log(RLS_clean$Mmax)
 RLS_clean$logLmax  = log(RLS_clean$MaxLength)
 
 data_final <- RLS_clean  |> dplyr::mutate(Area=50*10)  |> dplyr::arrange(SurveyID)
 
 
+#----------------Filtering only fishable fish -> productivity of fishery biomass ------------------------
+## keep only targeted families, according to Cinner et al. 2020 ##
+#families in which all species are targeted in the family:
+all_sp <- c("Acanthuridae", "Caesionidae", "Carangidae", "Ephippidae", "Haemulidae", "Kyphosidae",
+            "Labridae", "Lethrinidae", "Lutjanidae", "Mullidae", "Nemipteridae", "Scaridae",
+            "Scombridae", "Serranidae", "Siganidae", "Sparidae", "Sphyraenidae")
+#families with species targeted if larger than 20cm:
+target_larger_20cm <- c("Balistidae", "Holocentridae", "Pomacanthidae", "Priacanthidae")
+
+#non-targeted families:
+setdiff(unique(data_final$Family), c(all_sp, target_larger_20cm))
+# [1] "Pomacentridae"  "Monacanthidae"  "Scorpaenidae"   "Chaetodontidae" "Tetraodontidae" "Ostraciidae"   
+# [7] "Sciaenidae"     "Fistulariidae"  "Pempheridae"    "Cirrhitidae"    "Zanclidae"      "Mugilidae"     
+# [13] "Bothidae" 
+
+
+#keep only targeted fishes
+data_final_fishery <- data_final |> 
+  dplyr::filter(Family %in% all_sp | (Family %in% target_larger_20cm & MaxLength > 20))
+
+unique(data_final_fishery$Family)
 #----------------Run functions to predict productivity------------------------
 #Calculating productivity
 #--------- individual level ---------#
-RLS_prod_indiv = calc_prod_rfishprod(data_final)
+RLS_prod_indiv = calc_prod_rfishprod(data_final_fishery)
 
 save(RLS_prod_indiv, file = here::here("productivity","outputs", "RLS_prod_indiv.Rdata"))
 
