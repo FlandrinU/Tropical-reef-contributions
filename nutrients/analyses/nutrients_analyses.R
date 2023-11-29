@@ -30,7 +30,8 @@ source(here::here("nutrients", "R", "fishery_species_biomass.R"))
 #aggregate by species in each transect
 RLS_data <- data_surveys |>
   dplyr::group_by(SurveyID, species) |>
-  dplyr::summarise(biomass_sp = sum(biomass))
+  dplyr::summarise(biomass_sp = sum(biomass)) |> 
+  dplyr::filter(species %in% unique(data_surveys_fishery$species)) # keep only species targeted by fisheries
 
 #nutrients per species per transect
 RLS_nut_sp_surv <- RLS_data |>

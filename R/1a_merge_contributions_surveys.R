@@ -113,14 +113,14 @@ Contrib <- metadata_surveys |>
                 Trophic_Web_Robustness = robustness,
                 Mean_Trophic_Level = mean_TL,
                 
-                Productivity = Productivity,
+                Turnover_Available_Biomass = Productivity,
                 Selenium = Selenium_C,
                 Zinc = Zinc_C,
                 Omega_3 = Omega_3_C,
                 Calcium = Calcium_C,
                 Iron = Iron_C,
                 Vitamin_A = Vitamin_A_C,
-                Fishery_Biomass = fishery_biomass,
+                Available_Biomass = fishery_biomass,
                 Aesthetic = aesthe_survey,
                 Public_Interest = public_interest
                 # Academic_Knowledge = academic_knowledge
@@ -178,7 +178,7 @@ Contrib_skewed_distribution <- c("Biomass","N_Recycling","P_Recycling",
                              "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite",
                              "Monohydrocalcite", "Amorphous_Carbonate", 
                              "Herbivores_Biomass", "Invertivores_Biomass", 
-                             "Piscivores_Biomass", "Fishery_Biomass",
+                             "Piscivores_Biomass", "Available_Biomass",
                              "gravtot2")
 
 

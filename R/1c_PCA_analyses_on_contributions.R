@@ -65,14 +65,14 @@ grp_NN_NP <- as.factor(c(N_Recycling = "NN",
                          Trophic_Web_Robustness = "NN",
                          Mean_Trophic_Level = "NN",
                          
-                         Productivity = "NP",
+                         Turnover_Available_Biomass = "NP",
                          Selenium = "NP",
                          Zinc = "NP",
                          Omega_3 = "NP",
                          Calcium = "NP",
                          Iron = "NP",
                          Vitamin_A = "NP",
-                         Fishery_Biomass = "NP",
+                         Available_Biomass = "NP",
                          Aesthetic = "NP",
                          Public_Interest = "NP")) # /!\ the order matter
 
@@ -177,7 +177,7 @@ elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_ex
 elbow_plot
 ggsave(filename = here::here("outputs", "figures",
                              "Variance explained by ACP_elbow rule.png"), elbow_plot, 
-       width = 15, height =10 )
+       width = 12, height =8 )
 
 
 
@@ -243,7 +243,7 @@ biom <- Contrib_site_log_transformed$Biomass
 plot(pc1_coord ~ biom)
 cor.test(pc1_coord, biom)
 # cor 
-# 0.8559888 
+# 0.8536316 
 l <- lm(pc1_coord ~ biom)
 summary(l)
 
@@ -386,3 +386,85 @@ plot(rv1)
 mantel_test <- vegan::mantel(dist(scale(Contrib_NP)), dist(scale(Contrib_NN)), permutations = 100)
 mantel_test
 #Mantel statistic r: 0.5443 
+
+##------- Dimensionality in random contributions -------
+load(here::here("outputs","Contrib_site_log_random.Rdata"))
+Contrib_site_log_transformed <- Contrib_site_condition
+
+Contrib_site_selected <- subset(Contrib_site_log_transformed, 
+                                select = -c(SiteCode, SurveyDate,
+                                            SiteCountry, SiteEcoregion, SurveyDepth, 
+                                            SiteMeanSST, SiteLatitude, SiteLongitude,
+                                            HDI, MarineEcosystemDependency,
+                                            coral_imputation, gravtot2, mpa_name,
+                                            mpa_enforcement, protection_status, 
+                                            mpa_iucn_cat,
+                                            Biomass))
+
+
+Contrib_site_for_pca <- scale(Contrib_site_selected)
+pca <- FactoMineR::PCA(Contrib_site_for_pca, 
+                       scale.unit = FALSE, graph=F, ncp=9)
+
+eig <- factoextra::get_eig(pca)
+variance_explained <- data.frame(
+  Axe = c(1:nrow(eig)), 
+  cumulative_variance_explained = eig[,3],
+  contribution_coefficient = eig[,2]/100)
+
+elbow_values <- elbow(variance_explained[,c("Axe", "cumulative_variance_explained")])
+
+elbow_point <- c( elbow_values$"Axe"[tail(which(elbow_values$"SelectedorNot" =="Selected"), n = 1)],
+                  elbow_values$"cumulative_variance_explained"[tail(
+                    which(elbow_values$"SelectedorNot" =="Selected"), n = 1)])
+
+
+ndim=20
+elbow_plot <- ggplot(variance_explained, aes(x = Axe, y = cumulative_variance_explained,
+                                             color = "black")) + 
+  #barchart of eigenvalues
+  geom_bar(data = as.data.frame(eig)[c(1:ndim),], 
+           aes(x= c(1:ndim), y = variance.percent), 
+           stat= "identity",
+           col = "grey30",
+           fill = "grey30")+
+  
+  #cumulative curve
+  stat_summary(fun = "mean", geom = "line", linewidth = 1, alpha = 0.4) +
+  stat_summary(fun = "mean", linewidth = 0.5) +
+  
+  labs(x = "Number of dimensions") + 
+  labs(y = "Variance explained (in %)") +
+  theme_bw(base_line_size = 0) +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank(),
+        axis.title.x = element_text(size = 12, face = "bold"),
+        axis.title.y = element_text(size = 12, face = "bold"),
+        panel.background = element_blank(),
+        legend.position = "none") +
+  coord_cartesian(expand = FALSE, xlim = c(0, ndim), ylim = c(0, 100))+
+  harrypotter::scale_colour_hp_d(option = "LunaLovegood") +
+  
+  # elbow point
+  geom_segment(aes(x = elbow_point[1], xend = elbow_point[1],
+                   y = 0 , yend = elbow_point[2]),
+               color = "black", linetype = "dotted", linewidth = 1) +
+  
+  geom_segment(aes(y = elbow_point[2], yend = elbow_point[2],
+                   x = 0, xend = elbow_point[1]),
+               color = "black", linetype = "dotted", linewidth = 1) +
+  
+  geom_point(aes(y = elbow_point[2], x = elbow_point[1]),
+             color = "black", size = 4, shape = 19)+
+  geom_label(aes(label = paste0("Elbow rule: ", elbow_point[1], " dimensions \n", 
+                                "Variance explained = ", round(elbow_point[2],1) , " %"),
+                 y = elbow_point[2]-5, x = elbow_point[1]+1), size = 4,
+             color = "black", hjust = 0)+
+  geom_text(data = variance_explained[c(1:13),],
+            aes(x=Axe + 0.5, y = cumulative_variance_explained,
+                label = paste(round(cumulative_variance_explained, 1), "%")))
+
+
+elbow_plot
+
+

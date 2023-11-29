@@ -228,7 +228,7 @@ ggsave(plot=fig_2a, filename=here::here("outputs", "figures", "FIG2A_NNxNP_space
 # --------------- Figure 2b: Stack plot MPA proportion -------------
 mpa_proportion <- data.frame(rect= NA, tot=NA, quarter=NA, protection=NA, Freq=NA, pct=NA)
 quart = c("up_right", "up_left", "down_left", "down_right")
-names = c("4-bright", "3-NPonly", "1-dark", "2-NNonly")
+names = c("4-bright", "2-NPonly", "1-dark", "3-NNonly")
 
 
 for(i in c(1:4)){
@@ -269,14 +269,11 @@ mpa_plot <- ggplot(mpa_proportion[-1,],
            stat = "identity",
            alpha=0, linewidth=1,
            position = position_fill())+
-  scale_colour_manual(values=c("grey30", "forestgreen", "dodgerblue3", "darkgoldenrod3" )) +
-  # scale_x_discrete(labels=c("<span style = 'color:grey10;'>nn np</span>",
-  #                           "<span style = 'color:forestgreen;'>**NN** np</span>",
-  #                           "<span style = 'color:dodgerblue3;'>nn **NP**</span>",
-  #                           "<span style = 'color:darkgoldenrod3;'>**NN** **NP**</span>"))+
+  scale_colour_manual(values=c("grey30",  "dodgerblue3","forestgreen", "darkgoldenrod3" )) +
+
   scale_x_discrete(labels=c("<span style = 'color:grey30;'>**Dark spots**</span>",
-                            "<span style = 'color:forestgreen;'>**NN only**</span>",
                             "<span style = 'color:dodgerblue3;'>**NP only**</span>",
+                            "<span style = 'color:forestgreen;'>**NN only**</span>",
                             "<span style = 'color:darkgoldenrod3;'>**Bright spots**</span>"))+
   geom_text(size = 5, fontface = "italic",
             aes(y=1.07, label = paste0("n=", tot)))+

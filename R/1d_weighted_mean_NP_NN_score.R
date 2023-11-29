@@ -70,14 +70,14 @@ grp_NN_NP <- as.factor(c(N_Recycling = "NN",
                          Trophic_Web_Robustness = "NN",
                          Mean_Trophic_Level = "NN",
                          
-                         Productivity = "NP",
+                         Turnover_Available_Biomass = "NP",
                          Selenium = "NP",
                          Zinc = "NP",
                          Omega_3 = "NP",
                          Calcium = "NP",
                          Iron = "NP",
                          Vitamin_A = "NP",
-                         Fishery_Biomass = "NP",
+                         Available_Biomass = "NP",
                          Aesthetic = "NP",
                          Public_Interest = "NP")) # /!\ the order matter
 
@@ -155,7 +155,7 @@ sites_all_variables <- cbind(Contrib_site_log_transformed,
                                "Low_Mg_Calcite", "High_Mg_Calcite", "Aragonite", 
                                "Monohydrocalcite", "Amorphous_Carbonate",
                                "Herbivores_Biomass", "Invertivores_Biomass",
-                               "Piscivores_Biomass", "Fishery_Biomass",
+                               "Piscivores_Biomass", "Available_Biomass",
                                "gravtot2"),
                      .fn = ~paste0("log(", .x, ")")) #informs which variables are log-transformed
 
@@ -251,70 +251,16 @@ ggsave(filename = here::here("outputs", "figures","Socio_envir_variables_with_NP
 
 
 ##-------------NN and NP correlation -----------------
-cor.test(NN_NP_scores$NP_score, NN_NP_scores$NN_score) # cor = 0.232
+cor.test(NN_NP_scores$NP_score, NN_NP_scores$NN_score) # cor = 0.249
 
 l<- lm(NP_score ~ NN_score, NN_NP_scores)
 summary(l)
 
-##-------------Spatial distribution of NN and NP scores, independently -----------------
-map_NN_or_NP <- function(coord_NN_NP = NN_NP_with_product,
-                         Contrib = NN_NP_with_product$NN_score ,
-                         col_Contrib= "forestgreen",
-                         ylim = c(-36, 31),
-                         xlim= c(-180,180), title=""){
-  ggplot(coord_NN_NP) +
-    geom_sf(data = coast, color = NA, fill = "lightgrey") +
-    geom_point(aes(x = SiteLongitude, y = SiteLatitude,
-                   color = Contrib, alpha= abs(Contrib),
-                   size = 2)) +
-    geom_point(aes(x = SiteLongitude, y = SiteLatitude),
-               shape = 1, size = 2, stroke = 0.5,
-               color= "black",
-               data = coord_NN_NP[which(Contrib > quantile(Contrib, .98)),]) +
-    
-    scale_colour_gradientn(colours = colorRampPalette(rev(c( col_Contrib ,"white", "grey30")))(1000)) +
-    scale_alpha_continuous(range = c(0, 1)) +
-    
-    coord_sf(xlim=xlim, ylim = ylim, expand = FALSE) +
-    guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-    scale_size_continuous(range = c(0.5, 4), guide = "none") +
-    theme_minimal()+
-    labs(title = title,
-         x="Longitude", y= "Latitude") +
-    theme(
-      legend.position = "none",
-      plot.title = element_text(colour = col_Contrib, 
-                                face = "bold", size = 12,
-                                margin=margin(t = 20, b = -15),
-                                hjust = 0.01))
-}
-
-## NN
-NN_worldwide <- map_NN_or_NP(coord_NN_NP = NN_NP_with_product,
-                             Contrib = NN_NP_with_product$NN_score,
-                             col_Contrib= "forestgreen",
-                             ylim = c(-36, 31),
-                             xlim= c(-180,180), title="Nature to Nature")
-
-## NP
-NP_worldwide <- map_NN_or_NP(coord_NN_NP = NN_NP_with_product,
-                             Contrib = NN_NP_with_product$NP_score,
-                             col_Contrib= "dodgerblue3",
-                             ylim = c(-36, 31),
-                             xlim= c(-180,180), title="Nature to People")
-
-#panel
-ggpubr::ggarrange(NN_worldwide, NP_worldwide,
-                  nrow = 2, labels = c("A", "B")) 
-ggsave(plot = last_plot(), width=11, height =6,
-       filename = here::here("outputs", "figures", "world map with NN and NP score SEPARATLY.png"))
-
-
 
 ##-------------Study the NNxNP 2D space -----------------
 #### Study the contribution distributions in the NNxNP space ####
-var <- c('`log(Biomass)`', 'Productivity', 'Aesthetic', 'Iron', 
-         'Omega_3','Taxonomic_Richness', '`log(Fishery_Biomass)`',
+var <- c('`log(Biomass)`', 'Turnover_Available_Biomass', 'Aesthetic', 'Iron', 
+         'Omega_3','Taxonomic_Richness', '`log(Available_Biomass)`',
          'Functional_Entropy', 'Endemism')
 
 plot_contrib <- parallel::mclapply(var, mc.cores=5, function(contrib){
@@ -331,7 +277,7 @@ plot_contrib <- parallel::mclapply(var, mc.cores=5, function(contrib){
     theme(legend.position = c(0.85,0.1))
 })
 
-plot<- (plot_contrib[[1]] + plot_contrib[[2]] + plot_contrib[[3]]) / 
+plot <- (plot_contrib[[1]] + plot_contrib[[2]] + plot_contrib[[3]]) / 
   (plot_contrib[[4]] + plot_contrib[[5]] + plot_contrib[[6]] ) /
   (plot_contrib[[7]] + plot_contrib[[8]] + plot_contrib[[8]] )
 ggsave(here::here("outputs", "figures", "contributions_distributions_in_NNxNP_space.png"),
@@ -575,7 +521,8 @@ function_NN_NP_on_map <- function(coord_NN_NP = NN_NP_with_product, ylim = c(-36
 width_jitter = 0.4
 height_jitter = 0.4
 
-world_map_zoom <- world_map_NN_NP + 
+world_map_zoom <- function_NN_NP_on_map( NN_NP_with_product, 
+                                         ylim = c(-36, 31),xlim= c(-180,180),title = "") + 
   geom_rect(aes(xmin = 110, xmax = 160, ymin = -32, ymax = -7), color = "black", fill= "transparent")+
   geom_rect(aes(xmin = -95, xmax = -67, ymin = -3, ymax = 18), color = "black", fill= "transparent")
 
@@ -602,6 +549,60 @@ ggsave(plot = last_plot(), width=11, height =7,
        filename = here::here("outputs", "figures", "world map of NN and NP score with zoom.png"))
 
 
+##-------------Spatial distribution of NN and NP scores, independently -----------------
+map_NN_or_NP <- function(coord_NN_NP = NN_NP_with_product,
+                         Contrib = NN_NP_with_product$NN_score ,
+                         col_Contrib= "forestgreen",
+                         ylim = c(-36, 31),
+                         xlim= c(-180,180), title=""){
+  ggplot(coord_NN_NP) +
+    geom_sf(data = coast, color = NA, fill = "lightgrey") +
+    geom_point(aes(x = SiteLongitude, y = SiteLatitude,
+                   color = Contrib, alpha= abs(Contrib),
+                   size = 2)) +
+    geom_point(aes(x = SiteLongitude, y = SiteLatitude),
+               shape = 1, size = 2, stroke = 0.5,
+               color= "black",
+               data = coord_NN_NP[which(Contrib > quantile(Contrib, .98)),]) +
+    
+    scale_colour_gradientn(colours = colorRampPalette(rev(c( col_Contrib ,"white", "grey30")))(1000)) +
+    scale_alpha_continuous(range = c(0, 1)) +
+    
+    coord_sf(xlim=xlim, ylim = ylim, expand = FALSE) +
+    guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
+    scale_size_continuous(range = c(0.5, 4), guide = "none") +
+    theme_minimal()+
+    labs(title = title,
+         x="Longitude", y= "Latitude") +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(colour = col_Contrib, 
+                                face = "bold", size = 12,
+                                margin=margin(t = 20, b = -15),
+                                hjust = 0.01))
+}
+
+## NN
+NN_worldwide <- map_NN_or_NP(coord_NN_NP = NN_NP_with_product,
+                             Contrib = NN_NP_with_product$NN_score,
+                             col_Contrib= "forestgreen",
+                             ylim = c(-36, 31),
+                             xlim= c(-180,180), title="Nature to Nature")
+
+## NP
+NP_worldwide <- map_NN_or_NP(coord_NN_NP = NN_NP_with_product,
+                             Contrib = NN_NP_with_product$NP_score,
+                             col_Contrib= "dodgerblue3",
+                             ylim = c(-36, 31),
+                             xlim= c(-180,180), title="Nature to People")
+
+#panel
+ggpubr::ggarrange(NN_worldwide, NP_worldwide,
+                  nrow = 2, labels = c("A", "B")) 
+ggsave(plot = last_plot(), width=11, height =6,
+       filename = here::here("outputs", "figures", "world map with NN and NP score SEPARATLY.png"))
+
+
 
 ##------------------------Study MPAs distribution in the NNxNP space------------------------------------
 mpa_distribution <- NN_NP_with_product |>
@@ -619,7 +620,7 @@ prop.table(contingency_table,1)
 #chi-squared test
 summary(contingency_table)
 # Test for independence of all factors:
-#   Chisq = 19.067, df = 6, p-value = 0.004051
+#   Chisq = 25.786, df = 6, p-value = 0.000244
 
 # Effect size
-lsr::cramersV(contingency_table) #0.1142666
+lsr::cramersV(contingency_table) #0.1020928

@@ -49,14 +49,14 @@ grp_NN_NP <- as.factor(c(N_Recycling = "NN",
                          Trophic_Web_Robustness = "NN",
                          Mean_Trophic_Level = "NN",
                          
-                         Productivity = "NP",
+                         Turnover_Available_Biomass = "NP",
                          Selenium = "NP",
                          Zinc = "NP",
                          Omega_3 = "NP",
                          Calcium = "NP",
                          Iron = "NP",
                          Vitamin_A = "NP",
-                         Fishery_Biomass = "NP",
+                         Available_Biomass = "NP",
                          Aesthetic = "NP",
                          Public_Interest = "NP")) # /!\ the order matter
 ##-------------computing PCA-------------

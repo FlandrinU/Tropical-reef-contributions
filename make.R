@@ -97,6 +97,8 @@ source(here::here('R', '1d_weighted_mean_NP_NN_score.R'))
 ## Test the spatial correlation of both NN and NP scores
 source(here::here('R', '1e_spatial_autocorrelation.R')) 
 
+## Test the the senseibility of composite indicators to the aggregation sensibility
+source(here::here('R', '1f_test_composite_scores_NP_NN.R')) 
 
 
 #----------------- Construct the figures of the paper ---------------------

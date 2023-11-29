@@ -21,17 +21,24 @@ data_surveys_fishery <- data_surveys |>
   dplyr::rename(max_size = Size)
 table(data_surveys_fishery$family)
 
-#families in which all species are targeted in the family:
+#families in which all species are targeted in the family: (Cinner et al. 2020 + other expert opinion )
 all_sp <- c("Acanthuridae", "Caesionidae", "Carangidae", "Ephippidae", "Haemulidae", "Kyphosidae",
             "Labridae", "Lethrinidae", "Lutjanidae", "Mullidae", "Nemipteridae", "Scaridae",
-            "Scombridae", "Serranidae", "Siganidae", "Sparidae", "Sphyraenidae")
-#families with species targeted if larger than 20cm:
+            "Scombridae", "Serranidae", "Siganidae", "Sparidae", "Sphyraenidae",
+            "Mugilidae", "Bothidae", "Scorpaenidae", "Sciaenidae")
+
+#families with species targeted if larger than 20cm: (Cinner et al. 2020 + other expert opinion )
 target_larger_20cm <- c("Balistidae", "Holocentridae", "Pomacanthidae", "Priacanthidae")
 
-#non-targeted families:
-setdiff(unique(data_surveys_fishery$family), c(all_sp, target_larger_20cm))
-# [1] "Pomacentridae"  "Tetraodontidae" "Chaetodontidae" "Scorpaenidae"   "Cirrhitidae"    "Ostraciidae"    "Zanclidae"     
-# [8] "Monacanthidae"  "Pempheridae"    "Fistulariidae"  "Sciaenidae"     "Mugilidae"      "Bothidae"  
+#non-targeted families: (Cinner et al. 2020 + other expert opinion )
+untargeted_fam <- c("Chaetodontidae","Cirrhitidae", "Diodontidae", "Grammatidae", 
+                   "Monacanthidae", "Pempheridae", "Pinguipedidae", "Pseudochromidae", 
+                   "Synodontidae", "Tetraodontidae", "Zanclidae","Fistulariidae",
+                   "Ostraciidae", "Pomacentridae")
+
+unclassified_fam <- setdiff(unique(data_surveys_fishery$family), c(all_sp, target_larger_20cm, untargeted_fam))
+unclassified_fam #OK
+
 
 #keep only targeted fishes
 data_surveys_fishery <- data_surveys_fishery |> 

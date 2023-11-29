@@ -233,12 +233,13 @@ summary(M[which(p_val > 0.01)]) # correlations lower than -0.07 and upper 0.07 a
 
 ## Study correlogram
 pairwise_corr <- M[upper.tri(M)]
+summary(pairwise_corr) 
 summary(abs(pairwise_corr)) #
 # Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
 # 0.001428 0.093911 0.207787 0.259847 0.386886 0.975419 
-length(which(pairwise_corr > 0.2)) #151
-length(which(pairwise_corr < -0.2)) #54
-length(which( pairwise_corr < 0.2 & -0.2 < pairwise_corr)) #201
+length(which(pairwise_corr > 0.2)) #155
+length(which(pairwise_corr < -0.2)) #51
+length(which( pairwise_corr < 0.2 & -0.2 < pairwise_corr)) #200
 length(which( pairwise_corr < 0.5 & -0.5 < pairwise_corr)) #356
 
 RdBu = c("#67001F", "#B2182B", 
