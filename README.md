@@ -105,7 +105,7 @@ The script 'cultural_contributions/analyses/cultural_analyses.R'
 ### Contributions analysis
 
 After assessing all the contributions, the script 'make.R' merges all of them and 
-study their distribution, dimensionality and correaltions. This script calls both 
+study their distribution, dimensionality and correlations. This script calls both 
 scripts '2a_make_fig_1.R' and '2b_make_fig_2.R' to produce  both Figure 1 and 2 
 of the paper Flandrin at al. 
 
@@ -138,23 +138,25 @@ brackets:
 
 - Figure S1 (`R/1b_Plot_contributions.R`)
 
-- Figure S2 (`R/1b_Plot_contributions.R`)
+- Figure S2 (`R/1f_test_composite_scores_NP_NN.R`)
 
 - Figure S3 (`R/1b_Plot_contributions.R`)
 
 - Figure S4 (`R/1b_Plot_contributions.R`)
 
-- Figure S5 (`R/1c_PCA_analyses_on_contributions.R`)
+- Figure S5 (`R/1b_Plot_contributions.R`)
 
 - Figure S6 (`R/1c_PCA_analyses_on_contributions.R`)
 
-- Figure S7 (`R/1d_weighted_mean_NP_NN_score.R`)
+- Figure S7 (`R/1c_PCA_analyses_on_contributions.R`)
 
 - Figure S8 (`R/1d_weighted_mean_NP_NN_score.R`)
 
-- Figure S9 (`R/1e_spatial_autocorrelation.R`)
+- Figure S9 (`R/1d_weighted_mean_NP_NN_score.R`)
 
-- Figure S10 (`R/1d_weighted_mean_NP_NN_score.R`)
+- Figure S10 (`R/1e_spatial_autocorrelation.R`)
+
+- Figure S11 (`R/1d_weighted_mean_NP_NN_score.R`)
 
 
 
@@ -169,7 +171,9 @@ source("make.R")
 All required packages will be installed (if necessary) and loaded.
 
 > :boom: WARNING: running `make.R` calls all the scripts and takes hours so if 
-you want to work on one or a few scripts, you should run lines 17-42 of 
-`make.R` and then go to the other script.
+you want to work on one or a few scripts, you should run lines 17-45 of 
+`make.R` and then go to the other script. Note that the lines 47-72 let to assess
+each contributions in each surveys; you can run the lines 76-108 to quickly 
+reproduce all the figures of the paper flandrin et al. 
 
 Enjoy!

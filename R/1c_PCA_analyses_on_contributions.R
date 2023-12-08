@@ -37,8 +37,6 @@ load(here::here("outputs","all_Contrib_site_log_transformed.Rdata"))
 # Contrib_site_log_transformed <- Contrib_site_condition
 ###
 
-
-load(here::here("biodiversity", "outputs", "occurrence_matrix_family_survey_relative_biomass.Rdata"))
 coast <- sf::st_read(here::here("data", "ShapeFiles coast", "GSHHS_h_L1.shp"))
 
 source(here::here("R", "elbow.R"))
@@ -370,12 +368,18 @@ dev.off()
 
 
 ##------- PCA co-inertia between NN and NP -------
+NN_names <- names(grp_NN_NP)[ grp_NN_NP=="NN" ]
+Contrib_NN <- Contrib_site_for_pca[,NN_names]
+
+NP_names <- names(grp_NN_NP)[ grp_NN_NP=="NP" ]
+Contrib_NP <- Contrib_site_for_pca[,NP_names]
+
 pca_NP <- ade4::dudi.pca(Contrib_NP, center = T, scale = T, scannf=F, nf=10)
 pca_NN <- ade4::dudi.pca(Contrib_NN, center = T, scale = T, scannf=F, nf=10)
 
 coinertia <- ade4::coinertia(pca_NN, pca_NP, scannf = F, nf=3)
 coinertia
-summary(coinertia) #RV: 0.4567662 
+summary(coinertia) #RV: 0.4727786 
 plot(coinertia)
 #strengh of the relationship
 rv1 <- ade4::RV.rtest(pca_NP$tab, pca_NN$tab, 99)

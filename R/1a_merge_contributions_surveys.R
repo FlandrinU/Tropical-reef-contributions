@@ -180,13 +180,20 @@ Contrib_skewed_distribution <- c("Biomass","N_Recycling","P_Recycling",
                              "Herbivores_Biomass", "Invertivores_Biomass", 
                              "Piscivores_Biomass", "Available_Biomass",
                              "gravtot2")
+Contrib_skewed_zeros <- c() # identified contributions that should be log-transformed, but wthat contain some zero values.
+for( i in Contrib_skewed_distribution){
+  if(length(which(Contrib_surveys[[i]] == 0)) > 0){
+    cat("Zero detected in ", i, "\n")
+    Contrib_skewed_zeros <- c(Contrib_skewed_zeros, i)
+  } 
+}
 
 
 Contrib_survey_log_transformed <- Contrib_surveys |>
+  dplyr::mutate(across(.cols = all_of(Contrib_skewed_zeros),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>
   dplyr::mutate(across(.cols = all_of(Contrib_skewed_distribution),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>      
-  dplyr::mutate(across(.cols = all_of(Contrib_skewed_distribution),
-                       .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid negative values
+                       .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid -Inf values
 
 save(Contrib_survey_log_transformed, file = here::here("outputs", "all_Contrib_survey_log_transformed.Rdata"))
 
@@ -261,10 +268,10 @@ save(Contrib_site, file = here::here("outputs", "all_Contrib_site.Rdata"))
 
 
 Contrib_site_log_transformed <- Contrib_site |>
+  dplyr::mutate(across(.cols = all_of(Contrib_skewed_zeros),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>
   dplyr::mutate(across(.cols = all_of(Contrib_skewed_distribution),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>      
-  dplyr::mutate(across(.cols = all_of(Contrib_skewed_distribution),
-                       .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid negative values
+                       .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid -Inf values
 
 save(Contrib_site_log_transformed, file = here::here("outputs", "all_Contrib_site_log_transformed.Rdata"))
 
@@ -281,10 +288,10 @@ for(condition in c("coral_reef", "coral_0_imputed", "wo_australia", "coral_5_imp
                                        HDI, MarineEcosystemDependency, gravtot2,
                                        mpa_name, mpa_enforcement, protection_status, mpa_iucn_cat),
                       multiple = "all") |>
+    dplyr::mutate(across(.cols = all_of(Contrib_skewed_zeros),
+                         .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transform
     dplyr::mutate(across(.cols = all_of(Contrib_skewed_distribution),
-                         .fns = ~ .x +1 , .names = "{.col}")) |>      # Adds 1 to values to log transformed
-    dplyr::mutate(across(.cols = all_of(Contrib_skewed_distribution),
-                         .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid negative values
+                         .fns = log10 , .names = "{.col}"))          # log(x+1) to avoid -Inf values
   
   save(Contrib_site_condition, file = here::here("outputs", paste0("Contrib_site_log_", condition,".Rdata")))
 }

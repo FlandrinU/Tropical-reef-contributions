@@ -44,9 +44,9 @@ behrmann <- "+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS
 world <- robinmap::robinmap(center = 150, crs = behrmann)
 sf::st_write(obj=world, here::here("data", "ShapeFiles coast", "shapefile_coast_pacific_centered.shp"))
 
-## Extract, filter and clean  data to run analysis
-source(here::here("analyses", "preping_data_rls.R"))
 
+## Extract, filter and clean data to run analysis
+source(here::here("analyses", "preping_data_rls.R"))
 
 #-----------------Assess all survey contributions---------------------
 
@@ -75,7 +75,7 @@ source(here::here("trophic_web", "trophic_web_analyses.R"))
 
 #-----------------Study contributions at the reef (=site) level---------------------
 
-## Merge all the assessed contributions at the reef level. Filter 
+## Merge all the assessed contributions at the reef level
 source(here::here('R', '1a_merge_contributions_surveys.R')) 
 
 ## Explore the correlations among contributions, and the spatial distribution of
@@ -97,11 +97,11 @@ source(here::here('R', '1d_weighted_mean_NP_NN_score.R'))
 ## Test the spatial correlation of both NN and NP scores
 source(here::here('R', '1e_spatial_autocorrelation.R')) 
 
-## Test the the senseibility of composite indicators to the aggregation sensibility
+## Test the the sensibility of composite indicators to the aggregating method
 source(here::here('R', '1f_test_composite_scores_NP_NN.R')) 
 
 
-#----------------- Construct the figures of the paper ---------------------
+#----------------- Construct the main figures of the paper ---------------------
 
 source(here::here('R', '2a_make_fig_1.R')) 
 source(here::here('R', '2b_make_fig_2.R')) 
