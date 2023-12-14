@@ -44,7 +44,7 @@ load(here::here("trophic_web", "outputs", "trophic_indicators_survey.Rdata"))
 
 ##-------------Filtering contributions-------------
 recycl <- dplyr::select(task3_data_surveys,
-                        SurveyID, Btot, recycling_N, recycling_P) #2402 surveys
+                        SurveyID, Btot, excretion_N, excretion_P) #2402 surveys
 
 prod <- dplyr::select(RLS_prod_transect, SurveyID, Productivity) #3628 surveys
 
@@ -92,8 +92,8 @@ Contrib <- metadata_surveys |>
   dplyr::select(SurveyID, SiteCode, SiteCountry, SiteLatitude, SiteLongitude, 
                 SiteMeanSST, SurveyDepth, coral_imputation,
                 Biomass = Btot, 
-                N_Recycling = recycling_N,
-                P_Recycling = recycling_P,
+                N_Recycling = excretion_N,
+                P_Recycling = excretion_P,
                 Taxonomic_Richness = taxo_richness,
                 Functional_Entropy = funct_entropy, 
                 Phylogenetic_Entropy = phylo_entropy_Mean,

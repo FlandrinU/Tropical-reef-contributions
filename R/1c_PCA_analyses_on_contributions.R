@@ -241,7 +241,7 @@ biom <- Contrib_site_log_transformed$Biomass
 plot(pc1_coord ~ biom)
 cor.test(pc1_coord, biom)
 # cor 
-# 0.8536316 
+# 0.8569964 
 l <- lm(pc1_coord ~ biom)
 summary(l)
 

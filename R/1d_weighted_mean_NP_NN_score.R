@@ -251,7 +251,7 @@ ggsave(filename = here::here("outputs", "figures","Socio_envir_variables_with_NP
 
 
 ##-------------NN and NP correlation -----------------
-cor.test(NN_NP_scores$NP_score, NN_NP_scores$NN_score) # cor = 0.249
+cor.test(NN_NP_scores$NP_score, NN_NP_scores$NN_score) # cor = 0.2442032 
 
 l<- lm(NP_score ~ NN_score, NN_NP_scores)
 summary(l)
@@ -261,7 +261,7 @@ summary(l)
 #### Study the contribution distributions in the NNxNP space ####
 var <- c('`log(Biomass)`', 'Turnover_Available_Biomass', 'Aesthetic', 'Iron', 
          'Omega_3','Taxonomic_Richness', '`log(Available_Biomass)`',
-         'Functional_Entropy', 'Endemism')
+         'Functional_Entropy', 'Endemism', 'SiteLatitude')
 
 plot_contrib <- parallel::mclapply(var, mc.cores=5, function(contrib){
   ggplot(sites_all_variables, aes( y= NP_score, x = NN_score) ) +
@@ -279,10 +279,11 @@ plot_contrib <- parallel::mclapply(var, mc.cores=5, function(contrib){
 
 plot <- (plot_contrib[[1]] + plot_contrib[[2]] + plot_contrib[[3]]) / 
   (plot_contrib[[4]] + plot_contrib[[5]] + plot_contrib[[6]] ) /
-  (plot_contrib[[7]] + plot_contrib[[8]] + plot_contrib[[8]] )
+  (plot_contrib[[7]] + plot_contrib[[8]] + plot_contrib[[9]] )
 ggsave(here::here("outputs", "figures", "contributions_distributions_in_NNxNP_space.png"),
        plot , width=13, height = 13 )
 
+# plot_contrib[[10]]
 
 
 #### Define colors by quarter in the NNxNP space ####
@@ -620,7 +621,7 @@ prop.table(contingency_table,1)
 #chi-squared test
 summary(contingency_table)
 # Test for independence of all factors:
-#   Chisq = 25.786, df = 6, p-value = 0.000244
+#   Chisq = 28.164, df = 6, p-value = 8.753e-05
 
 # Effect size
-lsr::cramersV(contingency_table) #0.1020928
+lsr::cramersV(contingency_table) #0.106695

@@ -306,8 +306,6 @@ width_jitter = 200000
 height_jitter = 200000
 qt = 0.95
 
-set.seed(12)
-
 #change spatial projection of points
 NN_NP_with_product_spatial <- sf::st_as_sf(NN_NP_with_product,
                                            coords=c("SiteLongitude", "SiteLatitude"),
@@ -319,18 +317,12 @@ NN_NP_with_product_sp <- tidyr::extract(NN_NP_with_product_spatial, geometry,
                                         into=c("SiteLongitude", "SiteLatitude"),
                                         '\\((.*),(.*)\\)', conv = T)
 
+#order protection to keep the same classification
+NN_NP_with_product_sp$protection <- factor(NN_NP_with_product_sp$protection , levels = c("No take", "Restricted", "Fished"))
+
 #plot points on map
 fig_2c <- ggplot() +
   geom_sf(data = coast_pacific_centered, color = NA, fill = "grey70") +
-  
-  #down left quarter
-  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
-             position = position_jitter(width =width_jitter, height =height_jitter),
-             size = size_point, stroke = stroke, 
-             fill= "grey10",
-             data = NN_NP_with_product_sp[
-               which(NN_NP_with_product_sp$rank_d_l >=
-                       quantile(NN_NP_with_product_sp$rank_d_l, probs=c(qt), na.rm=T)), ] )+
   
   
   #up left quarter
@@ -363,6 +355,15 @@ fig_2c <- ggplot() +
                which(NN_NP_with_product_sp$rank_u_r >=
                        quantile(NN_NP_with_product_sp$rank_u_r, probs=c(qt), na.rm=T)), ] )+
   
+  #down left quarter
+  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+             position = position_jitter(width =width_jitter, height =height_jitter),
+             size = size_point, stroke = stroke, 
+             fill= "grey10",
+             data = NN_NP_with_product_sp[
+               which(NN_NP_with_product_sp$rank_d_l >=
+                       quantile(NN_NP_with_product_sp$rank_d_l, probs=c(qt), na.rm=T)), ] )+
+  
   
   # see MPAs
   scale_shape_manual(values=c(24,23,21))+
@@ -394,6 +395,8 @@ fig_2a_png <- cowplot::ggdraw() +
 
 
 ## construct the legend
+NN_NP_with_product$protection <- factor(NN_NP_with_product$protection , levels = c("No take", "Restricted", "Fished"))
+
 legend_plot <- ggplot(NN_NP_with_product, 
                       aes( y= NP_score, x = NN_score) ) +
   

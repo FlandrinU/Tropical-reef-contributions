@@ -227,19 +227,22 @@ cor.test.p <- function(x){
 }
 
 p_val <- cor.test.p(as.data.frame(dplyr::select(Contrib_site_clean, -Biomass)))
-length(which(p_val > 0.01)) #76 pairs are unsignificantly correlated
+length(which(p_val > 0.01))/2 #71 pairs are insignificantly correlated
 summary(M[which(p_val > 0.01)]) # correlations lower than -0.07 and upper 0.07 are significant
 
 
 ## Study correlogram
 pairwise_corr <- M[upper.tri(M)]
 summary(pairwise_corr) 
-summary(abs(pairwise_corr)) #
 # Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-# 0.001428 0.093911 0.207787 0.259847 0.386886 0.975419 
-length(which(pairwise_corr > 0.2)) #155
-length(which(pairwise_corr < -0.2)) #51
-length(which( pairwise_corr < 0.2 & -0.2 < pairwise_corr)) #200
+# -0.70118 -0.08658  0.10082  0.12798  0.33006  0.93022 
+summary(abs(pairwise_corr))
+# Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+# 0.001535 0.097598 0.208872 0.259157 0.374540 0.930220 
+pairwise_corr[order(pairwise_corr)]
+length(which(pairwise_corr > 0.2)) #156
+length(which(pairwise_corr < -0.2)) #53
+length(which( pairwise_corr < 0.2 & -0.2 < pairwise_corr)) #197
 length(which( pairwise_corr < 0.5 & -0.5 < pairwise_corr)) #356
 
 RdBu = c("#67001F", "#B2182B", 
