@@ -27,6 +27,5 @@ renv/
 # _targets
 _targets/
 
-# Outputs
-#*.png
-#*.jpg
+# DATA UNDER EMBARGO
+recycling_embargo/

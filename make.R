@@ -50,8 +50,8 @@ source(here::here("analyses", "preping_data_rls.R"))
 
 #-----------------Assess all survey contributions---------------------
 
-## Assess the recycling of N and P from tropical fishes in each communities
-source(here::here("recycling", "analyses", "recycling_analysis.R")) 
+# ## Assess the recycling of N and P from tropical fishes in each communities
+# source(here::here("recycling", "analyses", "recycling_analysis.R"))           # data under embargo, please contact us if needed. Final output is provided for the analysis.
 
 ## Assess the biodiversity metrics in each community
 source(here::here("biodiversity", "analyses", "biodiversity_analyses.R")) 
