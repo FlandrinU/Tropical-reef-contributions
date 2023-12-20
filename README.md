@@ -35,6 +35,12 @@ The script 'recycling/analyses/recycling_analyses.R'
   contains the amount of nitrogen and phosphorous recycled by fishes, aggregated 
   at the survey level
   
+> :boom: WARNING: The recycling data are under embargo, and will be published soon.
+The final table aggregating excretion data at the survey scale is available to
+enable the rest of the analysis. Please contact **Sebastien Villéger** for further
+informations.
+
+  
 
 #### Biodiversity
 The script 'biodiversity/analyses/biodiversity_analysis.R' 
