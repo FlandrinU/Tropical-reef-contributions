@@ -144,7 +144,7 @@ brackets:
 
 - Figure S1 (`R/1b_Plot_contributions.R`)
 
-- Figure S2 (`R/1f_test_composite_scores_NP_NN.R`)
+- Figure S2 (`R/1b_Plot_contributions.R`)
 
 - Figure S3 (`R/1b_Plot_contributions.R`)
 
@@ -163,6 +163,11 @@ brackets:
 - Figure S10 (`R/1e_spatial_autocorrelation.R`)
 
 - Figure S11 (`R/1d_weighted_mean_NP_NN_score.R`)
+
+- Figure S12 (`R/2b_make_fig_2.R`)
+
+- Figure S13 (`R/1f_test_composite_scores_NP_NN.R`)
+
 
 
 
