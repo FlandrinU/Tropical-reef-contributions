@@ -22,6 +22,9 @@ rm(list=ls())
 
 # ------------loading data-------------
 load(file = here::here("outputs", "NN_NP_score_wheighted_mean.Rdata"))
+# load(file = here::here("outputs", "NN_NP_score_wheighted_mean_SST20.Rdata")) # make figures with tropical points only
+# load(file = here::here("outputs", "NN_NP_score_wheighted_mean_RANDOM.Rdata")) # make figures with random associations between contributions
+
 
 coast_pacific_centered <- sf::st_read(here::here("data", "ShapeFiles coast",
                                                  "shapefile_coast_pacific_centered.shp"))
@@ -52,7 +55,7 @@ NN_NP_with_product$protection <- factor(NN_NP_with_product$protection , levels =
 summary(NN_NP_with_product)
 
 
-#### plot NN against NN ####
+#### plot NN against NP ####
 NN_NP_plot <- ggplot(NN_NP_with_product, 
                      aes( y= NP_score, x = NN_score) ) +
 
@@ -226,7 +229,10 @@ ggsave(plot=fig_2a, filename=here::here("outputs", "figures", "FIG2A_NNxNP_space
 
 
 # --------------- Figure 2b: Stack plot MPA proportion -------------
-mpa_proportion <- data.frame(rect= NA, tot=NA, quarter=NA, protection=NA, Freq=NA, pct=NA)
+mpa_proportion <- data.frame(rect = character(), tot = numeric(), 
+                             quarter = character(), protection = character(),
+                             Freq = integer(), pct = numeric(), 
+                             stringsAsFactors = FALSE)
 quart = c("up_right", "up_left", "down_left", "down_right")
 names = c("4-bright", "2-NPonly", "1-dark", "3-NNonly")
 
@@ -243,33 +249,39 @@ for(i in c(1:4)){
   mpa_proportion <- rbind(mpa_proportion,df)
 }
 
-
 #order the stack plot
 mpa_proportion$protection <- factor(mpa_proportion$protection , levels = c("No take", "Restricted", "Fished"))
 
 # Stacked
-mpa_plot <- ggplot(mpa_proportion[-1,], 
+mpa_plot <- ggplot(mpa_proportion,
                    aes(x=quarter,
-                       y=Freq, 
+                       y=Freq,
                        fill= protection)) +
   geom_bar(position = position_fill(), stat = "identity", width=0.7) +
   scale_fill_grey(start=1, end=0.6) +
-  
+
   geom_text(aes( label = paste0(round(pct, 0), "%")),
             stat= "identity",
             position = position_fill(vjust = 0.5),
             size=5,
             angle = 0,
             color=rep(c("black", "black", "white"), 4)) +
-  
+
   
   #Add rectangles
-  geom_bar(aes(x=rect, color=rect),
+  geom_bar(data = mpa_proportion |> dplyr::filter(!is.na(rect)),
+           aes(x=rect, color=rect),
            width=0.7,
            stat = "identity",
            alpha=0, linewidth=1,
            position = position_fill())+
-  scale_colour_manual(values=c("grey30",  "dodgerblue3","forestgreen", "darkgoldenrod3" )) +
+  scale_colour_manual(values=c("grey30",  "dodgerblue3","forestgreen", "darkgoldenrod3")) +
+  # geom_rect(aes(xmin = as.numeric(factor(quarter)) - 0.35,
+  #               xmax = as.numeric(factor(quarter)) + 0.35,
+  #               ymin = 0,
+  #               ymax = 1),
+  #           fill = NA,
+  #           width = 1.5)+
 
   scale_x_discrete(labels=c("<span style = 'color:grey30;'>**Dark spots**</span>",
                             "<span style = 'color:dodgerblue3;'>**NP only**</span>",
@@ -300,6 +312,7 @@ mpa_plot
 
 # --------------- Figure 2c Plot outliers on map (Pacific centered)-------------
 #set parameters
+set.seed(0621)
 stroke = 0.5 
 size_point = 4
 width_jitter = 200000
@@ -323,6 +336,15 @@ NN_NP_with_product_sp$protection <- factor(NN_NP_with_product_sp$protection , le
 #plot points on map
 fig_2c <- ggplot() +
   geom_sf(data = coast_pacific_centered, color = NA, fill = "grey70") +
+  
+  #down left quarter
+  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
+             position = position_jitter(width =width_jitter, height =height_jitter),
+             size = size_point, stroke = stroke, 
+             fill= "grey10",
+             data = NN_NP_with_product_sp[
+               which(NN_NP_with_product_sp$rank_d_l >=
+                       quantile(NN_NP_with_product_sp$rank_d_l, probs=c(qt), na.rm=T)), ] )+
   
   
   #up left quarter
@@ -355,14 +377,7 @@ fig_2c <- ggplot() +
                which(NN_NP_with_product_sp$rank_u_r >=
                        quantile(NN_NP_with_product_sp$rank_u_r, probs=c(qt), na.rm=T)), ] )+
   
-  #down left quarter
-  geom_point(aes( x= SiteLongitude, y = SiteLatitude, shape = protection),
-             position = position_jitter(width =width_jitter, height =height_jitter),
-             size = size_point, stroke = stroke, 
-             fill= "grey10",
-             data = NN_NP_with_product_sp[
-               which(NN_NP_with_product_sp$rank_d_l >=
-                       quantile(NN_NP_with_product_sp$rank_d_l, probs=c(qt), na.rm=T)), ] )+
+
   
   
   # see MPAs
@@ -415,7 +430,7 @@ legend_plot <- ggplot(NN_NP_with_product,
         legend.box.margin = margin(0,0,0,0))+
   guides(fill = guide_legend(title.position = "top",
                              title.hjust = 0.5,
-                             title.vjust = -2)) 
+                             title.vjust = -1)) 
 legend <- ggpubr::get_legend(legend_plot)
 
 

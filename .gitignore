@@ -24,8 +24,9 @@ inst/doc
 .Rprofile
 renv/
 
-# _targets
-_targets/
+# Code test
+R/3_test_map_outliers_on_contributions_rank.R
+R/3_plot_for_graphical_abstract.R
 
 # DATA UNDER EMBARGO
 recycling_embargo/

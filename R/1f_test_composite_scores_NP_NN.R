@@ -55,7 +55,7 @@ grp_NN_NP <- as.factor(c(N_Recycling = "NN",
                          Vitamin_A = "NP",
                          Available_Biomass = "NP",
                          Aesthetic = "NP",
-                         Public_Interest = "NP")) # /!\ the order matter
+                         Public_Attention = "NP")) # /!\ the order matter
 
 ##-------------Clean data-------------
 Contrib_log_transformed <- subset(Contrib_site_log_transformed, 

@@ -136,11 +136,11 @@ Figures will be stored in `outputs/figures/`.
 The following Figures and Tables can be reproduced with the script indicated in 
 brackets:
     
-- Figure 1 (`2a_make_fig_1.R`)
+- Figure 1 (`R/2a_make_fig_1.R`)
 
-- Figure 2 (`2b_make_fig_2.R`)
+- Figure 2 (`R/2b_make_fig_2.R`)
 
-- Figure 3 has been produced by other mean
+- Figure 3 has been produced by other mean.
 
 - Figure S1 (`R/1b_Plot_contributions.R`)
 

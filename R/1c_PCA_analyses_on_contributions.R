@@ -72,7 +72,7 @@ grp_NN_NP <- as.factor(c(N_Recycling = "NN",
                          Vitamin_A = "NP",
                          Available_Biomass = "NP",
                          Aesthetic = "NP",
-                         Public_Interest = "NP")) # /!\ the order matter
+                         Public_Attention = "NP")) # /!\ the order matter
 
 
 
@@ -355,8 +355,6 @@ ggsave(filename = here::here("outputs", "figures", "PCA_temp_according_Dim1.png"
 
 
 ### Lattitude pattern
-png(filename = here::here("outputs", "figures","PCA_lattitude_pattern.png"), 
-    width= 30, height = 20, units = "cm", res = 1000)
 print( factoextra::fviz_pca_biplot(pca,
                                    geom="point", pointshape=21,
                                    fill.ind = abs(Contrib_site_log_transformed$SiteLatitude),
@@ -365,6 +363,46 @@ print( factoextra::fviz_pca_biplot(pca,
                                    col.var = "black", repel = TRUE,
                                    legend.title = "abs(latitude)") )
 dev.off()
+
+##------- PCA co-inertia between weighted and unweighted PCA -------
+pca_weighted <- ade4::dudi.pca(Contrib_site_for_pca, center = F, scale = F, 
+                               col.w = w, scannf=F, nf=10)
+pca_unweighted <- ade4::dudi.pca(Contrib_site_for_pca, center = F, scale = F, scannf=F, nf=10)
+
+# Plot unweighted PCA
+png(filename = here::here("outputs", "figures","unweighted_PCA_NP_NN_axes1-2_blind.png"), 
+    width= 30, height = 20, units = "cm", res = 1000)
+factoextra::fviz_pca_biplot(pca_unweighted, col.var = grp_NN_NP, 
+                            title="",
+                            palette = c("forestgreen", "dodgerblue3"),
+                            labelsize = 4, 
+                            repel = TRUE,
+                            geom="point", pointshape=21,
+                            stroke=0, pointsize=3,
+                            alpha.ind = 0.7,
+                            fill.ind = Contrib_site_log_transformed$Biomass,
+                            gradient.cols = RColorBrewer::brewer.pal(9,name="YlOrRd"))+
+  labs(col = "Reef Contributions", fill = "Total Biomass")+
+  scale_color_discrete(type=c("forestgreen", "dodgerblue3"),labels = c("NN", "NP"))+
+  theme(legend.position = "bottom")
+
+dev.off()
+
+# Co-inertia analysis
+coinertia <- ade4::coinertia(pca_weighted, pca_unweighted, scannf = F, nf=3)
+coinertia
+summary(coinertia) #RV: 0.96433 
+
+png(filename = here::here("outputs", "figures","coinertia_analysis_weighted_and_unweighted_PCA.png"), 
+    width= 25, height = 25, units = "cm", res = 1000)
+plot(coinertia)
+dev.off()
+
+#strengh of the relationship
+rv1 <- ade4::RV.rtest(pca_weighted$tab, pca_unweighted$tab, 99)
+rv1
+plot(rv1)
+
 
 
 ##------- PCA co-inertia between NN and NP -------
@@ -389,7 +427,7 @@ plot(rv1)
 #Mantel test between the two contributions tables
 mantel_test <- vegan::mantel(dist(scale(Contrib_NP)), dist(scale(Contrib_NN)), permutations = 100)
 mantel_test
-#Mantel statistic r: 0.5443 
+#Mantel statistic r: 0.5285 
 
 ##------- Dimensionality in random contributions -------
 load(here::here("outputs","Contrib_site_log_random.Rdata"))

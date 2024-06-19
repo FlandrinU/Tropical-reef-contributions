@@ -79,7 +79,7 @@ grp_NN_NP <- as.factor(c(N_Recycling = "NN",
                          Vitamin_A = "NP",
                          Available_Biomass = "NP",
                          Aesthetic = "NP",
-                         Public_Interest = "NP")) # /!\ the order matter
+                         Public_Attention = "NP")) # /!\ the order matter
 
 ##-------------Clean data-------------
 Contrib_log_transformed <- subset(Contrib_site_log_transformed, 
@@ -256,12 +256,43 @@ cor.test(NN_NP_scores$NP_score, NN_NP_scores$NN_score) # cor = 0.2442032
 l<- lm(NP_score ~ NN_score, NN_NP_scores)
 summary(l)
 
+# # #test NN and NP against contributions
+# cor.test(sites_all_variables$Turnover_Available_Biomass, sites_all_variables$NP_score)
+# cor.test(sites_all_variables$`log(Biomass)`, sites_all_variables$NP_score)
+# 
+# summary(lm(sites_all_variables$Turnover_Available_Biomass ~ sites_all_variables$NP_score))
+# plot(sites_all_variables$Turnover_Available_Biomass ~ sites_all_variables$NP_score)
+# 
+# cor.test(sites_all_variables$Aesthetic, sites_all_variables$NP_score)
+# cor.test(sites_all_variables$Public_Attention, sites_all_variables$NP_score)
+# cor.test(sites_all_variables$Zinc, sites_all_variables$NP_score)
+# cor.test(sites_all_variables$Iron, sites_all_variables$NP_score)
+# cor.test(sites_all_variables$`log(Available_Biomass)`, sites_all_variables$NP_score)
+# 
+# cor.test(sites_all_variables$`log(Biomass)`, sites_all_variables$NN_score)
+# summary(lm(sites_all_variables$`log(Biomass)`~ sites_all_variables$NN_score))
+# plot(sites_all_variables$`log(Biomass)`~ sites_all_variables$NN_score)
+# 
+# df <- sites_all_variables[,c(8:37,48,49)]
+# cor_matrix <- cor(df)
+# corrplot::corrplot(cor_matrix, method = "circle")
+# 
+# # Compare with random variables
+# set.seed(123)
+# random_vars <- replicate(6, rnorm(1200))
+# mean_score <- rowMeans(random_vars)
+# summary(lm(random_vars[,1]~mean_score))
+
+
 
 ##-------------Study the NNxNP 2D space -----------------
 #### Study the contribution distributions in the NNxNP space ####
 var <- c('`log(Biomass)`', 'Turnover_Available_Biomass', 'Aesthetic', 'Iron', 
          'Omega_3','Taxonomic_Richness', '`log(Available_Biomass)`',
          'Functional_Entropy', 'Endemism', 'SiteLatitude')
+
+# var <- c('`log(Biomass)`', 'Turnover_Available_Biomass')
+# sites_all_variables$Turnover_Available_Biomass <- log(sites_all_variables$Turnover_Available_Biomass)
 
 plot_contrib <- parallel::mclapply(var, mc.cores=5, function(contrib){
   ggplot(sites_all_variables, aes( y= NP_score, x = NN_score) ) +
@@ -422,9 +453,60 @@ NN_NP_plot <- ggplot(NN_NP_with_product, aes( y= NP_score, x = NN_score) ) +
   theme(legend.position = c("bottom"))
 
 NN_NP_plot
-ggsave( here::here("outputs", "figures", "Sites and outlier names in NN and NP scores.png"), 
-        plot = NN_NP_plot, 
-        width=12, height = 10 )
+
+
+## Add gradient in the margins of NN_NP_plot & names the corners ##
+# /!\ This plot need the figures "legend_gradient" of NN and NP which are created
+# in the script 2b_make_fig_2.R 
+grad_NN <- cowplot::ggdraw() +
+  cowplot::draw_image(here::here("outputs", "figures","legend_gradient_NN.png"))
+grad_NP <- cowplot::ggdraw() +
+  cowplot::draw_image(here::here("outputs", "figures","legend_gradient_NP.png"))
+
+label_corner <- data.frame(
+  X = c(-Inf,-Inf,Inf,Inf),
+  Y =  c(-Inf, Inf,-Inf,Inf),
+  text = c("Dark spots","NP only",
+           "NN only","Bright spots"),
+  x_adjust = c(-0.2,-0.2,1.5,1.3),
+  y_adjust = c(-2,3,-2,3),
+  col = c("grey30", "dodgerblue3", "forestgreen", "darkgoldenrod3"))
+
+fig_S8 <- NN_NP_plot +
+  geom_text(data=label_corner, 
+            aes(x=X,y=Y, hjust= x_adjust,vjust=y_adjust,label=text, 
+                fontface= "bold", color = col),
+            size = 4.5)+
+  scale_color_identity() +
+  annotation_custom( ggplotGrob(grad_NN),
+                     xmin= -2.1 ,#-2.2,#-2,
+                     ymin = -2.6 ,#-2.5,  #-2.4,
+                     xmax=2.1,  #2.2,#1,
+                     ymax = -2.2 )+
+  
+  annotation_custom( ggplotGrob(grad_NP),
+                     xmin=-2.55, #-2.7
+                     xmax=-2.32, # -2.3
+                     ymin = -2, #-2
+                     ymax = 1.97)+
+  labs( x=  "Nature for Nature", y = "Nature for People")+
+  theme( legend.position = "bottom",
+         legend.box.margin = margin(30, 0, 0,0), 
+         axis.title.x = element_text(hjust = 0.96,
+                                     vjust = -4.5,
+                                     colour = "white",
+                                     face = "bold",
+                                     size = 15),
+         axis.title.y = element_text(hjust = 0.96,
+                                     vjust = 2.1,
+                                     colour = "white",
+                                     face = "bold",
+                                     size = 15)) 
+
+
+fig_S8
+ggsave(plot=fig_S8, filename=here::here("outputs", "figures","Sites and outlier names in NN and NP scores.png"),
+       height = 8.5, width = 11)
 
 
 
@@ -552,22 +634,27 @@ ggsave(plot = last_plot(), width=11, height =7,
 
 ##-------------Spatial distribution of NN and NP scores, independently -----------------
 map_NN_or_NP <- function(coord_NN_NP = NN_NP_with_product,
-                         Contrib = NN_NP_with_product$NN_score ,
-                         col_Contrib= "forestgreen",
+                         Contrib = NN_NP_with_product$NP_score ,
+                         col_Contrib= "dodgerblue3",
                          ylim = c(-36, 31),
                          xlim= c(-180,180), title=""){
-  ggplot(coord_NN_NP) +
+  
+  coord_NN_NP_sorted <- coord_NN_NP#[order(abs(Contrib)), ]
+  # Contrib <- Contrib[order(abs(Contrib))]
+  
+  ggplot(coord_NN_NP_sorted) +
     geom_sf(data = coast, color = NA, fill = "lightgrey") +
     geom_point(aes(x = SiteLongitude, y = SiteLatitude,
-                   color = Contrib, alpha= abs(Contrib),
+                   color = rank(Contrib),
+                   alpha= rank(abs(Contrib)),
                    size = 2)) +
     geom_point(aes(x = SiteLongitude, y = SiteLatitude),
                shape = 1, size = 2, stroke = 0.5,
                color= "black",
-               data = coord_NN_NP[which(Contrib > quantile(Contrib, .98)),]) +
+               data = coord_NN_NP_sorted[which(Contrib > quantile(Contrib, .98)),]) +
     
-    scale_colour_gradientn(colours = colorRampPalette(rev(c( col_Contrib ,"white", "grey30")))(1000)) +
-    scale_alpha_continuous(range = c(0, 1)) +
+    scale_colour_gradientn(colours = colorRampPalette(rev(c( col_Contrib ,"white", "grey50")))(1000)) +
+    scale_alpha_continuous(range = c(0, 0.6)) +
     
     coord_sf(xlim=xlim, ylim = ylim, expand = FALSE) +
     guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +

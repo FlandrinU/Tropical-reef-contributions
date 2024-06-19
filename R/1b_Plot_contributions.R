@@ -169,23 +169,28 @@ ggsave(filename = here::here("outputs", "figures","Contributions_log_transformed
 
 ##-------------Correlations among Contributions-------------
 plot_correlation <- function(x,y,i){  
+  r_pearson <- cor(x, Contrib_site_log_transformed[,y][[y]])
+  
   ggplot() +
     geom_point(aes(y = Contrib_site_log_transformed[,y][[y]], x = x),
-               color = col[i], alpha = 0.6, size = 1) +
+               color = col[i], alpha = 0.2, size = 1) +
     theme_bw() +
     labs(x = x_title, y = y) +
     theme(panel.grid.minor = element_blank(),
           axis.text = element_text(color = "black"), 
-          axis.title = element_text(size = 17))
+          axis.title = element_text(size = 15))+
+    annotate("text", x = -Inf, y = Inf, label = paste("r =", round(r_pearson, 2)), 
+             hjust = -.3, vjust = 2, size = 5, color = "black")
 }
 
 
 ## Relationship with the total biomass
 x<- Contrib_site_log_transformed$Biomass
-x_title = "total Biomass"
-col <- fishualize::fish(n = ncol(Contrib_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
-
-plots <- lapply( 1:ncol(Contrib_site_clean), function(i){
+x_title = "Total Biomass"
+# col <- fishualize::fish(n = ncol(Contrib_site_clean), option = "Ostracion_whitleyi", begin = 0, end = 0.8)
+col <- c(rep("forestgreen", 20), rep("dodgerblue3", 10))
+         
+plots <- lapply( 2:ncol(Contrib_site_clean), function(i){
   plot_correlation(x,colnames(Contrib_site_clean)[i],i)
 })
 
@@ -193,13 +198,36 @@ plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plots[[
   plots[[8]] + plots[[9]] +plots[[10]] + plots[[11]] + plots[[12]] + plots[[13]] + plots[[14]] +
   plots[[15]] +  plots[[16]] + plots[[17]] + plots[[18]] + plots[[19]] + plots[[20]] + plots[[21]] +
   plots[[22]] +  plots[[23]] + plots[[24]] + plots[[25]] + plots[[26]] + plots[[27]] +
-  plots[[28]] + plots[[29]] + plots[[30]] +
+  plots[[28]] + plots[[29]] + #plots[[30]] +
+  plot_layout(ncol=5)+
   
   theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
   plot_annotation(tag_levels = "a") &
   theme(plot.tag = element_text(face = 'bold'))
 
-ggsave(filename = here::here("outputs", "figures","Contrib_correlation_with_biomass.png"), plot, width = 22, height =14 )
+ggsave(filename = here::here("outputs", "figures",
+                             "Contrib_correlation_with_biomass.png"),
+       plot, width = 20, height =18 )
+
+
+corr_biom_tot <- cor(Contrib_site_clean)[,"Biomass"]
+NN_cor_to_biom <- corr_biom_tot[
+  c("N_Recycling","P_Recycling","Taxonomic_Richness","Functional_Entropy",
+    "Phylogenetic_Entropy", "Trait_Distinctiveness","Evolutionary_Distinctiveness",
+    "Herbivores_Biomass","Invertivores_Biomass","Piscivores_Biomass","Endemism",
+    "Elasmobranch_Diversity","Low_Mg_Calcite","High_Mg_Calcite", "Aragonite",                   
+    "Monohydrocalcite", "Amorphous_Carbonate", "Trophic_Web_Robustness", 
+    "Mean_Trophic_Level" )]
+summary(NN_cor_to_biom)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -0.1749  0.1342  0.4330  0.4282  0.6669  0.9736 
+
+NP_cor_to_biom <- corr_biom_tot[
+  c("Turnover_Available_Biomass", "Selenium","Zinc","Omega_3", "Calcium",
+    "Iron", "Vitamin_A", "Available_Biomass", "Aesthetic", "Public_Attention")]
+summary(NP_cor_to_biom)
+# Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+# -0.39988 -0.17313  0.02623  0.06492  0.22374  0.93905
 
 
 #### Corr-matrix for all Contributions (log transformed)
@@ -274,6 +302,61 @@ ggsave(filename = here::here("outputs", "figures","hist_pearson_correlation_Cont
        histo_r_corr, width = 8, height =6 )
 
 
+## Compare with random associations ##
+load(here::here("outputs","Contrib_site_log_random.Rdata"))
+Contrib_random <- subset(Contrib_site_condition, 
+                             select = -c(SiteCode, SiteCountry, SurveyDate,
+                                         SiteEcoregion, SurveyDepth, 
+                                         SiteMeanSST, SiteLatitude, SiteLongitude,
+                                         HDI, MarineEcosystemDependency,
+                                         coral_imputation, gravtot2, mpa_name,
+                                         mpa_enforcement, protection_status, 
+                                         mpa_iucn_cat, Biomass))
+M_random <- cor(Contrib_random)
+pairwise_corr_random <- M_random[upper.tri(M_random)]
+
+
+# Extract both histogramms
+hist1 <- hist(pairwise_corr, breaks = 30, plot = FALSE)
+df1 <- data.frame(mid = hist1$mids, density = hist1$density)
+
+hist2 <- hist(pairwise_corr_random, plot = FALSE)
+df2 <- data.frame(mid = hist2$mids, density = hist2$density)
+
+
+histo_r_corr_random <- ggplot() +
+  geom_bar(data = df1, aes(x = mid, y = density, fill = mid), 
+           stat = "identity", color = "grey60", linewidth = 0.2,
+           width = diff(hist1$breaks)[1]) +
+  scale_fill_gradientn(colors = colorRampPalette(RdBu, bias = 1.3)(30))+
+  
+  labs(title = "Comparison between the correlation distributions of 
+       calculated and randomized contributions", 
+       x = "Pairwise correlation", fill = "Pearson \ncorrelation",
+       y = "Density of contribution correlations") +
+  ggnewscale::new_scale("fill") +
+  
+  geom_bar(data = df2,
+           aes(x = mid, y = density / max(density) * (1.3*max(df1$density)),
+               fill = "Random correlation"),
+           stat = "identity", color = "grey60",linewidth = 0.2, alpha = 0.5,
+           width = diff(hist2$breaks)[1]) +
+  scale_fill_manual(values = c("Random correlation" = "grey60")) +
+  labs(fill = "") +
+  
+  # Add the y axis for random correlations
+  scale_y_continuous(sec.axis = sec_axis(~ . / max(df1$density) * max(df2$density),
+                                         name = "Density of RANDOM contribution correlations")) +
+  
+  geom_vline(xintercept = 0.2, linetype = 3, col = "black") +
+  geom_vline(xintercept = -0.2, linetype = 3, col = "black") +
+  theme_bw() +
+  theme(legend.position = "right", panel.grid.major = element_blank())
+
+histo_r_corr_random
+ggsave(filename = here::here("outputs", "figures",
+       "hist_pearson_correlation_Contributions_with_random_associations.png"), 
+       histo_r_corr_random, width = 8, height =6 )
 
 ##------------- Check spatial robustness with Mantel test ---------------
 ## all sites

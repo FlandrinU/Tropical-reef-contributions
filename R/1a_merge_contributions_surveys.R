@@ -122,7 +122,7 @@ Contrib <- metadata_surveys |>
                 Vitamin_A = Vitamin_A_C,
                 Available_Biomass = fishery_biomass,
                 Aesthetic = aesthe_survey,
-                Public_Interest = public_interest
+                Public_Attention = public_interest
                 # Academic_Knowledge = academic_knowledge
   )
 
@@ -168,8 +168,8 @@ all_plot <- plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]] + plots[[5]] + plo
   theme(plot.tag = element_text(face = 'bold'))
 all_plot
 
-median <-  robustbase::colMedians(as.matrix(dplyr::select(Contrib_surveys, Biomass:Public_Interest)))
-max <- apply(dplyr::select(Contrib_surveys, Biomass:Public_Interest),2,max)
+median <-  robustbase::colMedians(as.matrix(dplyr::select(Contrib_surveys, Biomass:Public_Attention)))
+max <- apply(dplyr::select(Contrib_surveys, Biomass:Public_Attention),2,max)
 magnitude <- max/median
 which(magnitude > 10)
 
@@ -202,7 +202,7 @@ save(Contrib_survey_log_transformed, file = here::here("outputs", "all_Contrib_s
 ### randomisation test : melt sites
 set.seed(06)
 Contrib_surveys_random <- questionr::na.rm(Contrib) |>
-  dplyr::mutate(across(.cols = c("Biomass":"Public_Interest"), .fns = sample, .names = "{.col}"))
+  dplyr::mutate(across(.cols = c("Biomass":"Public_Attention"), .fns = sample, .names = "{.col}"))
 
 ### keep only coral reef sites (according to Allen Atlas)
 allen_list <- dplyr::mutate(hab_filt, SurveyID = as.character(SurveyID))
@@ -251,7 +251,7 @@ Contrib_surveys_only_australia <- questionr::na.rm(Contrib_only_aust) #remains 1
 ### Mean per site
 mean_per_site <- function(var_survey = Contrib_surveys){
   var_survey |> dplyr::group_by( SiteCode, SiteCountry) |>
-    dplyr::summarise(across(.cols = c("SiteLatitude":"Public_Interest"),
+    dplyr::summarise(across(.cols = c("SiteLatitude":"Public_Attention"),
                             .fns = mean, .names = "{.col}"))
 }
 
