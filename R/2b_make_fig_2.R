@@ -402,6 +402,8 @@ fig_2c <- ggplot() +
   )
 
 fig_2c
+ggsave(plot=fig_2c, filename=here::here("outputs", "figures", "FIG2C_World_map_5percent_outliers.png"),
+       height = 4, width = 12)
 
 
 # ------------------------- Plot figure 2 -----------------------------

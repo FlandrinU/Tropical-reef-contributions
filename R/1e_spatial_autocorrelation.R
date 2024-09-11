@@ -12,7 +12,7 @@
 
 #-----------------Loading packages-------------------
 # pkgs <- c("spdep", "geodist", "ape", "ncf", "nlme", "ggplot2")
-# nip <- pkgs[!(pkgs %in% installed.paContribckages())]
+# nip <- pkgs[!(pkgs %in% installed.packages())]
 # nip <- lapply(nip, install.packages, dependencies = TRUE)
 
 rm(list=ls())

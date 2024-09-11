@@ -245,6 +245,14 @@ cor.test(pc1_coord, biom)
 l <- lm(pc1_coord ~ biom)
 summary(l)
 
+### -> which correlation between PC2_coordinates and taxo_richness ?
+pc2_coord <- pca$ind$coord[,2]
+taxo <- Contrib_site_log_transformed$Taxonomic_Richness
+plot(pc2_coord ~ taxo)
+cor.test(pc2_coord, taxo)
+# cor 
+# -0.404828  
+
 
 ### Survey date
 png(filename = here::here("outputs", "figures","PCA_date_pattern.png"), 

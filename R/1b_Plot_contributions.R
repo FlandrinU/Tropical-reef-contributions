@@ -281,14 +281,21 @@ plot_histogram <- function(data = as.data.frame(pairwise_corr),
                            x=pairwise_corr,
                            col= RdBu,
                            title=""){
+  
+  min_val <- round(min(data), 2)
+  max_val <- round(max(data), 2)
+  
   ggplot(data, aes(x)) +
     geom_histogram( bins = 30, color="grey60", aes(fill = after_stat(x)), 
                     linewidth=0.2)+
     scale_fill_gradientn(colors = colorRampPalette(col, bias = 1.3)(30))+
     
     labs(title = title, x = "Pairwise correlation", fill= "Pearson \ncorrelation")+
-    geom_vline(xintercept = 0.2, linetype = 3, col= "black")+
-    geom_vline(xintercept = -0.2, linetype = 3, col= "black")+
+    geom_vline(xintercept = 0.2 + 0.03, linetype = 3, col= "black")+
+    geom_vline(xintercept = -0.2 + 0.03, linetype = 3, col= "black")+
+    # geom_vline(xintercept = median(abs(data$pairwise_corr))+ 0.03, linetype = 1, col= "black")+
+    scale_x_continuous(breaks = c(min_val, -0.5, -0.2, 0, 0.2, 0.5, max_val) + 0.03, 
+                       labels = c(min_val, -0.5, -0.2, 0, 0.2, 0.5, max_val)) +
     theme_bw()+
     theme(legend.position = "right",    
           panel.grid.major = element_blank())
@@ -297,7 +304,16 @@ plot_histogram <- function(data = as.data.frame(pairwise_corr),
 histo_r_corr <- plot_histogram(data = as.data.frame(pairwise_corr), 
                                x=pairwise_corr,
                                col= RdBu,
-                               title="")
+                               title="") +
+  annotate("text", x = -0.5, y = Inf, label = "n = 53", vjust = 1.5) +
+  annotate("text", x = 0.03, y = Inf, label = "n = 197", vjust = 1.5) +
+  annotate("text", x = 0.6, y = Inf, label = "n = 156", vjust = 1.5) 
+  # +geom_segment(aes(x = 0.26, y = 1.5, xend = 0.21 + 0.03, yend = 0), linewidth = 0.2,
+  #                arrow = arrow(length = unit(0.15, "cm")), color = "black") +
+  # geom_label(aes(x = 0.26, y = 4, label = paste0("Median of absolute \n values = ", 
+  #                                                round(median(abs(data$pairwise_corr)), 2))),
+  #            size = 4, color = "black", hjust = 0, vjust = 1) 
+
 ggsave(filename = here::here("outputs", "figures","hist_pearson_correlation_Contributions.png"), 
        histo_r_corr, width = 8, height =6 )
 
