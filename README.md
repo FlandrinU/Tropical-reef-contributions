@@ -27,19 +27,18 @@ researcher of the 'REEF FUTURE' project
 
 #### Recycling
 The script 'recycling/analyses/recycling_analyses.R' 
-  - uses the work of **Sebastien Villéger** and **Nina Schiettekatte** (see 
+  - uses the work of **Nina Schiettekatte** and **Sebastien Villéger** (see 
   **Schiettekatte et al. 2022** for the methods), to assess from metabolic 
   parameters and 'rfishflux' package, the recycling of N and P by fishes.
   
   - produces the table 'recycling/outputs/flux_final_data_surveys.Rdata' that 
-  contains the amount of nitrogen and phosphorous recycled by fishes, aggregated 
-  at the survey level
+  contains the amount of nitrogen and phosphorous recycled by fish communities 
+  (aggregated at the survey level).
   
-> :boom: WARNING: The recycling data are under embargo, and will be published soon.
-The final table aggregating excretion data at the survey scale is available to
-enable the rest of the analysis. Please contact **Sebastien Villéger** for further
-informations.
-
+> NB: This study uses the recycling of N and P by individual fish, assessed with
+the methods describe in **Schiettekatte et al. 2022**, and gathers recycling data
+at the community level using the biomass data from RLS. For further informations
+on individual recylcing data, please contact **Sebastien Villéger**.
   
 
 #### Biodiversity
